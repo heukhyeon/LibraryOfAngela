@@ -392,5 +392,55 @@ namespace LibraryOfAngela.Battle
                 }
             }
         }
+
+        /// <summary>
+        /// actionAfterBehaviour.infoList = this.GetBehaviourAction(ref actionAfterBehaviour, ref actionAfterBehaviour2, false);
+        /// ->
+        /// BattleResultPatch.HandleBeforeMoveRoutine(ref actionAfterBehaviour, ref actionAfterBehaviour2)
+        /// actionAfterBehaviour.infoList = this.GetBehaviourAction(ref actionAfterBehaviour, ref actionAfterBehaviour2, false);
+        /// </summary>
+        /// <param name="instructions"></param>
+        /// <returns></returns>
+        [HarmonyPatch(typeof(RencounterManager), nameof(RencounterManager.SetMovingStateByActionResult))]
+        [HarmonyTranspiler]
+        private static IEnumerable<CodeInstruction> Trans_SetMovingStateByActionResult(IEnumerable<CodeInstruction> instructions)
+        {
+            var target = AccessTools.Field(typeof(RencounterManager.ActionAfterBehaviour), "preventOverlap");
+            var cnt = 0;
+            foreach (var code in instructions)
+            {
+                yield return code;
+                if (cnt < 2 && code.Is(OpCodes.Stfld, target))
+                {
+                    if (++cnt == 2)
+                    {
+                        yield return new CodeInstruction(OpCodes.Ldloca_S, 3);
+                        yield return new CodeInstruction(OpCodes.Ldloca_S, 4);
+                        yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleResultPatch), nameof(HandleBeforeMoveRoutine)));
+                    }
+                }
+            }
+        }
+
+        private static void HandleBeforeMoveRoutine(ref RencounterManager.ActionAfterBehaviour action1, ref RencounterManager.ActionAfterBehaviour action2)
+        {
+            try
+            {
+                HandleRoutine(action1.view.model, ref action1, ref action2);
+                HandleRoutine(action2.view.model, ref action2, ref action1);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+        }
+
+        private static void HandleRoutine(BattleUnitModel unit, ref RencounterManager.ActionAfterBehaviour my, ref RencounterManager.ActionAfterBehaviour opponent)
+        {
+            var skinInfo = AdvancedSkinInfoPatch.GetInfo(unit);
+            var coreInfo = AdvancedEquipBookPatch.Instance.infos.SafeGet(unit.Book.BookId);
+            skinInfo?.handleBeforeMoveRoutine?.Invoke(ref my, ref opponent);
+            coreInfo?.handleBeforeMoveRoutine?.Invoke(ref my, ref opponent);
+        }
     }
 }

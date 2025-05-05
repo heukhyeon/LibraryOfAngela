@@ -230,6 +230,43 @@ namespace LibraryOfAngela.EquipBook
             __instance._CustomBookItem = custombook;
         }
 
+        [HarmonyPatch(typeof(UnitDataModel), "EquipBook")]
+        [HarmonyPostfix]
+        private static void After_EquipBook(UnitDataModel __instance, BookModel newBook, BookModel __state)
+        {
+
+            if (__instance._bookItem != __state)
+            {
+                if (__state != null)
+                {
+                    try
+                    {
+                        var id = __state.GetBookClassInfoId();
+                        var config = Instance.configs.Find(d => d.packageId == id.packageId);
+                        if (config != null) config.OnCorePageStateChange(__state, id, EquipStateEvent.UnEquip, __instance);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e);
+                    }
+
+                }
+                if (newBook != null && __instance._bookItem == newBook)
+                {
+                    try
+                    {
+                        var id = newBook.GetBookClassInfoId();
+                        var config = Instance.configs.Find(d => d.packageId == id.packageId);
+                        if (config != null) config.OnCorePageStateChange(newBook, id, EquipStateEvent.Equip, __instance);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e);
+                    }
+                }
+            }
+        }
+
         [HarmonyPatch(typeof(UnitDataModel), "LoadFromSaveData")]
         [HarmonyPostfix]
         private static void After_LoadFromSaveData(UnitDataModel __instance, SaveData data)

@@ -1725,6 +1725,60 @@ namespace LibraryOfAngela.Battle
             }
         }
 
+        [HarmonyPatch(typeof(BattlePlayingCardDataInUnitModel), nameof(BattlePlayingCardDataInUnitModel.OnStandbyBehaviour))]
+        [HarmonyPatch(typeof(BattlePlayingCardDataInUnitModel), nameof(BattlePlayingCardDataInUnitModel.ResetCardQueueWithoutStandby))]
+        [HarmonyPatch(typeof(BattlePlayingCardDataInUnitModel), nameof(BattlePlayingCardDataInUnitModel.ResetCardQueue))]
+        [HarmonyTranspiler]
+        private static IEnumerable<CodeInstruction> Trans_HandleCreateDiceBehaviourList(IEnumerable<CodeInstruction> instructions)
+        {
+            var target = AccessTools.Method(typeof(BattleDiceCardModel), "CreateDiceCardBehaviorList");
+            foreach (var code in instructions)
+            {
+                yield return code;
+                if (code.Is(OpCodes.Callvirt, target))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), nameof(HandleCreateDiceBehaviourList)));
+                }
+            }
+        }
+
+        private static List<BattleDiceBehavior> HandleCreateDiceBehaviourList(List<BattleDiceBehavior> origin, BattlePlayingCardDataInUnitModel card)
+        {
+            var owner = card?.owner ?? card?.card?.owner;
+            if (owner is null) return origin;
+            var ability = card.cardAbility;
+            bool flag = false;
+
+            foreach (var effect in BattleInterfaceCache.Of<IHandleCreateDiceCardBehaviourList>(owner))
+            {
+                try
+                {
+                    effect.OnCreateDiceCardBehaviorList(card, origin);
+                    if (!flag && effect == ability)
+                    {
+                        flag = true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError(e);
+                }
+            }
+            if (!flag && ability is IHandleCreateDiceCardBehaviourList p)
+            {
+                try
+                {
+                    p.OnCreateDiceCardBehaviorList(card, origin);
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError(e);
+                }
+            }
+            return origin;
+        }
+
 
     }
 

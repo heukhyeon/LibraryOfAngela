@@ -98,6 +98,7 @@
     <Compile Include="Interface-External\IHandleChangeDamage.cs" />
     <Compile Include="Interface-External\IHandleChangeSkin.cs" />
     <Compile Include="Interface-External\IHandleClearResourceEnemyTeamStageManager.cs" />
+    <Compile Include="Interface-External\IHandleCreateDiceCardBehaviourList.cs" />
     <Compile Include="Interface-External\IHandleCustomPhase.cs" />
     <Compile Include="Interface-External\IHandleEmotionLevelUp.cs" />
     <Compile Include="Interface-External\IHandleKeywordMaximum.cs" />

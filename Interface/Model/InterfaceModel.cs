@@ -41,6 +41,9 @@ namespace LibraryOfAngela.Model
         public int level = -1;
         public List<LorId> cards;
     }
+
+    public delegate void HandleBeforeMoveRoutineListener(ref RencounterManager.ActionAfterBehaviour my, ref RencounterManager.ActionAfterBehaviour opponent);
+
     /// <summary>
     /// 특정 핵심책장을 장착했을때 해당 책장의 장착 제한, 임의의 출력용 패시브 추가 등을 지원합니다.
     /// </summary>
@@ -66,6 +69,10 @@ namespace LibraryOfAngela.Model
 
         // 현재 스킨, 캐릭터 설정시의 기존 스킨, 기존 커스터마이징 데이터, 결과값
         public Func<string, string, UnitCustomizingData, LoACustomFaceData> overrideFace = null;
+
+        // 움직이기 전 대상 변경등 전투 결과를 출력하기 전 바꿔칠 콜백을 지정합니다.
+        public HandleBeforeMoveRoutineListener handleBeforeMoveRoutine;
+
         public AdvancedEquipBookInfo(LorId id)
         {
             targetId = id;
@@ -117,6 +124,9 @@ namespace LibraryOfAngela.Model
         // workshop skin list에 올릴때 대응할 책장을 주입합니다.
         // 없다면 workshop skin list에 표시되지 않습니다.
         public LorId exportWorkshopSkinMatchedId = null;
+
+        // 움직이기 전 대상 변경등 전투 결과를 출력하기 전 바꿔칠 콜백을 지정합니다.
+        public HandleBeforeMoveRoutineListener handleBeforeMoveRoutine = null;
 
         public AdvancedSkinInfo(string skinName)
         {

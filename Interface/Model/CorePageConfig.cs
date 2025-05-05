@@ -34,12 +34,8 @@ namespace LibraryOfAngela.Model
 
         public virtual List<LorId> GetHideCostPassives() => null;
 
+        [Obsolete("Use Instead OnCorePageStateChange")]
         public virtual void OnCreateCorePage(BookModel book)
-        {
-
-        }
-
-        public virtual void OnSave()
         {
 
         }
@@ -51,5 +47,25 @@ namespace LibraryOfAngela.Model
         /// <param name="unit">대상 유닛 정보입니다.</param>
         /// <returns></returns>
         public virtual string ChangeCharacterSkinByUnitInfo(string skinName, UnitDataModel unit) => null;
+
+        /// <summary>
+        /// 책이 생성되거나, 장착 상태가 변경될때 호출됩니다.
+        /// </summary>
+        /// <param name="book"></param>
+        /// <param name="id">해당 책의 id</param>
+        /// <param name="ev">변경 이벤트 타입</param>
+        /// <param name="owner">해당 책의 장착 주인. <see cref="EquipStateEvent.Loaded"/> 나 <see cref="EquipStateEvent.Created"/> 시에는 null일 수 있다.</param>
+        public virtual void OnCorePageStateChange(BookModel book, LorId id, EquipStateEvent ev, UnitDataModel owner)
+        {
+
+        }
+    }
+
+    public enum EquipStateEvent
+    {
+        Created,
+        Loaded,
+        Equip,
+        UnEquip,
     }
 }

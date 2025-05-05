@@ -43,21 +43,6 @@ namespace LibraryOfAngela.Save
             {
                 BattleUIPatch.keywordCountDic.Clear();
                 SkinInfoProvider.Instance.SaveSkinProperties(__result);
-                foreach (var config in LoAModCache.CorePageConfigs)
-                {
-                    try
-                    {
-                        config.OnSave();
-                    }
-                    catch (MissingMethodException)
-                    {
-
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.LogError(e);
-                    }
-                }
             }
             catch (Exception e)
             {

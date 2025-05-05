@@ -64,17 +64,6 @@
     <Reference Include="Facepunch.Steamworks.Win64">
       <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\common\Library Of Ruina\LibraryOfRuina_Data\Managed\Facepunch.Steamworks.Win64.dll</HintPath>
     </Reference>
-    <Reference Include="LoAInterface, Version=1.0.2.4, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\workshop\content\1256670\2616101789\Assemblies\LazyDll\LoAInterface.dll</HintPath>
-    </Reference>
-    <Reference Include="LoALoader">
-      <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\workshop\content\1256670\3358685574\Assemblies\LoALoader.dll</HintPath>
-    </Reference>
-    <Reference Include="LoARuntimeUI, Version=1.0.0.1, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\workshop\content\1256670\2616101789\Assemblies\LazyDll\LoARuntimeUI.dll</HintPath>
-    </Reference>
     <Reference Include="Mono.Data.Sqlite">
       <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\common\Library Of Ruina\LibraryOfRuina_Data\Managed\Mono.Data.Sqlite.dll</HintPath>
     </Reference>
@@ -431,6 +420,20 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Initialize\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Interface\Interface.csproj">
+      <Project>{d74f9a54-b32a-41d1-9799-15fda8052ff3}</Project>
+      <Name>Interface</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Loader\Loader.csproj">
+      <Project>{dabb1f3c-b62c-43cb-b7a5-f980d01f435b}</Project>
+      <Name>Loader</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RuntimeUI\RuntimeUI.csproj">
+      <Project>{dfa52acd-128f-426a-b5ca-f4d7c8721366}</Project>
+      <Name>RuntimeUI</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
