@@ -1305,6 +1305,8 @@ namespace LibraryOfAngela.Battle
             }
         }
 
+        [HarmonyPatch(typeof(BattleDiceBehavior), nameof(BattleDiceBehavior.ApplyDiceStatBonus))]
+        [HarmonyPrefix]
         private static void Before_ApplyDiceStatBonus(BattleDiceBehavior __instance, ref DiceStatBonus bonus)
         {
             try
@@ -1315,7 +1317,7 @@ namespace LibraryOfAngela.Battle
                 b = SceneBufPatch.currentBuf?.ConvertDiceStatBonus(__instance, b) ?? b;
                 foreach (var x in BattleInterfaceCache.Of<IHandleDiceStatBonus>(__instance.owner))
                 {
-                    b = x.ConvertDiceStatBonus(__instance, b);
+                    b = x.ConvertDiceStatBonus(__instance, b) ?? b;
                 }
                 bonus = b;
             }

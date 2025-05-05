@@ -129,7 +129,12 @@ namespace LibraryOfAngela.Implement
             SingletonBehavior<BattleManagerUI>.Instance.ui_levelup.Init(info.cards.Count, info.cards.ToList());
         }
 
-
+        public EmotionCardXmlInfo FindEmotionCard(string packageId, int id)
+        {
+            var emotionInfo = infos.SafeGet(packageId);
+            if (emotionInfo is null) return null;
+            return emotionInfo.Find(d => d.id == id);
+        }
 
 
 

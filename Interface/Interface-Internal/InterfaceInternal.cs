@@ -23,6 +23,8 @@ namespace LibraryOfAngela.Interface_Internal
 
         List<AbnormalityCard> GetEmotionCardDescListByMod(ILoACustomEmotionMod mod);
 
+        EmotionCardXmlInfo FindEmotionCard(string packageId, int id);
+
         bool IsModCard(ILoACustomEmotionMod mod, EmotionCardXmlInfo target);
     }
 

@@ -13,5 +13,8 @@ using LibraryOfAngela.Model;
 
 public static class GlobalExtension
 {
-
+    public static EmotionCardXmlInfo FindMyEmotionCard(this ILoACustomEmotionMod owner, int id)
+    {
+        return ServiceLocator.Instance.GetInstance<ILoAEmotionDictionary>().FindEmotionCard(owner.packageId, id);
+    }
 }

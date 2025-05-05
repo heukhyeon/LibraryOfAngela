@@ -25,6 +25,10 @@ namespace LibraryOfAngela.Extension.Framework
             {
                 return null;
             }
+            catch (BadImageFormatException)
+            {
+                return null;
+            }
             catch (MissingFieldException)
             {
                 return null;

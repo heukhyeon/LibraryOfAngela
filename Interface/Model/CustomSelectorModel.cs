@@ -116,6 +116,11 @@ namespace LibraryOfAngela.Model
                 this.maxSelectCount = maxSelectCount;
                 return this;
             }
+            public Builder SetStoryArtwork(string story)
+            {
+                this.artwork = story;
+                return this;
+            }
 
             public Builder SetColor(Color color)
             {
