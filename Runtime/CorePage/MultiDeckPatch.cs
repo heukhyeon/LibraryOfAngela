@@ -139,9 +139,24 @@ namespace LibraryOfAngela.CorePage
                 if (info is null) return true;
                 var matchInfo = info.infos[owner._deckList.IndexOf(__instance)];
                 var result = matchInfo.onCardRemove?.Invoke(owner.owner, __instance, cardId);
-                if (result != null)
+                if (result is null)
                 {
-                    __result = result.Value;
+                    return true;
+                }
+                if (result is MultiDeckRemoveState.Rejected)
+                {
+                    __result = false;
+                    return false;
+                }
+                if (result is MultiDeckRemoveState.RemovedWithoutInventory)
+                {
+                    __instance._deck.Remove(ItemXmlDataList.instance.GetCardItem(cardId));
+                    __result = true;
+                    return false;
+                }
+                if (result is MultiDeckRemoveState.CustomHandle h)
+                {
+                    __result = h.isRemoved;
                     return false;
                 }
             }

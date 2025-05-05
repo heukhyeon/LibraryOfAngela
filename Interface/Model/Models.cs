@@ -312,6 +312,38 @@ namespace LibraryOfAngela.Model
         public bool enter = false;
     }
 
+    public abstract class MultiDeckRemoveState
+    {
+        /// <summary>
+        /// 제거는 하지만 인벤토리에 해당 카드가 들어가지 않는경우
+        /// </summary>
+        public class RemovedWithoutInventory : MultiDeckRemoveState
+        {
+
+        }
+
+        // 알아서 교체됨.
+        public class CustomHandle : MultiDeckRemoveState
+        {
+            /// <summary>
+            /// 처리 뒤의 다른 UI의 반응 결과값. 강제로 거부한게 아니면 true로 사용하는게 일반적
+            /// </summary>
+            public readonly bool isRemoved;
+
+            public CustomHandle(bool isRemoved)
+            {
+                this.isRemoved = isRemoved;
+            }
+        }
+
+        // 제거 불가
+        public class Rejected : MultiDeckRemoveState
+        {
+
+        }
+
+    }
+
     public class MultiDeckInfo
     {
         public struct DeckInfo
@@ -326,8 +358,9 @@ namespace LibraryOfAngela.Model
             /// <summary>
             /// 현재 유닛, 현재 덱, 제거하려는 카드를 통해 최종 제거 가능 여부를 변경해 반환한다.
             /// null 반환시 그냥 무시하고, 그 외의 값이라면 그 값으로 반환값을 강제 조정한다.
+            /// 일반 멀티덱이면 그냥 null 반환하거나 신경끄면 된다.
             /// </summary>
-            public Func<UnitDataModel, DeckModel, LorId, bool?> onCardRemove;
+            public Func<UnitDataModel, DeckModel, LorId, MultiDeckRemoveState> onCardRemove;
         }
 
         public LorId targetId;
