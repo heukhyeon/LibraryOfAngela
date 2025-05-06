@@ -194,7 +194,7 @@ namespace LibraryOfAngela.Battle
             if (unit is null) return;
             if (Instance.caches.ContainsKey(unit)) return;
             Instance.caches[unit] = new BattleEffectCache(unit);
-            if (BattlePatch.IsWaveStartCalled)
+            if (BattlePhasePatch.IsWaveStartCalled)
             {
                 foreach (var cache in Instance.caches.Values.SelectMany(d => d.ToEnumerable<IAllCharacterBufController>()))
                 {
@@ -240,7 +240,7 @@ namespace LibraryOfAngela.Battle
         private static void After_UnregisterUnit(BattleUnitModel unit)
         {
             if (unit is null) return;
-            if (BattlePatch.IsWaveStartCalled)
+            if (BattlePhasePatch.IsWaveStartCalled)
             {
                 foreach (var cache in Instance.caches.Values.SelectMany(d => d.ToEnumerable<IAllCharacterBufController>()))
                 {

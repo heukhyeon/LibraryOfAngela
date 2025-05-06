@@ -263,12 +263,12 @@ namespace LibraryOfAngela
 
         void ILoARoot.ReservePassive(BattleUnitPassiveDetail owner, LorId id)
         {
-            BattlePatch.EnqueueReservePassive(owner, id);
+            BattlePhasePatch.EnqueueReservePassive(owner, id);
         }
 
         void ILoARoot.AddPhaseCallback(StageController.StagePhase? phase, Action callback, bool onlyOnce)
         {
-            BattlePatch.AddPhaseCallback(phase, callback, onlyOnce);
+            BattlePhasePatch.AddPhaseCallback(phase, callback, onlyOnce);
         }
 
         List<EmotionCardXmlInfo> ILoARoot.CreateValidEmotionCardListByEmotionRate(List<EmotionCardXmlInfo> cardFool, int emotionLevel, int count)

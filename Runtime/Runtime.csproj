@@ -346,6 +346,7 @@
     <Compile Include="BattleUI\EmotionOver5.cs" />
     <Compile Include="Battle\AutoBattlePatch.cs" />
     <Compile Include="Battle\BattleInterfaceCache.cs" />
+    <Compile Include="Battle\BattlePhasePatch.cs" />
     <Compile Include="Battle\BattleResultPatch.cs" />
     <Compile Include="Battle\BattleUIPatch.cs" />
     <Compile Include="Battle\ExhaustPatch.cs" />

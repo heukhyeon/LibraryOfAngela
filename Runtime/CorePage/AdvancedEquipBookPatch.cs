@@ -498,9 +498,16 @@ namespace LibraryOfAngela.EquipBook
             var t = Instance.effects.SafeGet(resource);
             if (t == null) return;
             var obj = new GameObject();
-            __result = obj.AddComponent(t) as DiceAttackEffect;
-            __result.Initialize(self, target, time);
-            __result.SetScale(scaleFactor);
+            try
+            {
+                __result = obj.AddComponent(t) as DiceAttackEffect;
+                __result.Initialize(self, target, time);
+                __result.SetScale(scaleFactor);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
         }
 
         private static DiceCardXmlInfo ConvertValidOnlyCardInfo(DiceCardXmlInfo origin, int cardID, LorId xmlId)

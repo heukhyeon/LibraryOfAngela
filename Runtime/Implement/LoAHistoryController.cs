@@ -41,14 +41,14 @@ namespace LibraryOfAngela.Implement
         private static void Before_StartBattle()
         {
             Instance.currentWaveDieCount = 0;
-            BattlePatch.ClearResource();
+            BattlePhasePatch.ClearResource();
         }
 
         [HarmonyPatch(typeof(StageController), "InitCommon")]
         [HarmonyPrefix]
         private static void Before_InitCommon()
         {
-            BattlePatch.ClearResource();
+            BattlePhasePatch.ClearResource();
         }
 
         // GameOver가 호출이 아예 안되는 경우도 가끔 있음
@@ -95,7 +95,7 @@ namespace LibraryOfAngela.Implement
                 Instance.histories.Clear();
             }
 
-            BattlePatch.ClearResource();
+            BattlePhasePatch.ClearResource();
 
             try
             {

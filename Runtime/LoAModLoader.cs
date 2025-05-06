@@ -314,6 +314,7 @@ namespace LibraryOfAngela
                 var time = DateTimeOffset.Now.ToUnixTimeMilliseconds();
                 Patch(typeof(BookCategoryPatch));
                 Patch(typeof(BattlePatch));
+                Patch(typeof(BattlePhasePatch));
                 Patch(typeof(AdvancedSuccessionPatch));
                 Patch(typeof(AdvancedEquipBookPatch));
                 Patch(typeof(MapPatch));

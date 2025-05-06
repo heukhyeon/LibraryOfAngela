@@ -479,7 +479,11 @@ namespace LibraryOfAngela.CorePage
                 {
                     return new BehaviourAction_loa_purpletear();
                 }
-                return Instance.infos.SafeGet(skin)?.defaultActionScript?.Invoke() ?? origin;
+                var info = Instance.infos.SafeGet(skin);
+                if (info is null) return origin;
+                var sc = info.defaultActionScript?.Invoke() ?? info.overrideActionScript?.Invoke(result, origin);
+                if (sc != null) return sc;
+                return origin;
             }
             return origin;
         }

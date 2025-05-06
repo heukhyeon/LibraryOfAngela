@@ -322,6 +322,15 @@ namespace LibraryOfAngela.Battle
                         stop = true;
                     }
                 }
+                else
+                {
+                    action = AdvancedSkinInfoPatch.ConvertDefaultActionScript2(action, instance._currentEnemyBehaviourResult);
+                    if (action is IForceStopMotion)
+                    {
+                        origin = action.IsMovable(instance._currentEnemyBehaviourResult, instance._currentLibrarianBehaviourResult);
+                        stop = !origin;
+                    }
+                }
             }
 
             return origin;
@@ -340,6 +349,19 @@ namespace LibraryOfAngela.Battle
                 {
                     origin = action.IsMovable(instance._currentLibrarianBehaviourResult, instance._currentEnemyBehaviourResult);
                     stop = !origin;
+                }
+                else
+                {
+                    action = AdvancedSkinInfoPatch.ConvertDefaultActionScript2(action, instance._currentLibrarianBehaviourResult);
+                    if (action is IForceStopMotion)
+                    {
+                        var ret = action.IsOpponentMovable(instance._currentLibrarianBehaviourResult, instance._currentEnemyBehaviourResult);
+                        if (!ret)
+                        {
+                            origin = ret;
+                            stop = true;
+                        }
+                    }
                 }
             }
             return origin;
