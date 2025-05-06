@@ -277,6 +277,19 @@ namespace LibraryOfAngela
             }
         }
 
+        // 다른 모드 등에서 접대 이외의 방법으로 전투 시작시
+        [HarmonyPatch(typeof(GlobalGameManager), "LoadBattleScene")]
+        [HarmonyPrefix]
+        private static void Before_LoadBattleScene()
+        {
+            var id = StageController.Instance.GetStageModel()?.ClassInfo?.id;
+            if (Instance.currentForceSyncRequest?.targetInvitationId != id)
+            {
+                Before_OnClickGameStart();
+            }
+        }
+
+
         [HarmonyPatch(typeof(BattleSceneRoot), "StartBattle")]
         [HarmonyPrefix]
         private static bool Before_StartBattle(BattleSceneRoot __instance)

@@ -15,6 +15,7 @@ namespace LibraryOfAngela.AssetBundleData
         private List<AssetBundleType> requestTypes;
         private int requestCount;
         private bool reserved;
+        public LorId targetInvitationId;
 
         public bool IsValid()
         {
@@ -31,6 +32,7 @@ namespace LibraryOfAngela.AssetBundleData
         {
             var id = StageController.Instance.GetStageModel().ClassInfo.id;
             if (!id.IsWorkshop()) return;
+            targetInvitationId = id;
             var key = new AssetBundleType.Invitation(id);
             var response = LoAAssetBundles.Instance.LoadAssetBundle(key, forceAsync: true, onComplete: (isAsync, success) => OnLoaded(isAsync, success));
 
