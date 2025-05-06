@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-public interface ILoACustomUseableCard
+public interface ILoACustomUsableCard
 {
-    bool IsUseable(BattleUnitModel owner);
+    bool IsUsable(BattleUnitModel owner);
 
     void OnHandle(BattleDiceCardUI ui, BattleUnitModel owner, BattleDiceCardModel card);
 }

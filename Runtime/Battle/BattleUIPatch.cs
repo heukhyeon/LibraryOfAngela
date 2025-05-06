@@ -168,7 +168,7 @@ namespace LibraryOfAngela.Battle
         /// ->			
         /// 			this._cardList[num].SetCard(list2[num], Array.Empty<BattleDiceCardUI.Option>());
         /// 			this._cardList[num].SetDefault();
-        /// 			BattleUIPatch.HandleCustomUseableCard(this, num, battleUnitModel);
+        /// 			BattleUIPatch.HandleCustomUsableCard(this, num, battleUnitModel);
         /// 			this._cardList[num].ResetSiblingIndex();
         /// </summary>
         /// <param name="instructions"></param>
@@ -188,21 +188,21 @@ namespace LibraryOfAngela.Battle
                     yield return new CodeInstruction(OpCodes.Ldarg_0);
                     yield return new CodeInstruction(OpCodes.Ldloc_3);
                     yield return new CodeInstruction(OpCodes.Ldloc_2);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleUIPatch), nameof(HandleCustomUseableCard)));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleUIPatch), nameof(HandleCustomUsableCard)));
                 }
             }
         }
 
-        private static void HandleCustomUseableCard(BattleUnitCardsInHandUI instance, int num, BattleUnitModel owner)
+        private static void HandleCustomUsableCard(BattleUnitCardsInHandUI instance, int num, BattleUnitModel owner)
         {
             try
             {
                 var ui = instance._cardList[num];
                 var card = ui.CardModel;
                 var script = card._script ?? card.CreateDiceCardSelfAbilityScript();
-                if (script is ILoACustomUseableCard c)
+                if (script is ILoACustomUsableCard c)
                 {
-                    var useable = c.IsUseable(owner);
+                    var useable = c.IsUsable(owner);
                     c.OnHandle(ui, owner, card);
                     if (!useable)
                     {
