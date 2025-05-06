@@ -222,6 +222,7 @@ namespace LibraryOfAngela
                 foreach (var info in mod.GetAssetBundleInfos())
                 {
                     if (info.types == null && info.type is null) info.type = AssetBundleType.Default;
+                    info.packageId = mod.packageId;
                     var node = new AssetBundleNode(mod.packageId, info);
                     loadRequireNodes[info] = node;
                     nodes.Add(node);

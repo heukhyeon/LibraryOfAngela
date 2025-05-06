@@ -86,6 +86,7 @@ namespace LibraryOfAngela
     public class AssetBundleInfo
     {
         public string path;
+        public string packageId = null;
 
         public AssetBundleType type;
         /// <summary>
@@ -98,7 +99,7 @@ namespace LibraryOfAngela
         {
             if (obj is AssetBundleInfo info)
             {
-                return path == info.path;
+                return packageId == info.packageId && path == info.path;
             }
             return false;
         }

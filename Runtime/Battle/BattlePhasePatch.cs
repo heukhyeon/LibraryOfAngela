@@ -164,7 +164,8 @@ namespace LibraryOfAngela.Battle
         private static void Before_OnFixedUpdate(StageController __instance)
         {
             // 뒤돌프모드는 프로퍼티 설정 안하고 독자적으로 필드를 바로 할당시킴. 재할당 요청
-            if (__instance._phase != expectedPhase)
+            // 초기 할당은 어긋날수 있으므로 드로우 이후로 판정
+            if (IsWaveStartCalled && __instance._phase != expectedPhase && __instance._phase > StageController.StagePhase.DrawCardPhase)
             {
                 var p = __instance._phase;
                 if (!dRudolphLogShow)
