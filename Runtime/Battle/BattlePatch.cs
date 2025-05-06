@@ -9,6 +9,7 @@ using LibraryOfAngela.Implement;
 using LibraryOfAngela.Interface_External;
 using LibraryOfAngela.Interface_Internal;
 using LibraryOfAngela.Model;
+using LibraryOfAngela.Util;
 using LOR_BattleUnit_UI;
 using LOR_DiceSystem;
 using Sound;
@@ -1271,6 +1272,23 @@ namespace LibraryOfAngela.Battle
             };
         }
 
+        [HarmonyPatch(typeof(BattleAllyCardDetail), nameof(BattleAllyCardDetail.SpendCard))]
+        [HarmonyPrefix]
+        private static void Before_SpendCard(BattleDiceCardModel card, out bool __state)
+        {
+            __state = card.costSpended;
+        }
+
+        [HarmonyPatch(typeof(BattleAllyCardDetail), nameof(BattleAllyCardDetail.SpendCard))]
+        [HarmonyPostfix]
+        private static void After_SpendCard(BattleDiceCardModel card, BattleUnitModel ____self, bool __state)
+        {
+            if (__state)
+            {
+                HandleSpendCard(card, ____self, null, false);
+            }
+        }
+
         [HarmonyPatch(typeof(BattlePersonalEgoCardDetail), "SpendCard")]
         [HarmonyPostfix]
         private static void After_SpendCard(BattleDiceCardModel card, BattleUnitModel ____self, ref bool __result,
@@ -1279,14 +1297,49 @@ namespace LibraryOfAngela.Battle
         {
             if (__result)
             {
-                var script = card.CreateDiceCardSelfAbilityScript() as IRepeatPersonalCard;
-                if (script?.isReturnToHandImmediately(____self, card) == true)
+                var script = card.CreateDiceCardSelfAbilityScript();
+                if (script is IRepeatPersonalCard sc && sc?.isReturnToHandImmediately(____self, card) == true)
                 {
                     ____cardInUse.Remove(card);
                     ____cardInHand.Add(card);
                 }
+                HandleSpendCard(card, ____self, script, true);
             }
         }
+
+        private static void HandleSpendCard(BattleDiceCardModel card, BattleUnitModel owner, object script, bool isPersonal)
+        {
+            try
+            {
+                if (script is null) script = card.CreateDiceCardSelfAbilityScript();
+                bool flag = false;
+                ILoACardListController controller = null;
+                foreach (var b in BattleInterfaceCache.Of<IHandleSpendCard>(owner))
+                {
+                    if (controller is null)
+                    {
+                        controller = isPersonal ? new LoACardListControllerImpl(owner.personalEgoDetail) : new LoACardListControllerImpl(owner.allyCardDetail);
+                    }
+                    b.OnSpendCard(owner, card, controller);
+                    if (b == script) flag = true;
+                }
+                if (!flag && script is IHandleSpendCard b2)
+                {
+                    if (controller is null)
+                    {
+                        controller = isPersonal ? new LoACardListControllerImpl(owner.personalEgoDetail) : new LoACardListControllerImpl(owner.allyCardDetail);
+                    }
+                    b2.OnSpendCard(owner, card, controller);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+        }
+
+
+        
 
         [HarmonyPatch(typeof(BattleUnitPassiveDetail), "OnStartTargetedByAreaAtk")]
         [HarmonyPostfix]

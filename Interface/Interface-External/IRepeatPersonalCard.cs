@@ -9,6 +9,7 @@ namespace LibraryOfAngela.Interface_External
     /// <summary>
     /// 이 인터페이스는 <see cref="ILoABattleEffect"/> 를 상속하지 않습니다.
     /// </summary>
+    [Obsolete("Use Instaed IHandleSpendCard")]
     public interface IRepeatPersonalCard
     {
         /// <summary>

@@ -12,6 +12,7 @@ using LibraryOfAngela.Interface_Internal;
 using LibraryOfAngela.Map;
 using LibraryOfAngela.Model;
 using LibraryOfAngela.Save;
+using LibraryOfAngela.Util;
 using Mod;
 using Opening;
 using System;
@@ -386,6 +387,28 @@ namespace LibraryOfAngela
         void ILoARoot.UpdateRarity(RarityModel model)
         {
             AdvancedCorePageRarityPatch.UpdateRarityModel(model);
+        }
+
+        ILoACardListController ILoARoot.GetCardListController(BattleAllyCardDetail detail)
+        {
+            return new LoACardListControllerImpl(detail);
+        }
+
+        ILoACardListController ILoARoot.GetCardListController(BattlePersonalEgoCardDetail detail)
+        {
+            return new LoACardListControllerImpl(detail);
+        }
+
+        ILoACardListController ILoARoot.GetCardListControllerByCard(BattleDiceCardModel card, BattleUnitModel owner)
+        {
+            if (card.XmlData.IsPersonal())
+            {
+                return new LoACardListControllerImpl(owner.personalEgoDetail);
+            }
+            else
+            {
+                return new LoACardListControllerImpl(owner.allyCardDetail);
+            }
         }
     }
 }

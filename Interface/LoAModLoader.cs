@@ -209,5 +209,11 @@ namespace LibraryOfAngela
         void AddPhaseCallback(StageController.StagePhase? phase, Action callback, bool onlyOnce);
         void ShowCustomSelector(CustomSelectorModel model);
         List<EmotionCardXmlInfo> CreateValidEmotionCardListByEmotionRate(List<EmotionCardXmlInfo> cardFool, int emotionLevel, int count);
+
+        ILoACardListController GetCardListController(BattleAllyCardDetail detail);
+
+        ILoACardListController GetCardListController(BattlePersonalEgoCardDetail detail);
+
+        ILoACardListController GetCardListControllerByCard(BattleDiceCardModel card, BattleUnitModel owner);
     }
 }

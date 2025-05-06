@@ -410,6 +410,7 @@
     <Compile Include="Story\TimelineConflict.cs" />
     <Compile Include="Story\TimelinePatch.cs" />
     <Compile Include="Util\HarmonyExtension.cs" />
+    <Compile Include="Util\LoACardListControllerImpl.cs" />
     <Compile Include="Util\LoADebugger.cs" />
     <Compile Include="Implement\PatcherImpl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

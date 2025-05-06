@@ -67,10 +67,17 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\common\Library Of Ruina\LibraryOfRuina_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>..\..\Program Files (x86)\Steam\steamapps\common\Library Of Ruina\LibraryOfRuina_Data\UnityEngine.InputLegacyModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\..\Program Files (x86)\Steam\steamapps\common\Library Of Ruina\LibraryOfRuina_Data\UnityEngine.UI.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Artwork.cs" />
     <Compile Include="AssetBundle.cs" />
+    <Compile Include="Component\LoADiceCardUIKeyDetect.cs" />
     <Compile Include="EmotionSelectBuilder.cs" />
     <Compile Include="Extension\BattleExtension.cs" />
     <Compile Include="Extension\CommonExtension.cs" />
@@ -78,6 +85,7 @@
     <Compile Include="Global\GlobalExtension.cs" />
     <Compile Include="Extension\LoAModExtension.cs" />
     <Compile Include="Extension\PatchTextension.cs" />
+    <Compile Include="Global\ILoACustomUseableCard.cs" />
     <Compile Include="Global\ILoAKeywordBufDic.cs" />
     <Compile Include="Global\LimbusDiceAbility.cs" />
     <Compile Include="ILoAMod.cs" />
@@ -118,6 +126,7 @@
     <Compile Include="Interface-External\IHandleRecover.cs" />
     <Compile Include="Interface-External\IHandleDrawCard.cs" />
     <Compile Include="Interface-External\IHandleRecoverPlayPoint.cs" />
+    <Compile Include="Interface-External\IHandleSpendCard.cs" />
     <Compile Include="Interface-External\IHandleStandbyDice.cs" />
     <Compile Include="Interface-External\ILoABattleEffect.cs" />
     <Compile Include="Interface-External\IHandleNewCharacter.cs" />
@@ -140,6 +149,7 @@
     <Compile Include="Model\AssetBundleConfig.cs" />
     <Compile Include="Model\BattlePageConfig.cs" />
     <Compile Include="Model\CorePageConfig.cs" />
+    <Compile Include="Model\ILoACardListController.cs" />
     <Compile Include="Model\LoACustomFaceData.cs" />
     <Compile Include="Model\CustomSelectorModel.cs" />
     <Compile Include="Model\EmotionConfig.cs" />

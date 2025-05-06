@@ -9,6 +9,7 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using TMPro;
+using UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -159,5 +160,61 @@ namespace LibraryOfAngela.Battle
 
             return (380f / 4f) * (num * 2);
         }
+
+        /// <summary>
+        /// 			this._cardList[num].SetCard(list2[num], Array.Empty<BattleDiceCardUI.Option>());
+        /// 			this._cardList[num].SetDefault();
+        /// 			this._cardList[num].ResetSiblingIndex();
+        /// ->			
+        /// 			this._cardList[num].SetCard(list2[num], Array.Empty<BattleDiceCardUI.Option>());
+        /// 			this._cardList[num].SetDefault();
+        /// 			BattleUIPatch.HandleCustomUseableCard(this, num, battleUnitModel);
+        /// 			this._cardList[num].ResetSiblingIndex();
+        /// </summary>
+        /// <param name="instructions"></param>
+        /// <returns></returns>
+        [HarmonyPatch(typeof(BattleUnitCardsInHandUI), nameof(BattleUnitCardsInHandUI.UpdateCardList))]
+        [HarmonyTranspiler]
+        private static IEnumerable<CodeInstruction> Trans_UpdateCardList(IEnumerable<CodeInstruction> instructions)
+        {
+            var target = AccessTools.Method(typeof(BattleDiceCardUI), nameof(BattleDiceCardUI.SetDefault));
+            var fired = false;
+            foreach (var code in instructions)
+            {
+                yield return code;
+                if (!fired && code.Calls(target))
+                {
+                    fired = true;
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Ldloc_3);
+                    yield return new CodeInstruction(OpCodes.Ldloc_2);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleUIPatch), nameof(HandleCustomUseableCard)));
+                }
+            }
+        }
+
+        private static void HandleCustomUseableCard(BattleUnitCardsInHandUI instance, int num, BattleUnitModel owner)
+        {
+            try
+            {
+                var ui = instance._cardList[num];
+                var card = ui.CardModel;
+                var script = card._script ?? card.CreateDiceCardSelfAbilityScript();
+                if (script is ILoACustomUseableCard c)
+                {
+                    var useable = c.IsUseable(owner);
+                    c.OnHandle(ui, owner, card);
+                    if (!useable)
+                    {
+                        ui.SetEgoLock();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+        }
+
     }
 }
