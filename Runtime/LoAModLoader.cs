@@ -253,6 +253,7 @@ namespace LibraryOfAngela
                 BufPatch.Instance.Initialize();
                 var harmonyTask = PatchHarmonies();
                 BookCategoryPatch.Instance.Initialize(AdvancedEquipBookPatch.Instance.configs);
+                TimelinePatch.Instance.InitData();
                 LogProgress("BookCategoryPatch", 0.0033f);
 
                 AdvancedSkinInfoPatch.Instance.Initialize();

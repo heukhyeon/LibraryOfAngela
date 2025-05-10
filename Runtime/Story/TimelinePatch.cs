@@ -32,8 +32,15 @@ namespace LibraryOfAngela.Story
         private bool isChanging = false;
         public TimelineData CurrentTimeline { get; private set; } = null;
 
-        public void InitData(List<CustomStoryTimeline> timelines)
+        public void InitData()
         {
+            var timelines = LoAModCache.StoryConfigs.SelectMany(d =>
+            {
+                var timeline = FrameworkExtension.GetSafeAction(() => d.GetTimelines());
+                if (timeline is null) return new List<CustomStoryTimeline>();
+                return timeline;
+            }).ToList();
+
             if (timelines.Count == 0)
             {
                 Logger.Log("Timeline Empty, Skip");

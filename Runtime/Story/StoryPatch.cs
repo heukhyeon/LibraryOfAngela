@@ -53,13 +53,6 @@ namespace LibraryOfAngela.Story
             slotInfo = new Dictionary<UIStoryProgressIconSlot, CustomStoryIconInfo>();
             visibleConditions = new Dictionary<LorId, Func<bool>>();
             storyTypes = new Dictionary<string, List<string>>();
-            
-            var timelines = LoAModCache.StoryConfigs.SelectMany(d =>
-            {
-                var timeline = FrameworkExtension.GetSafeAction(() => d.GetTimelines());
-                if (timeline is null) return new List<CustomStoryTimeline>();
-                return timeline;
-            });
 
             InternalExtension.SetRange(GetType());
             var method = typeof(StageClassInfoList).GetNestedTypes(AccessTools.all)
@@ -67,8 +60,6 @@ namespace LibraryOfAngela.Story
     .First(c => c.Name.Contains("GetWorkshopDataFromBooks") && c.ReturnType == typeof(bool));
 
             method.DeclaringType.PatchInternal(method.Name, flag: PatchInternalFlag.POSTFIX, patchName: "HandleStoryVisible");
-
-            TimelinePatch.Instance.InitData(timelines.ToList());
         }
 
         public static void AddStoryIcon(UIStoryProgressIconSlot slot, CustomStoryIconInfo info)
