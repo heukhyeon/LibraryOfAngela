@@ -1,5 +1,6 @@
 using LoALoader.Model;
 using LOR_DiceSystem;
+using LOR_XML;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -32,6 +33,7 @@ namespace LibraryOfAngela
 
         private Dictionary<string, List<WorkshopSkinData>> modSkins = new Dictionary<string, List<WorkshopSkinData>>();
 
+        private Dictionary<string, List<BookDesc>> modStories = new Dictionary<string, List<BookDesc>>();
 
         public void Combine()
         {
@@ -104,6 +106,11 @@ namespace LibraryOfAngela
                 Singleton<CustomizingBookSkinLoader>.Instance.AddBookSkinData(pair.Key, pair.Value);
             }
 
+            foreach (var pair in modStories)
+            {
+                BookDescXmlList.Instance.AddBookTextByMod(pair.Key, pair.Value);
+            }
+
             modStages.Clear();
             modPassives.Clear();
             modEnemys.Clear();
@@ -151,6 +158,12 @@ namespace LibraryOfAngela
         public void InsertCardDrops(string packageId, List<CardDropTableXmlInfo> cardDrops)
         {
             InsertOrUpdate(packageId, cardDrops, modCardDrops);
+        }
+
+        // 원어에 한해서는 Localize를 안두고 직접 data에 적는 경우가 있으므로 파싱에서도 유지
+        public void InsertBookStories(string packageId, List<BookDesc> stories)
+        {
+            InsertOrUpdate(packageId, stories, modStories);
         }
 
         public void InsertFormation(List<FormationXmlInfo> formations)

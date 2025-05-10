@@ -1,6 +1,7 @@
 using LibraryOfAngela;
 using LoALoader.Model;
 using LOR_DiceSystem;
+using LOR_XML;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -246,6 +247,11 @@ namespace LoALoader
                     LorId.InitializeLorIds<LorIdXml>(x._cardIdList, x.cardIdList, packageId);
                 }
                 loader.InsertCardDrops(packageId, tables);
+            }
+            else if (name.StartsWith("BookStory"))
+            {
+                var tables = getContents<BookDescRoot, BookDesc>(target, x => x.bookDescList);
+                loader.InsertBookStories(packageId, tables);
             }
             else if (name.StartsWith("FormationInfo"))
             {
