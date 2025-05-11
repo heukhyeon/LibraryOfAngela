@@ -11,16 +11,11 @@ namespace LibraryOfAngela.Util
 {
     class LoADebugger
     {
-        public static void Initialize()
-        {
-            if (!LoAFramework.DEBUG) return;
-            InternalExtension.SetRange(typeof(LoADebugger));
-        }
-
         [HarmonyPatch(typeof(LibraryModel), "LoadFromSaveData")]
         [HarmonyPostfix]
         private static void After_LoadFromSaveData(LibraryModel __instance)
         {
+            if (!LoAFramework.DEBUG) return;
             if (__instance.PlayHistory.currentchapterLevel >= 7) return;
 
             __instance.PlayHistory.currentchapterLevel = 7;

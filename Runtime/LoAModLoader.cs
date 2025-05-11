@@ -237,7 +237,6 @@ namespace LibraryOfAngela
                 BattleUIPatch.Initialize();
                 BattleResultPatch.Initialize();
                 BattleLogPatch.Instance.Initialize();
-                LoADebugger.Initialize();
                 MovePatch.Initialize();
                 LogProgress("UIAndUtilPatches", 0.02f);
 

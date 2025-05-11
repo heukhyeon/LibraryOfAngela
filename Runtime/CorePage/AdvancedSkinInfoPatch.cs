@@ -66,7 +66,7 @@ namespace LibraryOfAngela.CorePage
             }
             else if (language == "en")
             {
-                namePattern = new Regex("[a-z|A-Z|0-9|ㄱ-ㅎ|ㅏ-ㅣ|가-힣| ]*(?=('|'s Page)");
+                namePattern = new Regex(@"[a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣 ]*(?=(\x27s Page|\x27 Page))");
             }
             else if (language == "jp")
             {
