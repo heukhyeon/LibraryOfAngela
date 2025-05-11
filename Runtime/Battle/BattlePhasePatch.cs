@@ -4,6 +4,7 @@ using LibraryOfAngela.Interface_External;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -62,6 +63,48 @@ namespace LibraryOfAngela.Battle
         [HarmonyPrefix]
         private static void Before_set_phase(ref StageController.StagePhase value)
         {
+            if (!isForceHandlePhase)
+            {
+                var f = HandlePhase(value);
+                value = f;
+            }
+        }
+
+        [HarmonyPatch(typeof(StageController), "set_phase")]
+        [HarmonyPostfix]
+        private static void After_set_phase(StageController.StagePhase value)
+        {
+            CallPhaseCallbacks(value);
+            expectedPhase = value;
+            isForceHandlePhase = false;
+        }
+
+        private static StageController.StagePhase expectedPhase;
+        [HarmonyPatch(typeof(StageController), nameof(StageController.OnFixedUpdate))]
+        [HarmonyPrefix]
+        private static void Before_OnFixedUpdate(StageController __instance)
+        {
+            // 뒤돌프모드는 프로퍼티 설정 안하고 독자적으로 필드를 바로 할당시킴. 재할당 요청
+            // 바닐라도 타이밍에 따라 필드를 부르는 경우가 있음
+            // 초기 할당은 어긋날수 있으므로 드로우 이후로 판정
+            if (IsWaveStartCalled && __instance._phase != expectedPhase && __instance._phase > StageController.StagePhase.DrawCardPhase)
+            {
+                var nextPhase = HandlePhase(__instance._phase);
+                if (nextPhase != __instance._phase)
+                {
+                    isForceHandlePhase = true;
+                    __instance.phase = nextPhase;
+                }
+                else
+                {
+                    expectedPhase = nextPhase;
+                    CallPhaseCallbacks(__instance.phase);
+                }
+            }
+        }
+
+        private static StageController.StagePhase HandlePhase(StageController.StagePhase value)
+        {
             try
             {
                 if (LoAFramework.DEBUG) Logger.Log($"Phase Detect :: {value}");
@@ -104,11 +147,10 @@ namespace LibraryOfAngela.Battle
                 Logger.Log("OnError in CustomHandlePahse");
                 Logger.LogError(e);
             }
+            return value;
         }
 
-        [HarmonyPatch(typeof(StageController), "set_phase")]
-        [HarmonyPostfix]
-        private static void After_set_phase(StageController.StagePhase value)
+        private static void CallPhaseCallbacks(StageController.StagePhase value)
         {
             if (nextPhaseExists)
             {
@@ -155,27 +197,8 @@ namespace LibraryOfAngela.Battle
                     }
                 }
             }
-
-            expectedPhase = value;
         }
 
-        [HarmonyPatch(typeof(StageController), nameof(StageController.OnFixedUpdate))]
-        [HarmonyPrefix]
-        private static void Before_OnFixedUpdate(StageController __instance)
-        {
-            // 뒤돌프모드는 프로퍼티 설정 안하고 독자적으로 필드를 바로 할당시킴. 재할당 요청
-            // 초기 할당은 어긋날수 있으므로 드로우 이후로 판정
-            if (IsWaveStartCalled && __instance._phase != expectedPhase && __instance._phase > StageController.StagePhase.DrawCardPhase)
-            {
-                var p = __instance._phase;
-                if (!dRudolphLogShow)
-                {
-                    dRudolphLogShow = true;
-                    Logger.Log("A phase transition on the wrong path was detected. Probably caused by Distorted Rudolph mode, LoA handles this manually to control it correctly. This log is only called once to prevent performance issues in the game.");
-                }
-                __instance.phase = p;
-            }
-        }
 
         private static Queue<Action> nextPhaseExecuteActionQueue = new Queue<Action>();
 
@@ -184,8 +207,8 @@ namespace LibraryOfAngela.Battle
 
         private static bool nextPhaseExists = false;
         private static bool phaseCallbackExists = false;
-        private static bool dRudolphLogShow = false;
-        private static StageController.StagePhase expectedPhase;
+        private static bool isForceHandlePhase = false;
+        
 
         public static void AddPhaseCallback(StageController.StagePhase? phase, Action callback, bool onlyOnce)
         {
