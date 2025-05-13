@@ -12,7 +12,7 @@ using LibraryOfAngela.Model;
 
 namespace LibraryOfAngela.Interface_Internal
 {
-    public interface ILoAInternal
+    internal interface ILoAInternal
     {
         void RegisterLimbusParryingWinDice(LimbusDiceAbility ability);
     }

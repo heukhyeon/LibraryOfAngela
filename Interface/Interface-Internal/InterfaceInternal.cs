@@ -11,13 +11,13 @@ using UnityEngine;
 namespace LibraryOfAngela.Interface_Internal
 {
 
-    public interface ILoAArtworkGetter
+    internal interface ILoAArtworkGetter
     {
         bool ContainsKey(string packageId, string name);
         Sprite GetSprite(string packageId, string name, bool showWarning);
     }
 
-    public interface ILoAEmotionDictionary
+    internal interface ILoAEmotionDictionary
     {
         List<EmotionCardXmlInfo> GetEmotionCardListByMod(ILoACustomEmotionMod mod, Predicate<EmotionCardXmlInfo> condition);
 
@@ -28,7 +28,7 @@ namespace LibraryOfAngela.Interface_Internal
         bool IsModCard(ILoACustomEmotionMod mod, EmotionCardXmlInfo target);
     }
 
-    public interface IPatcher
+    internal interface IPatcher
     {
         void Patch(Type targetType, string name, string patchName, Type[] paramTypes, PatchScope scope);
 

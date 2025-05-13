@@ -51,8 +51,9 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp-nstrip">
-      <HintPath>..\..\LorMod\Assembly-CSharp-nstrip.dll</HintPath>
+    <Reference Include="Assembly-CSharp-nstrip, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Workspace\LorMod\Assembly-CSharp-nstrip.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -77,6 +78,11 @@
   <ItemGroup>
     <Compile Include="Artwork.cs" />
     <Compile Include="AssetBundle.cs" />
+    <Compile Include="Buf\BattleUnitBuf_loaPoise.cs" />
+    <Compile Include="Buf\BattleUnitBuf_loaRupture.cs" />
+    <Compile Include="Buf\BattleUnitBuf_loaSinking.cs" />
+    <Compile Include="Buf\BattleUnitBuf_loaTremor.cs" />
+    <Compile Include="Buf\LoAKeywordBuf.cs" />
     <Compile Include="Component\LoADiceCardUIKeyDetect.cs" />
     <Compile Include="EmotionSelectBuilder.cs" />
     <Compile Include="Extension\BattleExtension.cs" />
@@ -109,6 +115,8 @@
     <Compile Include="Interface-External\IHandleCreateDiceCardBehaviourList.cs" />
     <Compile Include="Interface-External\IHandleCustomPhase.cs" />
     <Compile Include="Interface-External\IHandleEmotionLevelUp.cs" />
+    <Compile Include="Interface-External\IHandleGiveRupture.cs" />
+    <Compile Include="Interface-External\IHandleGiveTremor.cs" />
     <Compile Include="Interface-External\IHandleKeywordMaximum.cs" />
     <Compile Include="Interface-External\IHandleNeedTeamLevelUpEmotionCoin.cs" />
     <Compile Include="Interface-External\IHandleNextDice.cs" />
@@ -128,6 +136,10 @@
     <Compile Include="Interface-External\IHandleRecoverPlayPoint.cs" />
     <Compile Include="Interface-External\IHandleSpendCard.cs" />
     <Compile Include="Interface-External\IHandleStandbyDice.cs" />
+    <Compile Include="Interface-External\IHandleTakePoise.cs" />
+    <Compile Include="Interface-External\IHandleTakeRupture.cs" />
+    <Compile Include="Interface-External\IHandleTakeSinking.cs" />
+    <Compile Include="Interface-External\IHandleTakeTremor.cs" />
     <Compile Include="Interface-External\ILoABattleEffect.cs" />
     <Compile Include="Interface-External\IHandleNewCharacter.cs" />
     <Compile Include="Interface-External\IOnDieExtension.cs" />
