@@ -159,6 +159,7 @@ namespace LibraryOfAngela
                     {
                         l.Combine();
                     }
+                    BufPatch.InitLoABufEffectInfo();
                 });
 
                 var onInitializeModTask = localizeCompleteTask.ContinueWith((t) =>

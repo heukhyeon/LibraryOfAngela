@@ -78,10 +78,10 @@ namespace LibraryOfAngela.BattleUI
             layer.volumeTrigger = ui.camera.transform;
             layer.volumeLayer = ui.camera.cullingMask;
 
-            ui.renderImage = Instantiate(LoAFramework.ResourceBundle.LoadAsset<GameObject>(RENDER_ASSET_PATH), renderCanvas.transform).GetComponent<RawImage>();
+            ui.renderImage = Instantiate(LoAFramework.BattleUiBundle.LoadAsset<GameObject>(RENDER_ASSET_PATH), renderCanvas.transform).GetComponent<RawImage>();
             ui.renderImage.raycastTarget = false;
-            ui.texture = LoAFramework.ResourceBundle.LoadAsset<RenderTexture>(RENDER_TEXTURE_PATH);
-            ui.volume = Instantiate(LoAFramework.ResourceBundle.LoadAsset<GameObject>(RENDER_VOLUME_PATH), ui.camera.transform.parent);
+            ui.texture = LoAFramework.BattleUiBundle.LoadAsset<RenderTexture>(RENDER_TEXTURE_PATH);
+            ui.volume = Instantiate(LoAFramework.BattleUiBundle.LoadAsset<GameObject>(RENDER_VOLUME_PATH), ui.camera.transform.parent);
             ui.camera.targetTexture = ui.texture;
             ui.renderImage.texture = ui.texture;
 

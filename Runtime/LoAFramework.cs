@@ -44,17 +44,6 @@ namespace LibraryOfAngela
 
         public const bool DEBUG = false;
 
-        internal static AssetBundle ResourceBundle
-        {
-            get
-            {
-                if (_bundle == null && !string.IsNullOrEmpty(assetPath))
-                {
-                    _bundle = AssetBundle.LoadFromFile(assetPath);
-                }
-                return _bundle;
-            }
-        }
         internal static AssetBundle UiBundle
         {
             get
@@ -121,6 +110,7 @@ namespace LibraryOfAngela
             ServiceLocator.Instance.inject<ILoARoot>((k) => Instance);
             ServiceLocator.Instance.inject<ILoAHistoryController>((k) => LoAHistoryController.Instance);
             ServiceLocator.Instance.inject<ILoAInternal>((k) => LoAInternalImpl.Instance);
+            ServiceLocator.Instance.inject<TremorController>((k) => new TremorControllerImpl());
 
      
             typeof(UI.UIController).Patch("CallUIPhase", typeof(UIPhase));
@@ -202,6 +192,15 @@ namespace LibraryOfAngela
                         {
                             CustomSelectorUIManager.Instance.LazyInitialize();
                         }
+                    }
+                };
+                var req2 = AssetBundle.LoadFromFileAsync(Path.Combine(dir, "loa_asset"));
+                req2.completed += (per) =>
+                {
+                    if (per.isDone)
+                    {
+                        Logger.Log("ResourceBundle Preload Success");
+                        new BufAssetLoader(req2.assetBundle);
                     }
                 };
             }

@@ -8,7 +8,9 @@ public class BattleUnitBuf_loaTremor : BattleUnitBuf, IHandleAddNewKeywordBufInL
     public override string keywordId => controller.keywordId;
     public override string keywordIconId => controller.keywordIconId;
     
-    public override KeywordBuf bufType => LoAKeywordBuf.Tremor; 
+    public override KeywordBuf bufType => LoAKeywordBuf.Tremor;
+
+    public override BufPositiveType positiveType => controller.positiveType;
 
     public BattleUnitBuf_loaTremor()
     {
@@ -38,7 +40,7 @@ public class BattleUnitBuf_loaTremor : BattleUnitBuf, IHandleAddNewKeywordBufInL
 
     public virtual T Transform<T>(BattleUnitModel actor) where T : BattleUnitBuf_loaTremor, new()
     {
-        return controller.TremorTransform<T>(attacker, this);
+        return controller.TremorTransform<T>(actor, this);
     }
 
     /// <summary>
@@ -84,6 +86,8 @@ namespace LibraryOfAngela.Interface_Internal
     {
         string keywordId { get; }
         string keywordIconId { get; }
+
+        BufPositiveType positiveType { get; }
 
         void OnRoundEndTremor(BattleUnitBuf_loaTremor buf);
         void Burst(BattleUnitModel actor, BattleUnitBuf_loaTremor buf, bool isCard);

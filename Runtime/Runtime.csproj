@@ -351,6 +351,8 @@
     <Compile Include="Battle\BattleUIPatch.cs" />
     <Compile Include="Battle\ExhaustPatch.cs" />
     <Compile Include="Battle\FixValidPatch.cs" />
+    <Compile Include="Buf\BufAssetLoader.cs" />
+    <Compile Include="Buf\BufControllerImpl.cs" />
     <Compile Include="Buf\SceneBufImpl.cs" />
     <Compile Include="Buf\TremorController.cs" />
     <Compile Include="Combination\CombinationRoot.cs" />

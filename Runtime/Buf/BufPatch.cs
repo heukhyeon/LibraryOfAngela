@@ -30,54 +30,47 @@ namespace LibraryOfAngela.Buf
         public void Initialize()
         {
             InternalExtension.SetRange(typeof(BufPatch));
-            if (bufMatch.Count > 0)
+            InitLoABufInject();
+            var extenderType = Type.GetType("EnumExtenderV2.EnumExtenderInternals, 10EnumExtender");
+            var runtimeKeywordBufType = typeof(KeywordBuf).GetType();
+            var method = AccessTools.Method(typeof(Enum), "GetCachedValuesAndNames");
+            if (extenderType != null)
             {
-                Logger.Log("Find ExtenralBuf, Patch");
-                var extenderType = Type.GetType("EnumExtenderV2.EnumExtenderInternals, 10EnumExtender");
-                var runtimeKeywordBufType = typeof(KeywordBuf).GetType();
-                var method = AccessTools.Method(typeof(Enum), "GetCachedValuesAndNames");
-                if (extenderType != null)
-                {
-                    Logger.Log("Find EnumExtenderV2, Preload GetCachedValuesAndNames");
-                    method.Invoke(null, new object[] { typeof(KeywordBuf), true });
-                    //AccessTools.Method(extenderType, "SafetyUncache").Invoke(null, new Type[] { runtimeKeywordBufType });
-                }
+                Logger.Log("Find EnumExtenderV2, Preload GetCachedValuesAndNames");
+                method.Invoke(null, new object[] { typeof(KeywordBuf), true });
+                //AccessTools.Method(extenderType, "SafetyUncache").Invoke(null, new Type[] { runtimeKeywordBufType });
+            }
 
-                var field = AccessTools.Field(runtimeKeywordBufType, "GenericCache");
+            var field = AccessTools.Field(runtimeKeywordBufType, "GenericCache");
 
-                var currentCache = field.GetValue(runtimeKeywordBufType);
-                if (currentCache == null)
+            var currentCache = field.GetValue(runtimeKeywordBufType);
+            if (currentCache == null)
+            {
+                typeof(Enum).PatchInternal("GetCachedValuesAndNames", flag: PatchInternalFlag.PREFIX | PatchInternalFlag.POSTFIX);
+                method.Invoke(null, new object[] { typeof(KeywordBuf), true });
+            }
+            else
+            {
+                field.SetValue(runtimeKeywordBufType, HandleKeywordBufExtension(currentCache, runtimeKeywordBufType));
+            }
+
+
+            if (!Instance.isKeywordBufHandled)
+            {
+                Logger.Log("KeywordBuf Not Generated...Maybe Other Mod Inject ? Try Manually");
+                currentCache = field.GetValue(runtimeKeywordBufType);
+                if (currentCache is null)
                 {
-                    typeof(Enum).PatchInternal("GetCachedValuesAndNames", flag: PatchInternalFlag.PREFIX | PatchInternalFlag.POSTFIX);
-                    method.Invoke(null, new object[] { typeof(KeywordBuf), true });
+                    Logger.Log("KeywordBuf Not Generated But Current Cache is Same Null... What?");
                 }
                 else
                 {
                     field.SetValue(runtimeKeywordBufType, HandleKeywordBufExtension(currentCache, runtimeKeywordBufType));
+                    Logger.Log($"KeywordBuf Not Generated And Inject Manually : " + Instance.isKeywordBufHandled);
                 }
-
-
-                if (!Instance.isKeywordBufHandled)
-                {
-                    Logger.Log("KeywordBuf Not Generated...Maybe Other Mod Inject ? Try Manually");
-                    currentCache = field.GetValue(runtimeKeywordBufType);
-                    if (currentCache is null)
-                    {
-                        Logger.Log("KeywordBuf Not Generated But Current Cache is Same Null... What?");
-                    }
-                    else
-                    {
-                        field.SetValue(runtimeKeywordBufType, HandleKeywordBufExtension(currentCache, runtimeKeywordBufType));
-                        Logger.Log($"KeywordBuf Not Generated And Inject Manually : " + Instance.isKeywordBufHandled);
-                    }
-                }
-
-                typeof(BattleUnitBufListDetail).PatchInternal("AddNewKeywordBufInList", PatchInternalFlag.TRANSPILER);
             }
-            else
-            {
-                Logger.Log("Not Find ExtenralBuf, Skip");
-            }
+
+            typeof(BattleUnitBufListDetail).PatchInternal("AddNewKeywordBufInList", PatchInternalFlag.TRANSPILER);
         }
 
         public KeywordBuf GetKeywordBuf(Type type)
@@ -298,7 +291,8 @@ namespace LibraryOfAngela.Buf
                 if (__instance.Hide) return;
                 var key = __instance.keywordIconId;
                 if (string.IsNullOrEmpty(key)) return;
-                var art = ModBufIcon(key, __instance);
+                var art = LoABufIcon(key);
+                if (art is null) art = ModBufIcon(key, __instance);
                 if (!(art is null))
                 {
                     __result = art;
@@ -328,6 +322,20 @@ namespace LibraryOfAngela.Buf
             }
         }
 
+        internal static Sprite LoABufIcon(string key)
+        {
+            switch (key)
+            {
+                case "loa_tremor_icon":
+                case "loa_sinking_icon":
+                case "loa_rupture_icon":
+                case "loa_poise_icon":
+                    return BufAssetLoader.LoadImage(key);
+                default:
+                    return null;
+            }
+        }
+
         internal static Sprite ModBufIcon(string keyword, object target)
         {
             var artwork = LoAModCache.FromAssembly(target)?.Artworks;
@@ -335,5 +343,46 @@ namespace LibraryOfAngela.Buf
             return artwork[keyword];
         }
 
+        internal static void InitLoABufInject()
+        {
+            Instance.bufMatch[typeof(BattleUnitBuf_loaTremor)] = new KeywordWrapper
+            {
+                info = AccessTools.Property(typeof(LoAKeywordBuf), "Tremor"),
+                targetBufType = typeof(BattleUnitBuf_loaTremor)
+            };
+
+            Instance.bufMatch[typeof(BattleUnitBuf_loaSinking)] = new KeywordWrapper
+            {
+                info = AccessTools.Property(typeof(LoAKeywordBuf), "Sinking"),
+                targetBufType = typeof(BattleUnitBuf_loaSinking)
+            };
+
+            Instance.bufMatch[typeof(BattleUnitBuf_loaPoise)] = new KeywordWrapper
+            {
+                info = AccessTools.Property(typeof(LoAKeywordBuf), "Poise"),
+                targetBufType = typeof(BattleUnitBuf_loaPoise)
+            };
+
+            Instance.bufMatch[typeof(BattleUnitBuf_loaRupture)] = new KeywordWrapper
+            {
+                info = AccessTools.Property(typeof(LoAKeywordBuf), "Rupture"),
+                targetBufType = typeof(BattleUnitBuf_loaRupture)
+            };
+        }
+
+        internal static void InitLoABufEffectInfo()
+        {
+            foreach (var b in new List<BufControllerImpl> { 
+                new TremorControllerImpl()
+            })
+            {
+                BattleEffectTextsXmlList.Instance._dictionary[b.keywordId] = new LOR_XML.BattleEffectText
+                {
+                    ID = b.keywordId,
+                    Name = b.GetBufName(),
+                    Desc = b.GetBufActivatedText()
+                };
+            }
+        }
     }
 }

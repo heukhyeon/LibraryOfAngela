@@ -86,7 +86,7 @@ namespace LibraryOfAngela.BattleUI
 
             // ui.scrollView.horizontalScrollbarVisibility = ScrollRect.ScrollbarVisibility.Permanent;
             GameSceneManager.Instance.StartCoroutine(LazyInstantiate());
-            volume = Instantiate(LoAFramework.ResourceBundle.LoadAsset<GameObject>(RENDER_VOLUME_PATH), transform.parent);
+            volume = Instantiate(LoAFramework.BattleUiBundle.LoadAsset<GameObject>(RENDER_VOLUME_PATH), transform.parent);
 
 
             /*            var res = Resources.FindObjectsOfTypeAll<PostProcessResources>();
