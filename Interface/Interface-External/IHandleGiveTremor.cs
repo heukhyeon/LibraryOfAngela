@@ -21,7 +21,7 @@ namespace LibraryOfAngela.Interface_External
         /// <summary>
         /// 자신이 진폭변환을 발생시켰을 경우 호출
         /// </summary>
-        void OnGiveTremorTransform(BattleUnitBuf_loaTremor previous, BattleUnitBuf_loaTremor next);
+        void OnGiveTremorTransform(BattleUnitBuf_loaTremor previous, BattleUnitBuf_loaTremor next, bool isCard);
 
         /// <summary>
         /// 자신이 대상 진동의 수치감소를 발생시켰을 경우 호출

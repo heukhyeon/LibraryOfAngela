@@ -25,7 +25,7 @@ namespace LibraryOfAngela.Interface_External
         /// <summary>
         /// 자신에게 진폭변환이 발생할 경우 호출
         /// </summary>
-        void OnTakeTremorTransform(BattleUnitModel actor, BattleUnitBuf_loaTremor previous, BattleUnitBuf_loaTremor next);
+        void OnTakeTremorTransform(BattleUnitModel actor, BattleUnitBuf_loaTremor previous, BattleUnitBuf_loaTremor next, bool isCard);
 
         /// <summary>
         /// 자신의 진동의 수치감소가 발생할 경우 호출

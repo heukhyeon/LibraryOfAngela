@@ -17,11 +17,6 @@ namespace LibraryOfAngela.Battle
 {
     class BattleUIPatch
     {
-        public static void Initialize()
-        {
-            InternalExtension.SetRange(typeof(BattleUIPatch));
-        }
-
         // 세이브 시점에 초기화된다. (memory leak 방지)
         internal static Dictionary<DiceCardXmlInfo, int> keywordCountDic = new Dictionary<DiceCardXmlInfo, int>();
 
@@ -195,10 +190,14 @@ namespace LibraryOfAngela.Battle
 
         private static void HandleCustomUsableCard(BattleUnitCardsInHandUI instance, int num, BattleUnitModel owner)
         {
+            if (num < 0 || instance._cardList.Count >= num) {
+                return
+            }
+
+            var ui = instance._cardList[num];
+            var card = ui.CardModel;
             try
             {
-                var ui = instance._cardList[num];
-                var card = ui.CardModel;
                 var script = card._script ?? card.CreateDiceCardSelfAbilityScript();
                 if (script is ILoACustomUsableCard c)
                 {
@@ -212,6 +211,7 @@ namespace LibraryOfAngela.Battle
             }
             catch (Exception e)
             {
+                Logger.Log($"HandleCustomUsableCard Error in {num} // {card.GetID()} // {card?.GetName()} // Owner Exists : {owner != null} // {owner?.UnitData.unitData.name}");
                 Logger.LogError(e);
             }
         }

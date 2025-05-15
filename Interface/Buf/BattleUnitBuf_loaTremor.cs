@@ -38,9 +38,14 @@ public class BattleUnitBuf_loaTremor : BattleUnitBuf, IHandleAddNewKeywordBufInL
         controller.ReduceStack(actor, this, value, isCard);
     }
 
-    public virtual T Transform<T>(BattleUnitModel actor) where T : BattleUnitBuf_loaTremor, new()
+    public virtual T TransformByCard<T>(BattleUnitModel actor) where T : BattleUnitBuf_loaTremor, new()
     {
-        return controller.TremorTransform<T>(actor, this);
+        return controller.TremorTransform<T>(actor, this, true);
+    }
+
+    public virtual T TransformByEtc<T>(BattleUnitModel actor) where T : BattleUnitBuf_loaTremor, new()
+    {
+        return controller.TremorTransform<T>(actor, this, false);
     }
 
     /// <summary>
@@ -94,7 +99,7 @@ namespace LibraryOfAngela.Interface_Internal
 
         void ReduceStack(BattleUnitModel actor, BattleUnitBuf_loaTremor buf, int value, bool isRoundEnd);
 
-        T TremorTransform<T>(BattleUnitModel actor, BattleUnitBuf_loaTremor current) where T : BattleUnitBuf_loaTremor, new();
+        T TremorTransform<T>(BattleUnitModel actor, BattleUnitBuf_loaTremor current, bool isCard) where T : BattleUnitBuf_loaTremor, new();
 
         BattleUnitBuf FixValidCreateTremor(BattleUnitBuf_loaTremor buf, BattleUnitBuf current, BufReadyType readyType);
     }

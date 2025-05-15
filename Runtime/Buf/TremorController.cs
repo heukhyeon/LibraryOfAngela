@@ -106,9 +106,9 @@ namespace LibraryOfAngela.Buf
             ReduceStack(null, buf, reduceValue, false);
         }
 
-        public T TremorTransform<T>(BattleUnitModel attacker, BattleUnitBuf_loaTremor current) where T : BattleUnitBuf_loaTremor, new()
+        public T TremorTransform<T>(BattleUnitModel attacker, BattleUnitBuf_loaTremor current, bool isCard) where T : BattleUnitBuf_loaTremor, new()
         {
-            var now = BufReplace<T>(attacker, current._owner.bufListDetail._bufList, current);
+            var now = BufReplace<T>(attacker, current._owner.bufListDetail._bufList, current, isCard);
             if (now is null)
             {
                 Logger.Log($"TremorTransform Called But ChangeType Invalid ??\nTransform Type : {typeof(T).Name}\nPrevious:{current.GetType().Name}");
@@ -117,12 +117,12 @@ namespace LibraryOfAngela.Buf
             var ready = current._owner.bufListDetail._readyBufList.Find(d => d.keywordId == current.keywordId) as BattleUnitBuf_loaTremor;
             if (ready != null)
             {
-                BufReplace<T>(attacker, current._owner.bufListDetail._readyBufList, ready);
+                BufReplace<T>(attacker, current._owner.bufListDetail._readyBufList, ready, isCard);
             }
             ready = current._owner.bufListDetail._readyReadyBufList.Find(d => d.keywordId == current.keywordId) as BattleUnitBuf_loaTremor;
             if (ready != null)
             {
-                BufReplace<T>(attacker, current._owner.bufListDetail._readyReadyBufList, ready);
+                BufReplace<T>(attacker, current._owner.bufListDetail._readyReadyBufList, ready, isCard);
             }
 
             if (StageController.Instance.IsLogState())
@@ -156,8 +156,8 @@ namespace LibraryOfAngela.Buf
             var owner = current._owner;
             var newBuf = new T();
             current.OnTakeTremorTransform(actor, newBuf);
-            foreach (var eff in GetGiveList(actor)) eff.OnGiveTremorTransform(current, newBuf);
-            foreach (var eff in GetTakeList(current)) eff.OnTakeTremorTransform(actor, current, newBuf);
+            foreach (var eff in GetGiveList(actor)) eff.OnGiveTremorTransform(current, newBuf, isCard);
+            foreach (var eff in GetTakeList(current)) eff.OnTakeTremorTransform(actor, current, newBuf, isCard);
             current.Destroy();
             bufList.Remove(current);
             bufList.Insert(index, newBuf);

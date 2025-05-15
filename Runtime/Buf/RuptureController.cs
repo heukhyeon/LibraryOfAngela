@@ -38,7 +38,7 @@ namespace LibraryOfAngela.Buf
             var dmg = buf.stack;
             var originDmg = dmg;
             var isDead = buf._owner.IsDead();
-            RunCatching("BeforeTakekDamage", () => {
+            RunCatching("BeforeTakeDamage", () => {
                 foreach (var listener in takeListener) {
                     listener.BeforeTakeRuptureDamage(buf, ref dmg, originDmg);
                 }
@@ -87,7 +87,7 @@ namespace LibraryOfAngela.Buf
             }
             catch (Exception e)
             {
-                Logger.Log("Sinking Error in " + key);
+                Logger.Log("Rupture Error in " + key);
                 Logger.LogError(e);
             }
         }
