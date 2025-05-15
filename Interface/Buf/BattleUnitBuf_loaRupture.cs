@@ -54,7 +54,7 @@ namespace LibraryOfAngela.Interface_Internal
         string keywordId { get; }
         string keywordIconId { get; }
 
-        void OnRoundEndRupture(BattleUnitBuf buf);
-        void OnTakeDamageByAttackRupture(BattleUnitBuf buf, BattleDiceBehavior atkDice, int dmg);
+        void OnRoundEndRupture(BattleUnitBuf_loaRupture buf);
+        void OnTakeDamageByAttackRupture(BattleUnitBuf_loaRupture buf, BattleDiceBehavior atkDice, int dmg);
     }
 } 

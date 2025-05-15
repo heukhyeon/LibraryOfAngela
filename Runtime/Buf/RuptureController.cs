@@ -1,0 +1,101 @@
+using LibraryOfAngela.Battle;
+using LibraryOfAngela.Interface_External;
+using LibraryOfAngela.Interface_Internal;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using UnityEngine;
+
+
+namespace LibraryOfAngela.Buf
+{
+    class RuptureControllerImpl : RuptureController, BufControllerImpl
+    {
+        public string keywordId => "LoARupture";
+
+        public string keywordIconId => "loa_rupture_icon";
+
+        public void OnRoundEndRupture(BattleUnitBuf_loaRupture buf) {
+            buf.Destroy();
+        }
+
+        public void OnTakeDamageByAttackRupture(BattleUnitBuf_loaRupture buf, BattleDiceBehavior atkDice, int dmg) {
+            Damage(atkDice.owner, buf);
+            if (StageController.Instance.IsLogState()) {
+                buf._owner.battleCardResultLog.SetTakeDamagedEvent(() => {
+                    EffectRupture(buf);
+                });
+            } else {
+                EffectRupture(buf);
+            }
+        }
+
+        private void Damage(BattleUnitModel attacker, BattleUnitBuf_loaRupture buf) {
+            var takeListener = BattleInterfaceCache.Of<IHandleTakeRupture>(buf._owner).ToList();
+            var giveListener = BattleInterfaceCache.Of<IHandleGiveRupture>(attacker).ToList();
+            var dmg = buf.stack;
+            var originDmg = dmg;
+            var isDead = buf._owner.IsDead();
+            RunCatching("BeforeTakekDamage", () => {
+                foreach (var listener in takeListener) {
+                    listener.BeforeTakeRuptureDamage(buf, ref dmg, originDmg);
+                }
+                foreach (var listener in giveListener) {
+                    listener.BeforeGiveRuptureDamage(buf, ref dmg, originDmg);
+                }
+            });
+            buf._owner.TakeDamage(dmg, DamageType.Buf, attacker, keyword: LoAKeywordBuf.Rupture);
+            RunCatching("OnTakeDamage", () => {
+                foreach (var listener in takeListener) {
+                    listener.OnTakeRuptureDamage(buf, dmg);
+                }
+                foreach (var listener in giveListener) {
+                    listener.OnGiveRuptureDamage(buf, dmg);
+                }
+            });
+            if (!isDead && buf._owner.IsDead()) {
+                RunCatching("Die", () => {
+                    foreach (var listener in takeListener) {
+                        listener.OnDieByRupture(attacker);
+                    }
+                    foreach (var listener in giveListener) {
+                        listener.OnKillByRupture(buf);
+                    }
+                });
+            }
+            RunCatching("ReduceStack", () => {
+                var value = reduceValue;
+                foreach (var listener in takeListener) {
+                    listener.OnTakeRuptureReduceStack(attacker, ref value, reduceValue);
+                }
+                foreach (var listener in giveListener) {
+                    listener.OnGiveRuptureReduceStack(buf, ref value, reduceValue);
+                }
+                buf.stack -= value;
+                buf.OnAddBuf(-value);
+                if (buf.stack <= 0) buf.Destroy();
+            });
+        }
+
+        private void RunCatching(string key, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception e)
+            {
+                Logger.Log("Sinking Error in " + key);
+                Logger.LogError(e);
+            }
+        }
+
+        private void EffectRupture(BattleUnitBuf_loaRupture buf) {
+            var b = BufAssetLoader.LoadObject("loa_debuff_rupture", buf._owner.view.atkEffectRoot, 2f);
+            b.transform.localPosition = Vector3.zero;
+            b.transform.localScale = Vector3.one * 0.3f;
+        }
+    }
+}

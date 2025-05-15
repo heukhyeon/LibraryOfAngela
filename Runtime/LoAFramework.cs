@@ -111,6 +111,8 @@ namespace LibraryOfAngela
             ServiceLocator.Instance.inject<ILoAHistoryController>((k) => LoAHistoryController.Instance);
             ServiceLocator.Instance.inject<ILoAInternal>((k) => LoAInternalImpl.Instance);
             ServiceLocator.Instance.inject<TremorController>((k) => new TremorControllerImpl());
+            ServiceLocator.Instance.inject<SinkingController>((k) => new SinkingControllerImpl());
+            ServiceLocator.Instance.inject<RuptureController>((k) => new RuptureControllerImpl());
 
      
             typeof(UI.UIController).Patch("CallUIPhase", typeof(UIPhase));

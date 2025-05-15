@@ -373,7 +373,9 @@ namespace LibraryOfAngela.Buf
         internal static void InitLoABufEffectInfo()
         {
             foreach (var b in new List<BufControllerImpl> { 
-                new TremorControllerImpl()
+                new TremorControllerImpl(),
+                new SinkingControllerImpl(),
+                new RuptureControllerImpl()
             })
             {
                 BattleEffectTextsXmlList.Instance._dictionary[b.keywordId] = new LOR_XML.BattleEffectText
