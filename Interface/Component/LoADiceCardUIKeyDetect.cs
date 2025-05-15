@@ -32,22 +32,47 @@ public class LoADiceCardUIKeyDetect : MonoBehaviour, IPointerEnterHandler, IPoin
             detectorCache[ui] = com;
         }
 
-        com.Init(ui, card, owner, code, onKeyPress);
+        com.Init(ui, card, owner, new List<KeyCode> { code }, onKeyPress);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="ui"></param>
+    /// <param name="card"></param>
+    /// <param name="code"></param>
+    /// <param name="onKeyPress">반환값이 false라면 일회성으로 판단하고 이 컴포넌트를 제거합니다.</param>
+    public static void Create(BattleDiceCardUI ui, BattleUnitModel owner, BattleDiceCardModel card, List<KeyCode> codes, OnLoACardKeyPressListener onKeyPress)
+    {
+        LoADiceCardUIKeyDetect com;
+        if (detectorCache.ContainsKey(ui))
+        {
+            com = detectorCache[ui];
+        }
+        else
+        {
+            com = ui.gameObject.AddComponent<LoADiceCardUIKeyDetect>();
+            detectorCache[ui] = com;
+        }
+
+        com.Init(ui, card, owner, codes, onKeyPress);
     }
 
     BattleDiceCardUI ui;
     BattleDiceCardModel card;
     BattleUnitModel owner;
     OnLoACardKeyPressListener onKeyPress;
-    KeyCode code;
+    KeyCode[] codes;
+    int keyCount;
 
     bool isEnter = false;
 
-    public void Init(BattleDiceCardUI ui, BattleDiceCardModel card, BattleUnitModel owner, KeyCode code, OnLoACardKeyPressListener onKeyPress)
+    public void Init(BattleDiceCardUI ui, BattleDiceCardModel card, BattleUnitModel owner, List<KeyCode> codes, OnLoACardKeyPressListener onKeyPress)
     {
         this.ui = ui;
         this.card = card;
-        this.code = code;
+        this.codes = codes.ToArray();
+        keyCount = codes.Count;
         this.owner = owner;
         this.onKeyPress = onKeyPress;
         enabled = true;
@@ -60,12 +85,16 @@ public class LoADiceCardUIKeyDetect : MonoBehaviour, IPointerEnterHandler, IPoin
             enabled = false;
         }
         if (!isEnter) return;
-        if (Input.GetKey(code))
+        for (int i = 0; i < keyCount; i++)
         {
-            var controller = ServiceLocator.Instance.GetInstance<ILoARoot>().GetCardListControllerByCard(card, owner);
-            if (!onKeyPress(ui, owner, card, controller))
+            var c = codes[i];
+            if (Input.GetKey(c))
             {
-                Destroy(this);
+                var controller = ServiceLocator.Instance.GetInstance<ILoARoot>().GetCardListControllerByCard(card, owner);
+                if (!onKeyPress(ui, owner, card, controller, c))
+                {
+                    Destroy(this);
+                }
             }
         }
     }
@@ -88,4 +117,4 @@ public class LoADiceCardUIKeyDetect : MonoBehaviour, IPointerEnterHandler, IPoin
 
 }
 
-public delegate bool OnLoACardKeyPressListener(BattleDiceCardUI ui, BattleUnitModel owner, BattleDiceCardModel card, ILoACardListController controller);
+public delegate bool OnLoACardKeyPressListener(BattleDiceCardUI ui, BattleUnitModel owner, BattleDiceCardModel card, ILoACardListController controller, KeyCode code);

@@ -400,7 +400,7 @@ namespace LibraryOfAngela
 
         ILoACardListController ILoARoot.GetCardListControllerByCard(BattleDiceCardModel card, BattleUnitModel owner)
         {
-            if (card.XmlData.IsPersonal())
+            if (card?.XmlData?.IsPersonal() == true)
             {
                 return new LoACardListControllerImpl(owner.personalEgoDetail);
             }
