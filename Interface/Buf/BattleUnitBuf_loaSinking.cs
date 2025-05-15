@@ -67,11 +67,11 @@ namespace LibraryOfAngela.Interface_Internal
         string keywordIconId { get; }
 
 
-        void OnTakeDamageByAttackSinking(BattleUnitBuf buf, BattleDiceBehavior atkDice, int dmg);
+        void OnTakeDamageByAttackSinking(BattleUnitBuf_loaSinking buf, BattleDiceBehavior atkDice, int dmg);
 
-        void OnRoundEndSinking(BattleUnitBuf buf);
+        void OnRoundEndSinking(BattleUnitBuf_loaSinking buf);
 
-        void OnAddBufSinking(BattleUnitBuf buf, int addedStack);
+        void OnAddBufSinking(BattleUnitBuf_loaSinking buf, int addedStack);
     }
 }
 
