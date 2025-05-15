@@ -97,5 +97,25 @@ namespace LibraryOfAngela.Buf
             b.transform.localPosition = Vector3.zero;
             b.transform.localScale = Vector3.one * 0.3f;
         }
+
+        public string GetBufActivatedText()
+        {
+            switch (TextDataModel.CurrentLanguage)
+            {
+                default:
+                    return "한 막동안 피격시 피해 {0}을 받고 파열 수치가 2/3로 감소한다.(소수점 이하 버림)";
+            }
+        }
+
+        public string GetBufName()
+        {
+            switch (TextDataModel.CurrentLanguage)
+            {
+                case "kr":
+                    return "파열";
+                default:
+                    return "Rupture";
+            }
+        }
     }
 }

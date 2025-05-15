@@ -85,5 +85,25 @@ namespace LibraryOfAngela.Buf
             b.transform.localPosition = Vector3.zero;
             b.transform.localScale = Vector3.one * 0.3f;
         }
+
+        public string GetBufActivatedText()
+        {
+            switch (TextDataModel.CurrentLanguage)
+            {
+                default:
+                    return "막 종료시 흐트러짐 피해 {0}을 받고 침잠 수치가 2/3로 감소한다.(소수점 이하 버림)";
+            }
+        }
+
+        public string GetBufName()
+        {
+            switch (TextDataModel.CurrentLanguage)
+            {
+                case "kr":
+                    return "침잠";
+                default:
+                    return "Sinking";
+            }
+        }
     }
 }

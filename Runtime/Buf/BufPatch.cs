@@ -368,6 +368,12 @@ namespace LibraryOfAngela.Buf
                 info = AccessTools.Property(typeof(LoAKeywordBuf), "Rupture"),
                 targetBufType = typeof(BattleUnitBuf_loaRupture)
             };
+
+            Instance.bufMatch[typeof(BattleUnitBuf_loaDimensionRift)] = new KeywordWrapper
+            {
+                info = AccessTools.Property(typeof(LoAKeywordBuf), "DimensionRift"),
+                targetBufType = typeof(BattleUnitBuf_loaDimensionRift)
+            };
         }
 
         internal static void InitLoABufEffectInfo()
@@ -375,7 +381,8 @@ namespace LibraryOfAngela.Buf
             foreach (var b in new List<BufControllerImpl> { 
                 new TremorControllerImpl(),
                 new SinkingControllerImpl(),
-                new RuptureControllerImpl()
+                new RuptureControllerImpl(),
+                new DimensionRiftControllerImpl(),
             })
             {
                 BattleEffectTextsXmlList.Instance._dictionary[b.keywordId] = new LOR_XML.BattleEffectText
