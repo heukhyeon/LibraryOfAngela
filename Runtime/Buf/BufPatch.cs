@@ -330,6 +330,7 @@ namespace LibraryOfAngela.Buf
                 case "loa_sinking_icon":
                 case "loa_rupture_icon":
                 case "loa_poise_icon":
+                case "loa_dimension_rift_icon":
                     return BufAssetLoader.LoadImage(key);
                 default:
                     return null;

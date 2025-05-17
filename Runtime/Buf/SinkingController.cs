@@ -17,7 +17,7 @@ namespace LibraryOfAngela.Buf
 
         public string keywordIconId => "loa_sinking_icon";
 
-
+        public BufPositiveType positiveType => BufPositiveType.Negative;
         public void OnTakeDamageByAttackSinking(BattleUnitBuf_loaSinking buf, BattleDiceBehavior atkDice, int dmg) {
 
         }
@@ -25,9 +25,10 @@ namespace LibraryOfAngela.Buf
         public void OnRoundEndSinking(BattleUnitBuf_loaSinking buf) {
             var reducedValue = (buf.stack * 2) / 3;
             var reduceValue = buf.stack - reducedValue;
-            SinkingBreakDmg(null, buf)
+            SinkingBreakDmg(null, buf);
             RunCatching("ReduceStack", () => {
                 var value = reduceValue;
+                buf.OnTakeSinkingReduceStack(ref value, reduceValue);
                 foreach (var listener in BattleInterfaceCache.Of<IHandleTakeSinking>(buf._owner)) {
                     listener.OnTakeSinkingReduceStack(buf, ref value, reduceValue);
                 }
@@ -46,22 +47,25 @@ namespace LibraryOfAngela.Buf
             var listeners = BattleInterfaceCache.Of<IHandleTakeSinking>(buf._owner).ToList();
             var dmg = buf.stack;
             var originDmg = dmg;
-            var isBreaked = buf._owner.breakDetail.isBreakLifeZero();
+            var isBreaked = buf._owner.breakDetail.IsBreakLifeZero();
             RunCatching("BeforeTakeBreakDamage", () => {
+                buf.BeforeTakeSinkingBreakDamage(ref dmg, originDmg);
                 foreach (var listener in listeners) {
                     listener.BeforeTakeSinkingBreakDamage(buf, ref dmg, originDmg);
                 }
             });
             buf._owner.TakeBreakDamage(dmg, DamageType.Buf, buf._owner, keyword: LoAKeywordBuf.Sinking);
             RunCatching("OnTakeBreakDamage", () => {
+                buf.OnTakeSinkingBreakDamage(dmg);
                 foreach (var listener in listeners) {
                     listener.OnTakeSinkingBreakDamage(buf, dmg);
                 }
             });
-            if (!isBreaked && buf._owner.breakDetail.isBreakLifeZero()) {
+            if (!isBreaked && buf._owner.breakDetail.IsBreakLifeZero()) {
                 RunCatching("BreakState", () => {
+                    buf.OnBreakStateBySinking(actor);
                     foreach (var listener in listeners) {
-                        listener.OnBreakStateBySinking(actor, dmg);
+                        listener.OnBreakStateBySinking(actor, buf);
                     }
                 });
             }

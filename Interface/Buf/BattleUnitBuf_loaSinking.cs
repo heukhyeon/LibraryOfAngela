@@ -11,7 +11,7 @@ public class BattleUnitBuf_loaSinking : BattleUnitBuf
     private SinkingController controller;
     public override string keywordId => controller.keywordId;
     public override string keywordIconId => controller.keywordIconId;
-
+    public override BufPositiveType positiveType => controller.positiveType;
     public override KeywordBuf bufType => LoAKeywordBuf.Sinking;
 
     public BattleUnitBuf_loaSinking()
@@ -65,6 +65,8 @@ namespace LibraryOfAngela.Interface_Internal
     {
         string keywordId { get; }
         string keywordIconId { get; }
+
+        BufPositiveType positiveType { get; }
 
 
         void OnTakeDamageByAttackSinking(BattleUnitBuf_loaSinking buf, BattleDiceBehavior atkDice, int dmg);

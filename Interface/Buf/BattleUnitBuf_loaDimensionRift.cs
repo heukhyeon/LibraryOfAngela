@@ -1,18 +1,32 @@
 using LibraryOfAngela;
+using LibraryOfAngela.Interface_External;
 using LibraryOfAngela.Interface_Internal;
+using System;
+using UnityEngine;
 
 // 차원 균열
 public class BattleUnitBuf_loaDimensionRift : BattleUnitBuf, IHandleTakeRupture
 {
-    private DimentionLiftController controller;
+    private DimensionRiftController controller;
     public override string keywordId => controller.keywordId;
     public override string keywordIconId => controller.keywordIconId;
 
-    public override KeywordBuf bufType => LoAKeywordBuf.DimensionRift; 
+    public override KeywordBuf bufType => LoAKeywordBuf.DimensionRift;
 
+    public override BufPositiveType positiveType => controller.positiveType;
+
+    private bool isActivated = false;
+
+    public override int paramInBufDesc => controller.GetParamInBufDesc(this);
     public BattleUnitBuf_loaDimensionRift()
     {
-        controller = ServiceLocator.Instance.GetInstance<DimentionLiftController>();
+        controller = ServiceLocator.Instance.GetInstance<DimensionRiftController>();
+    }
+
+    public override void OnRoundStart()
+    {
+        base.OnRoundStart();
+        isActivated = true;
     }
 
     public override void OnRoundEnd()
@@ -25,7 +39,10 @@ public class BattleUnitBuf_loaDimensionRift : BattleUnitBuf, IHandleTakeRupture
     /// 자신에게 부여된 파열의 수치 감소가 발생할때 호출
     /// </summary>
     public virtual void OnTakeRuptureReduceStack(BattleUnitModel actor, BattleUnitBuf_loaRupture buf, ref int value, int originValue) {
-        controller.OnTakeRuptureReduceStack(actor, buf, this, ref value, originValue);
+        if (isActivated)
+        {
+            controller.OnTakeRuptureReduceStack(actor, buf, this, ref value, originValue);
+        }
     }
 
     /// <summary>
@@ -52,11 +69,12 @@ public class BattleUnitBuf_loaDimensionRift : BattleUnitBuf, IHandleTakeRupture
 
 namespace LibraryOfAngela.Interface_Internal
 {
-    internal interface DimentionLiftController
+    internal interface DimensionRiftController
     {
         string keywordId { get; }
         string keywordIconId { get; }
-
+        int GetParamInBufDesc(BattleUnitBuf_loaDimensionRift buf);
+        BufPositiveType positiveType { get; }
         void OnRoundEndDimensionRift(BattleUnitBuf_loaDimensionRift buf);
 
         void OnTakeRuptureReduceStack(BattleUnitModel actor, BattleUnitBuf_loaRupture rupture, BattleUnitBuf_loaDimensionRift buf, ref int value, int originValue);

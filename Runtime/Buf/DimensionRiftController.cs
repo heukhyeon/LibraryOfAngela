@@ -15,11 +15,26 @@ namespace LibraryOfAngela.Buf
     {
         public string keywordId => "LoADimensionRift";
 
-        public string keywordIconId => "loa_dimensionrift_icon";
+        public string keywordIconId => "loa_dimension_rift_icon";
+
+        public BufPositiveType positiveType => BufPositiveType.Negative;
+
+        public int GetParamInBufDesc(BattleUnitBuf_loaDimensionRift buf)
+        {
+            return buf.stack * 3;
+        }
 
         public void OnRoundEndDimensionRift(BattleUnitBuf_loaDimensionRift buf) {
-            buf._owner.bufListDetail.AddKeywordBufByEtc(LoAKeywordBuf.Rupture, buf.stack * 5, buf._owner);
+            EffectDimensionRift(buf);
+            buf._owner.bufListDetail.AddKeywordBufByEtc(LoAKeywordBuf.Rupture, buf.stack * 3, buf._owner);
             buf.Destroy();
+        }
+
+        private void EffectDimensionRift(BattleUnitBuf_loaDimensionRift buf)
+        {
+            var b = BufAssetLoader.LoadObject("loa_debuff_dimensionrift", buf._owner.view.atkEffectRoot, 2f);
+            b.transform.localPosition = Vector3.zero;
+            b.transform.localScale = Vector3.one * 0.3f;
         }
 
         public void OnTakeRuptureReduceStack(BattleUnitModel actor, BattleUnitBuf_loaRupture rupture, BattleUnitBuf_loaDimensionRift buf, ref int value, int originValue) {

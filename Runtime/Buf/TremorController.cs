@@ -147,7 +147,8 @@ namespace LibraryOfAngela.Buf
         T BufReplace<T>(
             BattleUnitModel actor, 
             List<BattleUnitBuf> bufList, 
-            BattleUnitBuf_loaTremor current
+            BattleUnitBuf_loaTremor current,
+            bool isCard
         ) where T : BattleUnitBuf_loaTremor, new()
         {
             var index = bufList.IndexOf(current);

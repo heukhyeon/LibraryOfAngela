@@ -16,7 +16,7 @@ namespace LibraryOfAngela.Buf
         public string keywordId => "LoARupture";
 
         public string keywordIconId => "loa_rupture_icon";
-
+        public BufPositiveType positiveType => BufPositiveType.Negative;
         public void OnRoundEndRupture(BattleUnitBuf_loaRupture buf) {
             buf.Destroy();
         }
@@ -39,6 +39,7 @@ namespace LibraryOfAngela.Buf
             var originDmg = dmg;
             var isDead = buf._owner.IsDead();
             RunCatching("BeforeTakeDamage", () => {
+                buf.BeforeTakeRuptureDamage(ref dmg, originDmg);
                 foreach (var listener in takeListener) {
                     listener.BeforeTakeRuptureDamage(buf, ref dmg, originDmg);
                 }
@@ -48,6 +49,7 @@ namespace LibraryOfAngela.Buf
             });
             buf._owner.TakeDamage(dmg, DamageType.Buf, attacker, keyword: LoAKeywordBuf.Rupture);
             RunCatching("OnTakeDamage", () => {
+                buf.OnTakeRuptureDamage(dmg);
                 foreach (var listener in takeListener) {
                     listener.OnTakeRuptureDamage(buf, dmg);
                 }
@@ -57,8 +59,9 @@ namespace LibraryOfAngela.Buf
             });
             if (!isDead && buf._owner.IsDead()) {
                 RunCatching("Die", () => {
+                    buf.OnDieByRupture(attacker);
                     foreach (var listener in takeListener) {
-                        listener.OnDieByRupture(attacker);
+                        listener.OnDieByRupture(attacker, buf);
                     }
                     foreach (var listener in giveListener) {
                         listener.OnKillByRupture(buf);
@@ -66,9 +69,11 @@ namespace LibraryOfAngela.Buf
                 });
             }
             RunCatching("ReduceStack", () => {
+                var reduceValue = (buf.stack) - ((buf.stack * 2) / 3);
                 var value = reduceValue;
+                buf.OnTakeRuptureReduceStack(attacker, ref value, reduceValue);
                 foreach (var listener in takeListener) {
-                    listener.OnTakeRuptureReduceStack(attacker, ref value, reduceValue);
+                    listener.OnTakeRuptureReduceStack(attacker, buf, ref value, reduceValue);
                 }
                 foreach (var listener in giveListener) {
                     listener.OnGiveRuptureReduceStack(buf, ref value, reduceValue);

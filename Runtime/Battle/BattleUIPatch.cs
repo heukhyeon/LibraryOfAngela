@@ -190,8 +190,8 @@ namespace LibraryOfAngela.Battle
 
         private static void HandleCustomUsableCard(BattleUnitCardsInHandUI instance, int num, BattleUnitModel owner)
         {
-            if (num < 0 || instance._cardList.Count >= num) {
-                return
+            if (num < 0) {
+                return;
             }
 
             var ui = instance._cardList[num];
@@ -211,7 +211,7 @@ namespace LibraryOfAngela.Battle
             }
             catch (Exception e)
             {
-                Logger.Log($"HandleCustomUsableCard Error in {num} // {card.GetID()} // {card?.GetName()} // Owner Exists : {owner != null} // {owner?.UnitData.unitData.name}");
+                Logger.Log($"HandleCustomUsableCard Error in {num} // {instance._cardList.Count} // {card.GetID()} // {card?.GetName()} // Owner Exists : {owner != null} // {owner?.UnitData.unitData.name}");
                 Logger.LogError(e);
             }
         }

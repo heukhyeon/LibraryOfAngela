@@ -31,6 +31,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DocumentationFile>bin\Release\LoAInterface.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -78,6 +79,7 @@
   <ItemGroup>
     <Compile Include="Artwork.cs" />
     <Compile Include="AssetBundle.cs" />
+    <Compile Include="Buf\BattleUnitBuf_loaDimensionRift.cs" />
     <Compile Include="Buf\BattleUnitBuf_loaPoise.cs" />
     <Compile Include="Buf\BattleUnitBuf_loaRupture.cs" />
     <Compile Include="Buf\BattleUnitBuf_loaSinking.cs" />

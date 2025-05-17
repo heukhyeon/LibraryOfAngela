@@ -7,8 +7,8 @@ public class BattleUnitBuf_loaRupture : BattleUnitBuf
     public override string keywordId => controller.keywordId;
     public override string keywordIconId => controller.keywordIconId;
 
-    public override KeywordBuf bufType => LoAKeywordBuf.Rupture; 
-
+    public override KeywordBuf bufType => LoAKeywordBuf.Rupture;
+    public override BufPositiveType positiveType => controller.positiveType;
     public BattleUnitBuf_loaRupture()
     {
         controller = ServiceLocator.Instance.GetInstance<RuptureController>();
@@ -53,6 +53,7 @@ namespace LibraryOfAngela.Interface_Internal
     {
         string keywordId { get; }
         string keywordIconId { get; }
+        BufPositiveType positiveType { get; }
 
         void OnRoundEndRupture(BattleUnitBuf_loaRupture buf);
         void OnTakeDamageByAttackRupture(BattleUnitBuf_loaRupture buf, BattleDiceBehavior atkDice, int dmg);

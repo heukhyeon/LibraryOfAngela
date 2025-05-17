@@ -312,7 +312,7 @@ namespace LibraryOfAngela.Battle
                 var bufDetail = __instance._owner?.bufListDetail;
                 if (bufDetail is null) return;
 
-                if (bufDetail._bufList.Contains(__instance) || bufDetail._readyBufList.Contains(__instance) || bufDetail._readyReadyBufList.Contains(__instance))
+                if (bufDetail._bufList.Contains(__instance))
                 {
                     Instance.caches.SafeGet(bufDetail._self)?.BufInit(eff);
                 }

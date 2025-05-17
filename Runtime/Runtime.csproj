@@ -353,7 +353,10 @@
     <Compile Include="Battle\FixValidPatch.cs" />
     <Compile Include="Buf\BufAssetLoader.cs" />
     <Compile Include="Buf\BufControllerImpl.cs" />
+    <Compile Include="Buf\DimensionRiftController.cs" />
+    <Compile Include="Buf\RuptureController.cs" />
     <Compile Include="Buf\SceneBufImpl.cs" />
+    <Compile Include="Buf\SinkingController.cs" />
     <Compile Include="Buf\TremorController.cs" />
     <Compile Include="Combination\CombinationRoot.cs" />
     <Compile Include="CorePage\AdvancedCorePageRarityPatch.cs" />
