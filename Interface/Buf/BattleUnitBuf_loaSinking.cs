@@ -6,6 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+/// <summary>
+/// 막 종료시 수치만큼 흐트러짐 피해를 받음. 대응하는 전투책장 키워드는 LoASinking_Keyword
+/// </summary>
 public class BattleUnitBuf_loaSinking : BattleUnitBuf
 {
     private SinkingController controller;

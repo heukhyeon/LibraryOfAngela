@@ -111,7 +111,6 @@ namespace LibraryOfAngela.Buf
             var now = BufReplace<T>(attacker, current._owner.bufListDetail._bufList, current, isCard);
             if (now is null)
             {
-                Logger.Log($"TremorTransform Called But ChangeType Invalid ??\nTransform Type : {typeof(T).Name}\nPrevious:{current.GetType().Name}");
                 return null;
             }
             var ready = current._owner.bufListDetail._readyBufList.Find(d => d.keywordId == current.keywordId) as BattleUnitBuf_loaTremor;
@@ -156,7 +155,10 @@ namespace LibraryOfAngela.Buf
             var stack = current.stack;
             var owner = current._owner;
             var newBuf = new T();
-            current.OnTakeTremorTransform(actor, newBuf);
+            if (!current.OnTakeTremorTransform(actor, newBuf))
+            {
+                return null;
+            }
             foreach (var eff in GetGiveList(actor)) eff.OnGiveTremorTransform(current, newBuf, isCard);
             foreach (var eff in GetTakeList(current)) eff.OnTakeTremorTransform(actor, current, newBuf, isCard);
             current.Destroy();

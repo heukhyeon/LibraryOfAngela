@@ -84,6 +84,7 @@
     <Compile Include="Buf\BattleUnitBuf_loaRupture.cs" />
     <Compile Include="Buf\BattleUnitBuf_loaSinking.cs" />
     <Compile Include="Buf\BattleUnitBuf_loaTremor.cs" />
+    <Compile Include="Buf\LoAAbilityKeyword.cs" />
     <Compile Include="Buf\LoAKeywordBuf.cs" />
     <Compile Include="Component\LoADiceCardUIKeyDetect.cs" />
     <Compile Include="EmotionSelectBuilder.cs" />

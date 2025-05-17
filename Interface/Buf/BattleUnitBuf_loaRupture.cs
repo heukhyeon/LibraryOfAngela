@@ -1,6 +1,9 @@
 using LibraryOfAngela;
 using LibraryOfAngela.Interface_Internal;
 
+/// <summary>
+/// 피격시 수치만큼 피해를 받음. 대응하는 전투책장 키워드는 LoARupture_Keyword
+/// </summary>
 public class BattleUnitBuf_loaRupture : BattleUnitBuf
 {
     private RuptureController controller;

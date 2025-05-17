@@ -392,6 +392,13 @@ namespace LibraryOfAngela.Buf
                     Name = b.GetBufName(),
                     Desc = b.GetBufActivatedText()
                 };
+
+                BattleEffectTextsXmlList.Instance._dictionary[b.keywordId + "_Keyword"] = new LOR_XML.BattleEffectText
+                {
+                    ID = b.keywordId + "_Keyword",
+                    Name = b.GetBufName() + " X",
+                    Desc = string.Format(b.GetBufActivatedText(), "X")
+                };
             }
         }
     }
