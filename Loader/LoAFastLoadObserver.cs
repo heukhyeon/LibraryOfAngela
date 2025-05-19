@@ -54,9 +54,10 @@ namespace LoALoader
         {
             createdTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             var t = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            EntryObserver.Create();
             var builder = new StringBuilder("Detected LoA Mods\n");
 
-            foreach (var mod in LoAInitializer.Instance.activatedMods)
+            foreach (var mod in EntryObserver.Instance.activatedMods)
             {
                 var dir = mod.dirInfo.FullName;
                 builder.AppendLine($"- {mod.invInfo.workshopInfo.title} // {dir}");
@@ -71,7 +72,7 @@ namespace LoALoader
                     initTasks.Add(FileLoader.LoadAll(mod.invInfo.workshopInfo.uniqueId, mod.invInfo.workshopInfo.title, dir, FileType.INIT, true));
                 }
             }
-            dllTask = FileLoader.CreateDllTask(LoAInitializer.Instance.activatedMods);
+            dllTask = FileLoader.CreateDllTask(EntryObserver.Instance.activatedMods);
             enqueueDuration += (DateTimeOffset.Now.ToUnixTimeMilliseconds() - t);
             UnityEngine.Debug.Log(builder.ToString());
         }

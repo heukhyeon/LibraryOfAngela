@@ -23,7 +23,6 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
-using System.Threading;
 using TMPro;
 using UI;
 using UI.Title;
@@ -95,24 +94,8 @@ namespace LibraryOfAngela
         internal static void Initialize(List<Assembly> assemblys)
         {
             var asm = Assembly.GetExecutingAssembly();
-            var initLogger = new StringBuilder($"LoA :: Framework Created\n ({asm.Location}) // {asm.GetName().Version}");
+            var initLogger = new StringBuilder($"LoA :: Framework Created\n ({asm.Location}) // {asm.GetName().Version}\n");
             Logger.Open();
-
-            var stack = new System.Diagnostics.StackTrace().GetFrames();
-            Type loaderType = null;
-            for (int i = 1; i < 10; i++)
-            {
-                var t = stack[i].GetMethod().DeclaringType;
-                if (t.Name.Contains("LoA"))
-                {
-                    loaderType = t;
-                    break;
-                }
-            }
-
-            initLogger.AppendLine($"- Is From LoALoader {loaderType.Assembly.GetName().Version} ({loaderType.Assembly.Location})");
-
-            LoALoaderWrapper.loaderAssemlby = loaderType.Assembly;
             loader = new LoAModLoader(assemblys);
             // loader.InitHarmony();
             ServiceLocator.Instance.inject<IPatcher>((k) =>
