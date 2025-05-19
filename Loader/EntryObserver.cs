@@ -11,21 +11,13 @@ namespace LoALoader
 {
     public class EntryObserver : MonoBehaviour
     {
-        public static EntryObserver Instance;
-        public static void Create()
+        public static void Create(EntryScene scene)
         {
-            var obj = FindObjectOfType<EntryScene>();
-            var observer = obj.gameObject.AddComponent<EntryObserver>();
-            observer.scene = obj;
-            Instance = observer;
-            observer.activatedMods = obj.modPopup.dataList.Where(d => d?.IsActivated == true &&
-        File.Exists(Path.Combine(d.ModInfo.dirInfo.FullName, "Assemblies", "LoALoader.dll")))
-                    .Select(d => d.ModInfo)
-                    .ToList();
+            var observer = scene.gameObject.AddComponent<EntryObserver>();
+            observer.scene = scene;
         }
 
         public EntryScene scene;
-        public List<ModContentInfo> activatedMods;
         private bool flag = false;
         void Update()
         {
