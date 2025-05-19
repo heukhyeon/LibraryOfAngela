@@ -34,9 +34,15 @@ namespace LibraryOfAngela.Buf
                 foreach (var eff in takeList) eff.BeforeTakeTremorBurst(actor, buf, ref value, originValue);
             });
 
-
-            buf._owner.TakeBreakDamage(value, DamageType.Buf, actor, keyword: LoAKeywordBuf.Tremor);
-
+            if (value > 0)
+            {
+                buf._owner.TakeBreakDamage(value, DamageType.Buf, actor, keyword: LoAKeywordBuf.Tremor);
+            }
+            else
+            {
+                value = 0;
+            }
+            
             RunCatching("OnTakeTremorBurst", () =>
             {
                 buf.OnTakeTremorBurst(actor, value, isCard);

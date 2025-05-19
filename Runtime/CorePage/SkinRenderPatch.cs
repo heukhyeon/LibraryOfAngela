@@ -104,6 +104,7 @@ namespace LibraryOfAngela.EquipBook
 
                     if (skin is LoAWorkshopSkinData d && !string.IsNullOrEmpty(d.prefab))
                     {
+                        Logger.Log($"Prefab Detect :: {key} // {d.prefab}");
                         prefabs[key] = d.prefab;
                         originSkins.Remove(skin);
                         i--;

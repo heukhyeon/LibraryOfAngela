@@ -80,60 +80,122 @@ namespace LibraryOfAngela.Model
     }
 
     /// <summary>
-    /// 특정 스킨을 구현했을때 해당 스킨의 높이, 액션스크립트등을 고정적으로 지원합니다.
+    /// 특정 스킨을 구현했을 때 해당 스킨의 높이, 액션 스크립트 등을 고정적으로 지원합니다.
     /// </summary>
     public class AdvancedSkinInfo
     {
-        // 내부적으로 사용됩니다. 모드에서 지정해도 내부적으로 다시 할당됩니다.
+        /// <summary>
+        /// 내부적으로 사용됩니다. 모드에서 지정해도 내부적으로 다시 할당됩니다.
+        /// </summary>
         public string packageId;
-        // 대상이 되는 스킨입니다. 반드시 지정되어야 합니다.
+
+        /// <summary>
+        /// 대상이 되는 스킨입니다. 반드시 지정되어야 합니다.
+        /// </summary>
         public readonly string skinName;
-        // 해당 핵심 책장을 장착시 키 값을 고정합니다.
+
+        /// <summary>
+        /// 스킨을 아예 프리팹으로 불러오는 경우 사용합니다.
+        /// 대상 프리팹은 <see cref="CharacterAppearance"/>를 루트에 가지고 있어야하며, 스킨 렌더링에 필요한 모든 상태 
+        /// (다수의 <see cref="CharacterMotion"/> 등)을 프리팹 내에 모두 보유하고 있어야합니다. 
+        /// 이 값이 존재한다면 Resources 내에 CharacterSkin이 있어도 새로 생성합니다. 따라서 Resources 내에 대상 CharacterSkin을 정의하지 않는걸 권합니다.
+        /// 이 값이 존재한다면 <see cref="audioReplace"/>, <see cref="hasSkinSprite"/> 을 무시합니다.
+        /// </summary>
+        public string prefabKey;
+
+        /// <summary>
+        /// 해당 핵심 책장을 장착 시 키 값을 고정합니다.
+        /// </summary>
         public int fixedHeight = -1;
-        // 스폐셜 모션을 포함합니다.
+
+        /// <summary>
+        /// 스페셜 모션을 포함합니다.
+        /// </summary>
         public bool hasSpecialSkin;
-        // 해당 핵심 책장을 장착시 사서의 이름을 변경합니다.
-        // 핵심책장의 경우도 둘다 존재합니다. 스킨의 값을 우선시합니다.
+
+        /// <summary>
+        /// 해당 스킨 장착 시 사서의 이름을 변경합니다.
+        /// 핵심 책장의 경우도 둘 다 존재할 수 있으며, 스킨의 값을 우선시합니다.
+        /// </summary>
         public Func<UnitDataModel, string> customOwnerName;
-        // 해당 스킨을 장착시 커스텀 다이얼로그를 생성합니다.
-        // 핵심 책장의 경우도 둘다 존재합니다. 스킨의 값을 우선시합니다.
+
+        /// <summary>
+        /// 해당 스킨 장착 시 커스텀 다이얼로그를 생성합니다.
+        /// 핵심 책장의 경우도 둘 다 존재할 수 있으며, 스킨의 값을 우선시합니다.
+        /// </summary>
         public Func<BattleDialogueModel> customDialog;
-        // 별도의 액션스크립트가 없을때 기본 액션스크립트를 주입할 지 여부입니다.
+
+        /// <summary>
+        /// 별도의 액션 스크립트가 없을 때 기본 액션 스크립트를 주입할지 여부입니다.
+        /// </summary>
         public Func<BehaviourActionBase> defaultActionScript = null;
-        // 기존의 액션 스크립트를 오버라이드합니다.
+
+        /// <summary>
+        /// 기존의 액션 스크립트를 오버라이드합니다.
+        /// </summary>
         public Func<BattleCardBehaviourResult, BehaviourActionBase, BehaviourActionBase> overrideActionScript = null;
-        // 모션에 대한 sfx를 교체할지 여부입니다. 기본 null 입니다.
-        // 리턴 값이 null 인경우에도 교체하지 않습니다.
+
+        /// <summary>
+        /// 모션에 대한 SFX를 교체할지 여부입니다. 기본은 null입니다.
+        /// 반환 값이 null인 경우에도 교체하지 않습니다.
+        /// </summary>
         public Func<ActionDetail, string> audioReplace = null;
-        // 책장 사용전에 움직일 지 여부를 결정합니다.
+
+        /// <summary>
+        /// 책장 사용 전에 움직일 수 있는지 여부를 결정합니다.
+        /// </summary>
         public Func<BattlePlayingCardDataInUnitModel, bool> isStartMoveable = null;
-        // sd 이미지가 별도의 skin 스프라이트를 가집니다. ('_skin' postfix) 이 경우 기존 스프라이트 위에 추가로 skin 스프라이트를 덮어씌웁니다.
+
+        /// <summary>
+        /// SD 이미지가 별도의 스킨 스프라이트('_skin' postfix)를 가집니다.
+        /// 이 경우 기존 스프라이트 위에 추가로 스킨 스프라이트를 덮어씁니다.
+        /// </summary>
         public bool hasSkinSprite;
-        // 계승 창에 보이는 사서 얼굴을 별도의 스프라이트로 변경합니다.
+
+        /// <summary>
+        /// 계승 창에 보이는 사서 얼굴을 별도의 스프라이트로 변경합니다.
+        /// </summary>
         [Obsolete("Use Instead CustomFaceData")]
         public string overrideFaceSprite;
-        // E.G.O 사용시 사서의 얼굴을 덮어씁니다.
+
+        /// <summary>
+        /// E.G.O 사용 시 사서의 얼굴을 덮어씁니다.
+        /// </summary>
         [Obsolete("Use Instead CustomFaceData")]
         public List<ActionDetail> overrideFaceTypes = new List<ActionDetail> { ActionDetail.Default };
 
-        // 현재 스킨, 기존 커스터마이징 데이터, 결과값
+        /// <summary>
+        /// 현재 스킨, 기존 커스터마이징 데이터, 결과값을 받아 커스텀 얼굴 데이터를 반환합니다.
+        /// </summary>
         public Func<string, string, UnitCustomizingData, LoACustomFaceData> overrideFace = null;
-        // 스킨 렌더링시 스킨의 이펙트등을 제어하는 컴포넌트의 타입을 반환합니다.
-        // LoASkinComponent 의 상속타입이어야합니다.
+
+        /// <summary>
+        /// 스킨 렌더링 시 스킨의 이펙트 등을 제어하는 컴포넌트의 타입을 반환합니다.
+        /// LoASkinComponent를 상속한 타입이어야 합니다.
+        /// </summary>
         public Type skinComponentType;
-        // workshop skin list에 올릴때 대응할 책장을 주입합니다.
-        // 없다면 workshop skin list에 표시되지 않습니다.
+
+        /// <summary>
+        /// Workshop skin list에 올릴 때 대응할 책장을 주입합니다.
+        /// 없다면 Workshop skin list에 표시되지 않습니다.
+        /// </summary>
         public LorId exportWorkshopSkinMatchedId = null;
 
-        // 움직이기 전 대상 변경등 전투 결과를 출력하기 전 바꿔칠 콜백을 지정합니다.
+        /// <summary>
+        /// 움직이기 전 대상 변경 등 전투 결과를 출력하기 전 바꿔칠 콜백을 지정합니다.
+        /// </summary>
         public HandleBeforeMoveRoutineListener handleBeforeMoveRoutine = null;
 
+        /// <summary>
+        /// 생성자: 스킨 이름을 지정합니다.
+        /// </summary>
+        /// <param name="skinName">스킨의 이름</param>
         public AdvancedSkinInfo(string skinName)
         {
             this.skinName = skinName;
         }
-
     }
+
 
     public struct CustomRairtyColor
     {

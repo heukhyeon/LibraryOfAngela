@@ -8,6 +8,7 @@ using LibraryOfAngela.Interface_External;
 using LibraryOfAngela.Model;
 using LibraryOfAngela.SD;
 using LibraryOfAngela.Story;
+using LoALoader.Model;
 using LOR_XML;
 using System;
 using System.Collections.Generic;
@@ -52,6 +53,47 @@ namespace LibraryOfAngela.CorePage
                     }
                     info.packageId = mod.packageId;
                     infos[info.skinName] = info;
+                    if (!string.IsNullOrEmpty(info.prefabKey))
+                    {
+                        var skinList = CustomizingBookSkinLoader.Instance._bookSkinData.SafeGet(mod.packageId);
+                        if (skinList is null)
+                        {
+                            skinList = new List<WorkshopSkinData>();
+                            CustomizingBookSkinLoader.Instance._bookSkinData[mod.packageId] = skinList;
+                        }
+                        bool flag = false;
+                        for (int i = 0; i < skinList.Count; i++)
+                        {
+                            var s = skinList[i];
+                            if (s.dataName == info.skinName)
+                            {
+                                flag = true;
+                                skinList.RemoveAt(i);
+                                s = new LoAWorkshopSkinData
+                                {
+                                    contentFolderIdx = mod.packageId,
+                                    dataName = info.skinName,
+                                    id = 0,
+                                    prefab = info.prefabKey,
+                                    dic = new Dictionary<ActionDetail, ClothCustomizeData>()
+                                };
+                                skinList.Insert(i, s);
+                                break;
+                            }
+                        }
+                        if (!flag)
+                        {
+                            skinList.Add(new LoAWorkshopSkinData
+                            {
+                                contentFolderIdx = mod.packageId,
+                                dataName = info.skinName,
+                                id = 0,
+                                prefab = info.prefabKey,
+                                dic = new Dictionary<ActionDetail, ClothCustomizeData>()
+                            });
+                        }
+                        // Logger.Log($"Inject AdditionalSkin : {info.packageId}//{info.skinName}");
+                    }
                 }
             }
             InternalExtension.SetRange(GetType());
