@@ -88,7 +88,7 @@ public class LoADiceCardUIKeyDetect : MonoBehaviour, IPointerEnterHandler, IPoin
         for (int i = 0; i < keyCount; i++)
         {
             var c = codes[i];
-            if (Input.GetKey(c))
+            if (Input.GetKeyDown(c))
             {
                 var controller = ServiceLocator.Instance.GetInstance<ILoARoot>().GetCardListControllerByCard(card, owner);
                 if (!onKeyPress(ui, owner, card, controller, c))
