@@ -182,12 +182,12 @@ namespace LibraryOfAngela.Battle
                     fired = true;
                     yield return new CodeInstruction(OpCodes.Ldarg_0);
                     yield return new CodeInstruction(OpCodes.Ldloc_3);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleUIPatch), nameof(HandleCustomUsableCard)));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleUIPatch), nameof(HandleLoACardBinder)));
                 }
             }
         }
 
-        private static void HandleCustomUsableCard(BattleUnitCardsInHandUI instance, int num)
+        private static void HandleLoACardBinder(BattleUnitCardsInHandUI instance, int num)
         {
             if (num < 0) {
                 return;
@@ -204,24 +204,19 @@ namespace LibraryOfAngela.Battle
             try
             {
                 var script = card._script ?? card.CreateDiceCardSelfAbilityScript();
-                if (script is ILoACustomUsableCard c)
+                if (script is ILoACardUIBinder c)
                 {
-                    var useable = c.IsUsable(owner);
                     if (owner is null)
                     {
                         Logger.Log("HandleCustomUsableCard Called, But Owner Not Detect, Maybe Other Logic Conflict...? Ignore.");
                         return;
                     }
                     c.OnHandle(ui, owner, card);
-                    if (!useable)
-                    {
-                        ui.SetEgoLock();
-                    }
                 }
             }
             catch (Exception e)
             {
-                Logger.Log($"HandleCustomUsableCard Error in {num} // {instance._cardList.Count} // {card.GetID()} // {card?.GetName()} // Owner Exists : {owner != null} // {owner?.UnitData.unitData.name}");
+                Logger.Log($"HandleLoACardBinder Error in {num} // {instance._cardList.Count} // {card.GetID()} // {card?.GetName()} // Owner Exists : {owner != null} // {owner?.UnitData.unitData.name}");
                 Logger.LogError(e);
             }
         }

@@ -159,10 +159,21 @@ namespace LibraryOfAngela
             }
             catch (ReflectionTypeLoadException e)
             {
-                Logger.Log($"Type Load Error in {assembly.FullName}");
+                var logger = new StringBuilder($"Type Load Error in {assembly.GetName().Name} ({assembly.Location})\n");
                 foreach (var ex in e.LoaderExceptions)
                 {
-                    Logger.LogError(ex);
+                    if (ex is TypeLoadException e2)
+                    {
+                        logger.AppendLine("- TargetType : " + e2.TypeName);
+                    }
+                    else
+                    {
+                        logger.AppendLine($"- {ex.GetType().Name} : {ex.Message}");
+                    }
+                    var stack = ex.StackTrace;
+                    if (string.IsNullOrEmpty(stack)) stack = e.StackTrace;
+                    logger.AppendLine(stack);
+                    Logger.Log(logger.ToString());
                 }
             }
             catch (Exception e)
