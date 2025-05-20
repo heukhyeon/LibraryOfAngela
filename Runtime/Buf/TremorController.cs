@@ -211,6 +211,9 @@ namespace LibraryOfAngela.Buf
         {
             switch (TextDataModel.CurrentLanguage)
             {
+                case "cn":
+                case "trcn":
+                    return "每一幕结束时减少1/3的层数。(向上取整)";
                 default:
                     return "막 종료시 진동 수치가 2/3로 감소한다.(소수점 이하 버림)";
             }
@@ -222,8 +225,23 @@ namespace LibraryOfAngela.Buf
             {
                 case "kr":
                     return "진동";
+                case "cn":
+                case "trcn":
+                    return "震颤";
                 default:
                     return "Tremor";
+            }
+        }
+
+        public string GetKeywordText()
+        {
+            switch (TextDataModel.CurrentLanguage)
+            {
+                case "cn":
+                case "trcn":
+                    return "触发“震颤爆发”效果时受到X点混乱伤害。\n每一幕结束时减少1 / 3的层数。(向上取整)";
+                default:
+                    return "진동 폭발시 흐트러짐 피해 X를 받음.\n막 종료시 진동 수치가 2 / 3로 감소한다.(소수점 이하 버림)";
             }
         }
     }

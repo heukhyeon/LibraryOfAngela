@@ -86,14 +86,17 @@ namespace LibraryOfAngela.Buf
 
         private void EffectSinking(BattleUnitBuf_loaSinking buf) {
             var b = BufAssetLoader.LoadObject("loa_debuff_sinking", buf._owner.view.atkEffectRoot, 2f);
-            b.transform.localPosition = Vector3.zero;
-            b.transform.localScale = Vector3.one * 0.3f;
+            b.transform.localPosition = new Vector3(0f, 1.7f, 0f);
+            b.transform.localScale = Vector3.one * 0.13f;
         }
 
         public string GetBufActivatedText()
         {
             switch (TextDataModel.CurrentLanguage)
             {
+                case "cn":
+                case "trcn":
+                    return "一幕内自身被击中时将受到{0}点混乱伤害并使“沉沦”层数减少1/3。（向上取整）";
                 default:
                     return "막 종료시 흐트러짐 피해 {0}을 받고 침잠 수치가 2/3로 감소한다.(소수점 이하 버림)";
             }
@@ -105,8 +108,23 @@ namespace LibraryOfAngela.Buf
             {
                 case "kr":
                     return "침잠";
+                case "cn":
+                case "trcn":
+                    return "沉沦";
                 default:
                     return "Sinking";
+            }
+        }
+
+        public string GetKeywordText()
+        {
+            switch (TextDataModel.CurrentLanguage)
+            {
+                case "cn":
+                case "trcn":
+                    return "一幕内自身被击中时将受到X点混乱伤害并使“沉沦”层数减少1/3。（向上取整）";
+                default:
+                    return "막 종료시 흐트러짐 피해 X를 받고 침잠 수치가 2/3로 감소한다.(소수점 이하 버림)";
             }
         }
     }
