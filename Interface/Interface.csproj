@@ -94,7 +94,7 @@
     <Compile Include="Global\GlobalExtension.cs" />
     <Compile Include="Extension\LoAModExtension.cs" />
     <Compile Include="Extension\PatchTextension.cs" />
-    <Compile Include="Global\ILoACustomUseableCard.cs" />
+    <Compile Include="Global\ILoACardUIBinder.cs" />
     <Compile Include="Global\ILoAKeywordBufDic.cs" />
     <Compile Include="Global\LimbusDiceAbility.cs" />
     <Compile Include="ILoAMod.cs" />

@@ -165,14 +165,14 @@ namespace LibraryOfAngela.Buf
             {
                 return null;
             }
-            foreach (var eff in GetGiveList(actor)) eff.OnGiveTremorTransform(current, newBuf, isCard);
-            foreach (var eff in GetTakeList(current)) eff.OnTakeTremorTransform(actor, current, newBuf, isCard);
             current.Destroy();
             bufList.Remove(current);
             bufList.Insert(index, newBuf);
             newBuf.Init(owner);
             newBuf.stack = stack;
             newBuf.OnAddBuf(stack);
+            foreach (var eff in GetGiveList(actor)) eff.OnGiveTremorTransform(current, newBuf, isCard);
+            foreach (var eff in GetTakeList(current)) eff.OnTakeTremorTransform(actor, current, newBuf, isCard);
             return newBuf;
         }
 
