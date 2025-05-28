@@ -92,7 +92,7 @@ namespace LibraryOfAngela.Emotion
         /// </summary>
         /// <param name="instructions"></param>
         /// <returns></returns>
-        [HarmonyPatch(typeof(UIAbnormalityPanel), "SetData")]
+        [HarmonyPatch(typeof(UIAbnormalityPanel), nameof(UIAbnormalityPanel.SetData))]
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> Trans_SetData(IEnumerable<CodeInstruction> instructions)
         {
@@ -103,7 +103,7 @@ namespace LibraryOfAngela.Emotion
                 if (code.opcode == OpCodes.Callvirt && code.operand is MethodInfo m && m.Name == "get_Level")
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_1);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(EmotionUIPatch), "FixLevelCheck"));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(EmotionUIPatch), nameof(FixLevelCheck)));
                 }
             }
         }
@@ -112,7 +112,6 @@ namespace LibraryOfAngela.Emotion
         {
             if (origin < floor.Level)
             {
-                Logger.Log($"Fix Floor ({floor.Sephirah}) Level : {origin}->{floor.Level}");
                 return floor.Level;
             }
             return origin;

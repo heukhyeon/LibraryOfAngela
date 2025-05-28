@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using UI;
 using UnityEngine;
 using HarmonyLib;
+using System.Collections.Concurrent;
 
 namespace LibraryOfAngela
 {
@@ -437,8 +438,17 @@ namespace LibraryOfAngela
                 loadRequireNodes.Remove(node.info);
                 if (success)
                 {
-                    strBuilder.Insert(0, $"AssetBundle Loaded (Sync : {isSync}) : {node.info.path}");
-                    Logger.Log(strBuilder.ToString());
+                    if (isSync)
+                    {
+                        strBuilder.Insert(0, $"AssetBundle Loaded (Sync : {isSync}) : {node.info.path}");
+                        Logger.Log(strBuilder.ToString());
+                    }
+                    else
+                    {
+                        strBuilder.Insert(0, $"- {node.info.path}\n");
+                        bundleLoadQueue.Enqueue(strBuilder);
+                    }
+               
                 }
 
                 LoAArtworks.Instance.OnAssetBundleLoaded(node.info, node.packageId, node.Bundle);
@@ -499,6 +509,8 @@ namespace LibraryOfAngela
             if (logger != null) Logger.Log(logger.ToString());
         }
 
+        private ConcurrentQueue<StringBuilder> bundleLoadQueue = new ConcurrentQueue<StringBuilder>();
+
         public async void LoopAsyncAssetBundleLoad()
         {
             if (asyncStart) return;
@@ -507,8 +519,23 @@ namespace LibraryOfAngela
 
             asyncStart = true;
 
+            int cnt = 0;
             while (true)
             {
+                if (bundleLoadQueue.Count != cnt)
+                {
+                    cnt = bundleLoadQueue.Count;
+                }
+                else if (cnt > 0)
+                {
+                    var totalBuilder = new StringBuilder("AssetBundleLoad Async Request Log\n");
+                    while (bundleLoadQueue.TryDequeue(out StringBuilder str))
+                    {
+                        totalBuilder.Append(str.ToString());
+                    }
+                    Logger.Log(totalBuilder.ToString());
+                }
+
                 if (asyncQueue.Count == 0)
                 {
                     await Task.Delay(500);
