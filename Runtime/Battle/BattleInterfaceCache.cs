@@ -258,6 +258,16 @@ namespace LibraryOfAngela.Battle
             Instance.caches.Remove(unit);
         }
 
+        /// <summary>
+        /// clear 만으로는 가끔 리소스가 초기화가 안됨
+        /// </summary>
+        [HarmonyPatch(typeof(StageController), "StartBattle")]
+        [HarmonyPrefix]
+        private static void Before_StartBattle()
+        {
+            After_Clear();
+        }
+
         [HarmonyPatch(typeof(BattleObjectManager), "Clear")]
         [HarmonyPostfix]
         private static void After_Clear()

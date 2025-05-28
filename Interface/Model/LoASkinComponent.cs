@@ -27,6 +27,7 @@ namespace LibraryOfAngela.Model
             }
         }
 
+        [Obsolete("Preview 때는 언제나 만들어지지 않습니다")]
         protected bool IsPreview
         {
             get
@@ -44,6 +45,15 @@ namespace LibraryOfAngela.Model
             if (IsRequireOwnerReference && !IsPreview)
             {
                 owner = appearance.GetComponentInParent<BattleUnitView>()?.model;
+            }
+        }
+
+        protected virtual void Start()
+        {
+            // 복제된 경우 없을 수 있음
+            if (Appearance is null)
+            {
+                Initialize(GetComponent<CharacterAppearance>());
             }
         }
 

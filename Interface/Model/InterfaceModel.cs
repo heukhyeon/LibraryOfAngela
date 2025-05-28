@@ -70,8 +70,7 @@ namespace LibraryOfAngela.Model
         // 현재 스킨, 캐릭터 설정시의 기존 스킨, 기존 커스터마이징 데이터, 결과값
         public Func<string, string, UnitCustomizingData, LoACustomFaceData> overrideFace = null;
 
-        // 움직이기 전 대상 변경등 전투 결과를 출력하기 전 바꿔칠 콜백을 지정합니다.
-        public HandleBeforeMoveRoutineListener handleBeforeMoveRoutine;
+        public Func<LoAMovingStateHandler> movingStateHandler = null;
 
         public AdvancedEquipBookInfo(LorId id)
         {
@@ -181,10 +180,8 @@ namespace LibraryOfAngela.Model
         /// </summary>
         public LorId exportWorkshopSkinMatchedId = null;
 
-        /// <summary>
-        /// 움직이기 전 대상 변경 등 전투 결과를 출력하기 전 바꿔칠 콜백을 지정합니다.
-        /// </summary>
-        public HandleBeforeMoveRoutineListener handleBeforeMoveRoutine = null;
+
+        public Func<LoAMovingStateHandler> movingStateHandler = null;
 
         /// <summary>
         /// 생성자: 스킨 이름을 지정합니다.

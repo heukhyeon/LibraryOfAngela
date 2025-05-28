@@ -96,6 +96,7 @@
     <Compile Include="Extension\PatchTextension.cs" />
     <Compile Include="Global\ILoACardUIBinder.cs" />
     <Compile Include="Global\ILoAKeywordBufDic.cs" />
+    <Compile Include="Global\LoAMovingStateHandler.cs" />
     <Compile Include="Global\LimbusDiceAbility.cs" />
     <Compile Include="ILoAMod.cs" />
     <Compile Include="Interface-External\IAddToEgoCard.cs" />

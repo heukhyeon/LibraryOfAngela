@@ -228,6 +228,11 @@ namespace LibraryOfAngela.Battle
 
         public static void ClearResource()
         {
+            if (IsWaveStartCalled)
+            {
+                IsWaveStartCalled = false;
+                CustomCardEffect.Instance.ClearThisRoundCardEffects();
+            }
             if (nextPhaseExists)
             {
                 nextPhaseExecuteActionQueue.Clear();
