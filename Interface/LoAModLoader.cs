@@ -18,7 +18,13 @@ namespace LibraryOfAngela
     public class LoA
     {
         public static SceneBuf CurrentSceneBuf { get => ServiceLocator.Instance.GetInstance<ILoARoot>().CurrentSceneBuf; }
-        
+
+        /// <summary>
+        /// 세이브가 로딩된 이후인지를 반환
+        /// 타이틀로 돌아간경우 다시 false가 될 수 있음
+        /// </summary>
+        public static bool IsSaveInitialized { get; internal set; } = false;
+
         public static void Init()
         {
             // 구현 없음

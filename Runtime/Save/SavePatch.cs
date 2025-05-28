@@ -50,12 +50,18 @@ namespace LibraryOfAngela.Save
             }
         }
 
+        [HarmonyPatch(typeof(LibraryModel), "LoadFromSaveData")]
+        [HarmonyPrefix]
+        public static void Before_LibraryModel_LoadFromSaveData(SaveData data)
+        {
+            LoA.IsSaveInitialized = false;
+        }
 
         [HarmonyPatch(typeof(LibraryModel), "LoadFromSaveData")]
         [HarmonyPostfix]
         public static void After_LibraryModel_LoadFromSaveData(SaveData data)
         {
-            isLibraryLoaded = true;
+            LoA.IsSaveInitialized = true;
             try
             {
                 Logger.Log("Load Complete, Inject Test");
