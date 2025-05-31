@@ -344,6 +344,7 @@
     <Compile Include="BattleUI\BattlePagePatch.cs" />
     <Compile Include="BattleUI\CustomSelectorUIManager.cs" />
     <Compile Include="BattleUI\EmotionOver5.cs" />
+    <Compile Include="Battle\AutoBattleImpl.cs" />
     <Compile Include="Battle\AutoBattlePatch.cs" />
     <Compile Include="Battle\BattleInterfaceCache.cs" />
     <Compile Include="Battle\BattlePhasePatch.cs" />
