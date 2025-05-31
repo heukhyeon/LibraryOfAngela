@@ -85,6 +85,23 @@ namespace LibraryOfAngela.Battle
             return instructions; // If pattern not found, return original
         }
 
+
+        public static List<BattleUnitModel> FilterUnitsForCustomAI(List<BattleUnitModel> originalList)
+        {
+            if (originalList == null) return new List<BattleUnitModel>();
+            return originalList.Where(unit => BattleInterfaceCache.Of<ICustomCardSetter>(unit).FirstOrDefault() == null).ToList();
+        }
+
+        [HarmonyPatch(typeof(StageController), "SetAutoCardForNonControlablePlayer")]
+        [HarmonyPostfix]
+        private static void After_SetAutoCardForNonControlablePlayer()
+        {
+            IsForceInjecting = true;
+            new AutoBattleImpl().Execute();
+            IsForceInjecting = false;
+        }
+
+
     }
 }
 
