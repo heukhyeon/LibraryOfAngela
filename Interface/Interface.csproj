@@ -104,6 +104,7 @@
     <Compile Include="Interface-External\IAggroAbility.cs" />
     <Compile Include="Interface-External\IAllCharacterBufController.cs" />
     <Compile Include="Interface-External\IAutoController.cs" />
+    <Compile Include="Interface-External\ICustomCardSetter.cs" />
     <Compile Include="Interface-External\IDiceCardSelfAbilityOnWaveStart.cs" />
     <Compile Include="Interface-External\IEndUseCard.cs" />
     <Compile Include="Interface-External\IForceStopMotion.cs" />
