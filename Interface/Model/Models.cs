@@ -394,11 +394,25 @@ namespace LibraryOfAngela.Model
         public ILoAArtworkCache cache;
     }
 
+    /// <summary>
+    /// 책장 사용 발생시 합인지 일방공격인지 여부
+    /// </summary>
     public class ParryingOneSideAction
     {
+        /// <summary>
+        /// 사용하는 이의 카드. 일방공격일때는 여기만 할당됨
+        /// </summary>
         protected readonly BattlePlayingCardDataInUnitModel card1;
+        /// <summary>
+        /// 반대 대상의 카드. 합일때만 할당됨
+        /// </summary>
         protected readonly BattlePlayingCardDataInUnitModel card2;
 
+        /// <summary>
+        /// 대상 팩션의 캐릭터의 카드를 반환
+        /// </summary>
+        /// <param name="faction"></param>
+        /// <returns></returns>
         public BattlePlayingCardDataInUnitModel GetAllyCard(Faction faction)
         {
             if (card1 != null && card1.owner.faction == faction) return card1;
@@ -406,6 +420,11 @@ namespace LibraryOfAngela.Model
             return null;
         }
 
+        /// <summary>
+        /// 대상 팩션의 반대 캐릭터의 카드를 반환
+        /// </summary>
+        /// <param name="faction"></param>
+        /// <returns></returns>
         public BattlePlayingCardDataInUnitModel GetEnemyCard(Faction faction)
         {
             if (card1 != null && card1.owner.faction != faction) return card1;
@@ -419,6 +438,9 @@ namespace LibraryOfAngela.Model
             this.card2 = card2;
         }
 
+        /// <summary>
+        /// 합
+        /// </summary>
         public class Parrying : ParryingOneSideAction
         {
             public new readonly BattlePlayingCardDataInUnitModel card1;
@@ -439,17 +461,37 @@ namespace LibraryOfAngela.Model
 
             }
 
+            /// <summary>
+            /// 밸류 비교
+            /// </summary>
+            /// <param name="obj"></param>
+            /// <returns></returns>
+            public override bool Equals(object obj)
+            {
+                return obj is Parrying p &&
+                    card1 == p.card1 && card2 == p.card2; 
+            }
 
 
 
         }
 
+        /// <summary>
+        /// 일방공격
+        /// </summary>
         public class OneSide : ParryingOneSideAction
         {
             public readonly BattlePlayingCardDataInUnitModel card;
             public readonly BattleUnitModel victim;
             public readonly int victimSlot;
 
+            /// <summary>
+            /// 공격자의 슬롯, 피격자의 슬롯 기반으로 생성. 일반적으로 피격 대상을 강제 전환할때 사용
+            /// </summary>
+            /// <param name="attacker"></param>
+            /// <param name="attackerSlot"></param>
+            /// <param name="victim"></param>
+            /// <param name="victimSlot"></param>
             public OneSide(BattleUnitModel attacker, int attackerSlot, BattleUnitModel victim, int victimSlot) : base(
                 attackerSlot >= 0 && attackerSlot <= attacker.cardSlotDetail.cardAry.Count - 1 ? attacker.cardSlotDetail.cardAry[attackerSlot] : null,
                 null
@@ -460,11 +502,26 @@ namespace LibraryOfAngela.Model
                 this.victimSlot = victimSlot;
             }
 
+            /// <summary>
+            /// 공격자의 카드로 생성. 일반적으로 강제 일반 공격시 사용
+            /// </summary>
+            /// <param name="card"></param>
             public OneSide(BattlePlayingCardDataInUnitModel card) : base(card, null)
             {
                 this.card = card;
                 this.victim = card.target;
                 this.victimSlot = card.targetSlotOrder;
+            }
+
+            /// <summary>
+            /// 밸류 비교
+            /// </summary>
+            /// <param name="obj"></param>
+            /// <returns></returns>
+            public override bool Equals(object obj)
+            {
+                return obj is OneSide p &&
+                    card == p.card && victim == p.victim && victimSlot == p.victimSlot;
             }
         }
 

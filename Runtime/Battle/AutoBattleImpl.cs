@@ -62,6 +62,9 @@ namespace LibraryOfAngela.Battle
 
             allyOwners.AddRange(GetCustomSetterOwners());
 
+            // 아군 제어가능 아군이 없을땐 판단 생략
+            if (allyOwners.Count == 0) return;
+
             foreach (var allyOwner in allyOwners)
             {
                 ExecuteInstance(allyOwner, allyOwner.owner.allyCardDetail._cardInHand);
