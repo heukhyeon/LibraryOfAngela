@@ -671,6 +671,27 @@ namespace LibraryOfAngela.Battle
             }
         }
 
+        [HarmonyPatch(typeof(BattleAllyCardDetail), "AddCardToHand")]
+        [HarmonyPostfix]
+        private static void After_AddCardToHand(BattleDiceCardModel card, bool front, BattleUnitModel ____self)
+        {
+            try
+            {
+                if (card._script is IAddCardToHandListener ef)
+                {
+                    ef.OnAddToHand(card, ____self, front);
+                }
+                foreach (var effect in BattleInterfaceCache.Of<IAddCardToHandListener>(____self))
+                {
+                    effect.OnAddToHand(card, ____self, front);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
+        }
+
         [HarmonyPatch(typeof(BattleUnitBuf_warpCharge), nameof(BattleUnitBuf.OnAddBuf))]
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> Trans_OnAddBuf(IEnumerable<CodeInstruction> instructions, MethodBase original)
