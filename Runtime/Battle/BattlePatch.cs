@@ -666,7 +666,7 @@ namespace LibraryOfAngela.Battle
                 if (code.Is(OpCodes.Callvirt, target))
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_1);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), "HandleValidScript"));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), nameof(HandleValidScript)));
                 }
             }
         }
