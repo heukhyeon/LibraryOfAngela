@@ -214,6 +214,8 @@ namespace LibraryOfAngela.Buf
                 case "cn":
                 case "trcn":
                     return "每一幕结束时减少1/3的层数。(向上取整)";
+                case "en":
+                    return "At the end of the Scene, subtract 2/3rd of the Tremor stack. (Rounds down)";
                 default:
                     return "막 종료시 진동 수치가 2/3로 감소한다.(소수점 이하 버림)";
             }
@@ -240,9 +242,39 @@ namespace LibraryOfAngela.Buf
                 case "cn":
                 case "trcn":
                     return "触发“震颤爆发”效果时受到X点混乱伤害。\n每一幕结束时减少1 / 3的层数。(向上取整)";
+                case "en":
+                    return "When Tremor Burst is activated on this character, take X Stagger damage.\nAt the end of the Scene, subtract 2 / 3rd of the Tremor stack. (Rounds down)";
                 default:
                     return "진동 폭발시 흐트러짐 피해 X를 받음.\n막 종료시 진동 수치가 2 / 3로 감소한다.(소수점 이하 버림)";
             }
+        }
+
+        public void AddAdditionalKeywordDesc()
+        {
+            string name = "";
+            string desc = "";
+            switch (TextDataModel.CurrentLanguage)
+            {
+                case "cn":
+                case "trcn":
+                    name = "震颤爆发";
+                    desc = "对目标造成等同于“震颤”层数的混乱伤害。";
+                    break;
+                case "en":
+                    name = "Tremor Burst";
+                    desc = "Deal Stagger damage equal to target's Tremor.";
+                    break;
+                default:
+                    name = "진동 폭발";
+                    desc = "대상에게 진동 수치만큼 흐트러짐 피해";
+                    break;
+            }
+            BattleEffectTextsXmlList.Instance._dictionary["LoATremorBurst_Keyword"] = new LOR_XML.BattleEffectText
+            {
+                ID = "LoATremorBurst_Keyword",
+                Name = name,
+                Desc = desc
+            };
         }
     }
 }

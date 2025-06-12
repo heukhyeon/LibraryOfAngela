@@ -55,6 +55,8 @@ namespace LibraryOfAngela.Buf
                 case "cn":
                 case "trcn":
                     return "因受击导致减少“破裂”层数时不会减少“破裂”层数而是改为减少1层“次元裂缝”。\n每一幕结束时在下一幕对自身施加{0}层“破裂”并移除本效果。";
+                case "en":
+                    return "When hit, instead of reducing Rupture stacks, lose 1 stack of this status.\nAt the end of the Scene, gain {0} Rupture next Scene and lose this status.";
                 default:
                     return "피격시 파열 수치가 감소하는 대신 차원 균열 수치가 1 감소한다.\n막 종료시 다음 막에 파열 {0}을 얻고 소멸";
             }
@@ -81,9 +83,16 @@ namespace LibraryOfAngela.Buf
                 case "cn":
                 case "trcn":
                     return "因受击导致减少“破裂”层数时不会减少“破裂”层数而是改为减少1层“次元裂缝”。\n每一幕结束时在下一幕对自身施加X层“破裂”并移除本效果。";
+                case "en":
+                    return "When hit, instead of reducing Rupture stacks, lose 1 stack of this status.\nAt the end of the Scene, gain Rupture next Scene and lose this status";
                 default:
                     return "한 막 동안 피격시 파열 수치의 감소를 막고 대신 수치가 1 감소하는 효과";
             }
+        }
+
+        public void AddAdditionalKeywordDesc()
+        {
+
         }
     }
 }

@@ -110,6 +110,8 @@ namespace LibraryOfAngela.Buf
                 case "cn":
                 case "trcn":
                     return "一幕内自身被击中时将受到{0}点伤害并使“破裂”层数减少1/3。（向上取整）";
+                case "en":
+                    return "For this Scene, when hit, take {0} damage and subtract 2/3rd of the Rupture stack. (Rounds down)";
                 default:
                     return "한 막동안 피격시 피해 {0}을 받고 파열 수치가 2/3로 감소한다.(소수점 이하 버림)";
             }
@@ -136,9 +138,16 @@ namespace LibraryOfAngela.Buf
                 case "cn":
                 case "trcn":
                     return "一幕内自身被击中时将受到X点伤害并使“破裂”层数减少1/3。（向上取整）";
+                case "en":
+                    return "For the Scene, when hit, take X damage and subtract 2/3rd of the Rupture stack. (Rounds down)";
                 default:
                     return "한 막 동안 피격시 피해 X를 받고 파열 수치가 2/3로 감소한다.(소수점 이하 버림)";
             }
+        }
+
+        public void AddAdditionalKeywordDesc()
+        {
+
         }
     }
 }

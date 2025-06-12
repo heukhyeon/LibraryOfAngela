@@ -399,6 +399,8 @@ namespace LibraryOfAngela.Buf
                     Name = b.GetBufName() + " X",
                     Desc = string.Format(b.GetBufActivatedText(), "X")
                 };
+
+                b.AddAdditionalKeywordDesc();
             }
         }
     }

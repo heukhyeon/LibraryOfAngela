@@ -15,5 +15,7 @@ namespace LibraryOfAngela.Buf
         string GetBufActivatedText();
 
         string GetKeywordText();
+
+        void AddAdditionalKeywordDesc();
     }
 }

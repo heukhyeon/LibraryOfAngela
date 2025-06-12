@@ -97,6 +97,8 @@ namespace LibraryOfAngela.Buf
                 case "cn":
                 case "trcn":
                     return "一幕内自身被击中时将受到{0}点混乱伤害并使“沉沦”层数减少1/3。（向上取整）";
+                case "en":
+                    return "At the end of the Scene, take {0} Stagger damage and subtract 1/3rd of the Sinking stack. (Rounds down)";
                 default:
                     return "막 종료시 흐트러짐 피해 {0}을 받고 침잠 수치가 2/3로 감소한다.(소수점 이하 버림)";
             }
@@ -123,9 +125,39 @@ namespace LibraryOfAngela.Buf
                 case "cn":
                 case "trcn":
                     return "一幕内自身被击中时将受到X点混乱伤害并使“沉沦”层数减少1/3。（向上取整）";
+                case "en":
+                    return "At the end of the Scene, take {0} Stagger damage and subtract 1/3rd of the Sinking stack. (Rounds down)";
                 default:
                     return "막 종료시 흐트러짐 피해 X를 받고 침잠 수치가 2/3로 감소한다.(소수점 이하 버림)";
             }
+        }
+
+        public void AddAdditionalKeywordDesc()
+        {
+            string name = "";
+            string desc = "";
+            switch (TextDataModel.CurrentLanguage)
+            {
+                case "cn":
+                case "trcn":
+                    name = "沉沦泛滥";
+                    desc = "重复触发目标的“沉沦”效果直至消耗所有“沉沦”。\n若目标无法受到混乱伤害或无混乱抗性可减少则改为受到伤害。";
+                    break;
+                case "en":
+                    name = "Sinking Deluge";
+                    desc = "Activate all target's Sinking instantly.\nIf target's Stagger Resist drops to 0, convert overflowing Stagger damage to physical damage.";
+                    break;
+                default:
+                    name = "침잠 쇄도";
+                    desc = "대상에게 있는 침잠을 침잠 수치만큼 반복하여 발동하고 침잠 제거.\n대상이 흐트러짐 피해를 받을 수 없다면 대신 피해로 받는다.";
+                    break;
+            }
+            BattleEffectTextsXmlList.Instance._dictionary["LoASinkingDeluge_Keyword"] = new LOR_XML.BattleEffectText
+            {
+                ID = "LoASinkingDeluge_Keyword",
+                Name = name,
+                Desc = desc
+            };
         }
     }
 }
