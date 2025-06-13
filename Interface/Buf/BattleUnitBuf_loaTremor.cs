@@ -1,6 +1,7 @@
 using LibraryOfAngela;
 using LibraryOfAngela.Interface_External;
 using LibraryOfAngela.Interface_Internal;
+using UnityEngine;
 
 /// <summary>
 /// 막 종료시 2/3로 감소, 진동폭발 발생시 수치만큼 흐트러짐 피해를 받음. 대응 키워드는 LoATremor_Keyword
@@ -14,6 +15,14 @@ public class BattleUnitBuf_loaTremor : BattleUnitBuf, IHandleAddNewKeywordBufInL
     public override KeywordBuf bufType => LoAKeywordBuf.Tremor;
 
     public override BufPositiveType positiveType => controller.positiveType;
+
+    /// <summary>
+    /// 진동 폭발시 이펙트 색상
+    /// 기본 진동은 외부에서 색상을 지정해주면 해당 색상을 따라가지만
+    /// 개별 상속된 진동은 자신만의 색상으로 고정할 수 있음
+    /// </summary>
+    public virtual Color BurstColor { get; set; } = Color.white;
+
 
     public BattleUnitBuf_loaTremor()
     {

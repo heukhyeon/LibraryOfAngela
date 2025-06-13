@@ -91,6 +91,16 @@ namespace LibraryOfAngela.Buf
             var b = BufAssetLoader.LoadObject("loa_debuff_tremorburst", buf._owner.view.atkEffectRoot, 2f);
             b.transform.localPosition = Vector3.zero;
             b.transform.localScale = Vector3.one * 0.3f;
+            var color = buf.BurstColor;
+            if (color != Color.white)
+            {
+                foreach (var c in b.GetComponentsInChildren<ParticleSystem>())
+                {
+                    var main = c.main;
+                    main.startColor = color;
+                }
+            }
+            BufAssetLoader.PlaySfx("limbus_tremor_burst");
         }
 
         public void ReduceStack(BattleUnitModel actor, BattleUnitBuf_loaTremor buf, int value, bool isRoundEnd)
