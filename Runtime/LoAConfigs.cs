@@ -29,6 +29,8 @@ namespace LibraryOfAngela
 
         public SuccessionConfig SuccessionConfig { get; private set; }
 
+        public SaveConfig SaveConfig { get; private set; }
+
         public ILoAArtworkCache Artworks { get; private set; }
 
         public AssetBundleCache AssetBundles { get; private set; }
@@ -58,6 +60,7 @@ namespace LibraryOfAngela
             if (mod is ILoACustomEmotionMod m6) config.EmotionConfig = m6.EmotionConfig;
             if (mod is ILoASuccessionMod m7) config.SuccessionConfig = m7.SuccessionConfig;
             if (mod is ILoACustomMapMod m8) config.MapConfig = m8.MapConfig;
+            if (mod is ILoACustomSaveHandleMod m9) config.SaveConfig = m9.SaveConfig;
 
             return config;
         }

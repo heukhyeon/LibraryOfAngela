@@ -37,12 +37,32 @@ namespace LibraryOfAngela.Save
 
         [HarmonyPatch(typeof(LibraryModel), "GetSaveData")]
         [HarmonyPostfix]
-        public static void After_LibraryModel_GetSaveData(ref SaveData __result)
+        public static void After_LibraryModel_GetSaveData(LibraryModel __instance, ref SaveData __result)
         {
             try
             {
                 BattleUIPatch.keywordCountDic.Clear();
                 SkinInfoProvider.Instance.SaveSkinProperties(__result);
+                int cnt = 0;
+                var wrapper = new SaveData();
+                foreach (var m in LoAModCache.Instance.Where(d => d.SaveConfig != null))
+                {
+                    try
+                    {
+                        var data = m.SaveConfig.GetSaveData(__instance);
+                        wrapper.AddData(m.packageId, data);
+                        cnt++;
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e);
+                    }
+                }
+                if (cnt > 0)
+                {
+                    __result.AddData("LoASaveDatas", wrapper);
+                }
+
             }
             catch (Exception e)
             {
@@ -78,6 +98,22 @@ namespace LibraryOfAngela.Save
                 if (CustomSelectorUIManager.IsAssetLoaded)
                 {
                     CustomSelectorUIManager.Instance.LazyInitialize();
+                }
+                var customSaveData = data.GetData("LoASaveDatas");
+                if (customSaveData != null)
+                {
+                    foreach (var pair in customSaveData._dic)
+                    {
+                        try
+                        {
+                            var mod = LoAModCache.Instance[pair.Key]?.SaveConfig;
+                            mod?.LoadFromSaveData(pair.Value);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.LogError(e);
+                        }
+                    }
                 }
                 // InjectAllClear();
 

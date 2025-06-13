@@ -1,3 +1,4 @@
+using GameSave;
 using LibraryOfAngela.Model;
 using System;
 using System.Collections.Generic;
@@ -150,5 +151,13 @@ namespace LibraryOfAngela
     public interface ILoASuccessionMod : ILoAMod
     {
         SuccessionConfig SuccessionConfig { get; }
+    }
+
+    /// <summary>
+    /// 세이브 데이터에 추가적인 데이터 삽입을 처리하려고 할때 사용합니다.
+    /// </summary>
+    public interface ILoACustomSaveHandleMod : ILoAMod
+    {
+        SaveConfig SaveConfig { get; }
     }
 }

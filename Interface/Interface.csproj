@@ -172,6 +172,7 @@
     <Compile Include="Model\LoAMoveType.cs" />
     <Compile Include="Model\LoASkinComponent.cs" />
     <Compile Include="Model\MapConfig.cs" />
+    <Compile Include="Model\SaveConfig.cs" />
     <Compile Include="Model\SimpleFunctions.cs" />
     <Compile Include="Model\StoryConfig.cs" />
     <Compile Include="Model\SuccessionConfig.cs" />
