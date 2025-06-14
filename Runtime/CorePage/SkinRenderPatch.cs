@@ -275,7 +275,12 @@ namespace LibraryOfAngela.EquipBook
             var bookItem = unit.CustomBookItem;
             var key = new SkinComponentKey { packageId = bookItem.ClassInfo.workshopID, skinName = bookItem.GetOriginalCharcterName() };
             RemoveCheck(key.skinName);
-            return LoAAssetBundles.Instance.LoadAsset<GameObject>(key.packageId, Instance.prefabs[key] + (ready ? "_Ready" : ""), false);
+            var obj = LoAAssetBundles.Instance.LoadAsset<GameObject>(key.packageId, Instance.prefabs[key] + (ready ? "_Ready" : ""), false);
+            if (obj is null || ready) return obj;
+            var component = AdvancedSkinInfoPatch.Instance.skinComponentTypes.SafeGet(key);
+            if (component is null) return obj;
+            obj.AddComponent(component);
+            return obj;
         }
 
         [HarmonyPatch(typeof(SdCharacterUtil), "LoadAppearance")]

@@ -666,8 +666,29 @@ namespace LibraryOfAngela.Battle
                 if (code.Is(OpCodes.Callvirt, target))
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_1);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), "HandleValidScript"));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), nameof(HandleValidScript)));
                 }
+            }
+        }
+
+        [HarmonyPatch(typeof(BattleAllyCardDetail), "AddCardToHand")]
+        [HarmonyPostfix]
+        private static void After_AddCardToHand(BattleDiceCardModel card, bool front, BattleUnitModel ____self)
+        {
+            try
+            {
+                if (card._script is IAddCardToHandListener ef)
+                {
+                    ef.OnAddToHand(card, ____self, front);
+                }
+                foreach (var effect in BattleInterfaceCache.Of<IAddCardToHandListener>(____self))
+                {
+                    effect.OnAddToHand(card, ____self, front);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
             }
         }
 

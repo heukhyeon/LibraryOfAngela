@@ -425,44 +425,120 @@ namespace LibraryOfAngela.Battle
         /// <returns></returns>
         [HarmonyPatch(typeof(RencounterManager), nameof(RencounterManager.SetMovingStateByActionResult))]
         [HarmonyTranspiler]
-        private static IEnumerable<CodeInstruction> Trans_SetMovingStateByActionResult(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> Trans_SetMovingStateByActionResult(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             var target = AccessTools.Field(typeof(RencounterManager.ActionAfterBehaviour), "preventOverlap");
-            var cnt = 0;
-            foreach (var code in instructions)
+            var myHandler = generator.DeclareLocal(typeof(LoAMovingStateHandler));
+            var enemyHandler = generator.DeclareLocal(typeof(LoAMovingStateHandler));
+            var myField = AccessTools.Field(typeof(RencounterManager), nameof(RencounterManager._currentLibrarianBehaviourResult));
+            var enemyField = AccessTools.Field(typeof(RencounterManager), nameof(RencounterManager._currentEnemyBehaviourResult));
+            foreach (var c in EmitPreCreateAction(myField, enemyField, myHandler)) yield return c;
+            foreach (var c in EmitPreCreateAction(enemyField, myField, enemyHandler)) yield return c;
+
+            var final = AccessTools.Method(typeof(RencounterManager), nameof(RencounterManager.MoveRoutine));
+
+            var codes = new List<CodeInstruction>(instructions);
+            var index = codes.FindLastIndex(d => d.opcode == OpCodes.Stfld);
+
+            for (int i = index + 1; i < codes.Count; i++)
+            {
+                if (codes[i].opcode == OpCodes.Ldarg_0)
+                {
+                    codes.InsertRange(i + 1, new CodeInstruction[] {
+                    new CodeInstruction(OpCodes.Ldloc, 2),
+                     new CodeInstruction(OpCodes.Ldloca_S, 3),
+                    new CodeInstruction(OpCodes.Ldloca_S, 4),
+                    new CodeInstruction(OpCodes.Ldloc, myHandler),
+                    new CodeInstruction(OpCodes.Ldloc, enemyHandler),
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleResultPatch), nameof(HandlePostCreateAction)))
+                    });
+                    break;
+                }
+            }
+
+            foreach (var code in codes)
             {
                 yield return code;
-                if (cnt < 2 && code.Is(OpCodes.Stfld, target))
-                {
-                    if (++cnt == 2)
-                    {
-                        yield return new CodeInstruction(OpCodes.Ldloca_S, 3);
-                        yield return new CodeInstruction(OpCodes.Ldloca_S, 4);
-                        yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleResultPatch), nameof(HandleBeforeMoveRoutine)));
-                    }
-                }
+                
             }
         }
 
-        private static void HandleBeforeMoveRoutine(ref RencounterManager.ActionAfterBehaviour action1, ref RencounterManager.ActionAfterBehaviour action2)
+        private static IEnumerable<CodeInstruction> EmitPreCreateAction(FieldInfo my, FieldInfo enemy, LocalBuilder field)
+        {
+            yield return new CodeInstruction(OpCodes.Ldarg_0);
+            yield return new CodeInstruction(OpCodes.Ldfld, my);
+            yield return new CodeInstruction(OpCodes.Ldarg_0);
+            yield return new CodeInstruction(OpCodes.Ldfld, enemy);
+            yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleResultPatch), nameof(HandlePreCreateAction)));
+            yield return new CodeInstruction(OpCodes.Stloc, field);
+        }
+
+
+        private static LoAMovingStateHandler HandlePreCreateAction(BattleCardBehaviourResult my, BattleCardBehaviourResult enemy)
         {
             try
             {
-                HandleRoutine(action1.view.model, ref action1, ref action2);
-                HandleRoutine(action2.view.model, ref action2, ref action1);
+                var isEnemy = my == RencounterManager.Instance._currentEnemyBehaviourResult;
+
+                var unit = my == RencounterManager.Instance._currentEnemyBehaviourResult ? RencounterManager.Instance._enemy :
+                    RencounterManager.Instance._librarian;
+
+                var target = unit == RencounterManager.Instance._enemy ? RencounterManager.Instance._librarian :
+                    RencounterManager.Instance._enemy;
+
+                var coreInfo = AdvancedEquipBookPatch.Instance.infos.SafeGet(unit.model.Book.BookId)?.movingStateHandler?.Invoke();
+
+                coreInfo?.OnPreMoveRoutine(unit, my, target, enemy);
+
+                return coreInfo;
             }
             catch (Exception e)
             {
                 Logger.LogError(e);
             }
+            return null;
         }
 
-        private static void HandleRoutine(BattleUnitModel unit, ref RencounterManager.ActionAfterBehaviour my, ref RencounterManager.ActionAfterBehaviour opponent)
+
+        private static RencounterManager HandlePostCreateAction(
+            RencounterManager target,
+            Result result,
+            ref RencounterManager.ActionAfterBehaviour action1, 
+            ref RencounterManager.ActionAfterBehaviour action2, 
+            LoAMovingStateHandler my, 
+            LoAMovingStateHandler enemy)
         {
-            var skinInfo = AdvancedSkinInfoPatch.GetInfo(unit);
-            var coreInfo = AdvancedEquipBookPatch.Instance.infos.SafeGet(unit.Book.BookId);
-            skinInfo?.handleBeforeMoveRoutine?.Invoke(ref my, ref opponent);
-            coreInfo?.handleBeforeMoveRoutine?.Invoke(ref my, ref opponent);
+            try
+            {
+                RencounterManager.ActionAfterBehaviour myAction;
+                RencounterManager.ActionAfterBehaviour enemyAction;
+                if (result == Result.Lose)
+                {
+                    myAction = action1;
+                    enemyAction = action2;
+                    my?.OnStartMoveRoutine(ref action1, ref action2);
+                    enemy?.OnStartMoveRoutine(ref action2, ref action1);
+                }
+                else
+                {
+                    myAction = action2;
+                    enemyAction = action1;
+                    my?.OnStartMoveRoutine(ref action2, ref action1);
+                    enemy?.OnStartMoveRoutine(ref action1, ref action2);
+                }
+                action1.endMoveRoutineEvent = (RencounterManager.ActionAfterBehaviour.EffectEvent)
+                    Delegate.Combine(action1.endMoveRoutineEvent, new RencounterManager.ActionAfterBehaviour.EffectEvent(() =>
+                    {
+                        my?.OnEndRoutine(myAction, enemyAction);
+                        enemy?.OnEndRoutine(enemyAction, myAction);
+                    }));
+                return target;
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+            return target;
         }
     }
 }

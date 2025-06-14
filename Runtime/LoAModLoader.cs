@@ -232,7 +232,6 @@ namespace LibraryOfAngela
                 AdvancedSuccessionPatch.Instance.Initialize();
                 LogProgress("SuccessionPatch", 0.02f);
 
-                new AutoBattlePatch().Initialize();
                 LogProgress("AutoBattlePatch", 0.02f);
 
                 BattleResultPatch.Initialize();

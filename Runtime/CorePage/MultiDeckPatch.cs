@@ -133,6 +133,7 @@ namespace LibraryOfAngela.CorePage
         {
             try
             {
+                if (!LoA.IsSaveInitialized) return true;
                 var owner = deckOwners.SafeGet(__instance);
                 if (owner is null) return true;
                 var info = infos.SafeGet(owner.BookId);
@@ -218,6 +219,8 @@ namespace LibraryOfAngela.CorePage
         {
             try
             {
+                if (!LoA.IsSaveInitialized) return;
+
                 var bookId = __instance.GetBookClassInfoId();
                 if (!infos.ContainsKey(bookId)) return;
                 var index = __instance._deckList.IndexOf(__instance._deck);
