@@ -40,7 +40,7 @@ namespace LibraryOfAngela.Battle
             Full,
         }
 
-        private LoggingLevel level = LoggingLevel.Full;
+        private LoggingLevel level = LoAFramework.DEBUG ? LoggingLevel.Full : LoggingLevel.None;
         private StringBuilder totalLogger = new StringBuilder();
         private List<CustomSetterOwner> allyOwners = new List<CustomSetterOwner>();
         private List<BattlePlayingCardDataInUnitModel> enemyCards = new List<BattlePlayingCardDataInUnitModel>();
