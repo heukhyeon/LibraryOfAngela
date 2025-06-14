@@ -81,7 +81,7 @@ namespace LibraryOfAngela.Story
         public void ViewPortDisabled(UIStoryProgressPanel root)
         {
             // 부모도 꺼진 경우면 그냥 꺼질게 꺼진것
-            if (!root.gameObject.activeSelf) return;
+            if (!root.gameObject.activeInHierarchy) return;
             if (TimelinePatch.Instance.CurrentTimeline != null)
             {
                 Logger.Log("Timeline Moved, Restore Other Icons");

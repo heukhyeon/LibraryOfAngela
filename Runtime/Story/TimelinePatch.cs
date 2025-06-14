@@ -8,6 +8,7 @@ using LibraryOfAngela.Extension.Framework;
 using LibraryOfAngela.Model;
 using UI;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace LibraryOfAngela.Story
@@ -135,6 +136,7 @@ namespace LibraryOfAngela.Story
                 }
 
                 var com = panel.iconList[0].closeRect.AddComponent<LoAStoryObserver>();
+                com.root = panel;
                 com.slot = panel.iconList[0];
                 // com.onDisable = CheckStoryDisableFromOtherMod; // 바닐라는 onDisable 감지 안함
                 com.onTimelineConflict = CheckTimelineConflict;
@@ -171,11 +173,10 @@ namespace LibraryOfAngela.Story
         public void SelectTimeline(LoATimelineButton button, string key)
         {
             var currentPanel = timelineRoots.FirstOrDefault(d => d.Value == button).Key;
-            Logger.Log($"Timeline Call :: {key}");
             if (currentPanel is null) return;
             currentPanel?.currentSlot?.SetSlotOpen(false);
 
-            if (!LoATimelineObserver.Instances[currentPanel].gameObject.activeSelf)
+            if (!LoATimelineObserver.Instances[currentPanel].gameObject.activeInHierarchy)
             {
                 Logger.Log("Timeline Conflict Detect. Storyline Reset");
                 TimelineConflict.Instance.FixTimelineRestore(currentPanel);
@@ -189,16 +190,33 @@ namespace LibraryOfAngela.Story
             if (!data.slots.ContainsKey(currentPanel)) InitTimeline(currentPanel, data);
             if (CurrentTimeline != null) ResetTimeline(currentPanel);
             CurrentTimeline = data;
-            TimelineConflict.Instance.ToggleOtherStoryIcons(currentPanel, false);
+            RestoreTimeline(currentPanel, data, true);
+        }
+
+        public void RestoreTimeline(UIStoryProgressPanel panel, TimelineData data, bool fromClick)
+        {
+            if (data is null) return;
+            if (!fromClick)
+            {
+                CurrentTimeline = data;
+                panel?.currentSlot?.SetSlotOpen(false);
+            }
+            // 서고에서 바로 넘어오는 경우 slots 초기화 안됬을수 있음
+            if (!data.slots.ContainsKey(panel)) InitTimeline(panel, data);
+            isChanging = true;
+            TimelineConflict.Instance.ToggleOtherStoryIcons(panel, false);
+            if (fromClick) Logger.Log($"Timeline Call :: {data.key}");
+            else Logger.Log($"Timeline Resume :: {data.key}");
             //TimelineConflict.Instance.ToggleOtherTimelineEnterVisible(currentPanel, false);
-            currentPanel.chapterIconList.ForEach(d =>
+            panel.chapterIconList.ForEach(d =>
             {
                 d.gameObject.SetActive(false);
             });
-            removedChapter[currentPanel] = true;
+
+            removedChapter[panel] = true;
 
             UIStoryProgressIconSlot firstSlot = null;
-            data.slots[currentPanel].ForEach(d =>
+            data.slots[panel].ForEach(d =>
             {
                 d.SetSlotData(new List<StageClassInfo>());
                 d.SetActiveStory(true);
@@ -209,16 +227,17 @@ namespace LibraryOfAngela.Story
             });
             if (firstSlot != null)
             {
-                currentPanel.MoveIconTarget(firstSlot);
-                currentPanel.targetScale = Vector3.one * 0.65f;
+                panel.MoveIconTarget(firstSlot);
+                panel.targetScale = Vector3.one * 0.65f;
             }
             UISoundManager.instance.PlayEffectSound(UISoundType.Card_Over);
-            UpdateReturnButton(currentPanel, data);
+            UpdateReturnButton(panel, data);
             isChanging = false;
         }
 
         public void ResetTimeline(UIStoryProgressPanel panel)
         {
+            
             foreach (var d in datas)
             {
                 var slots = d.Value.slots?.SafeGet(panel);
@@ -314,6 +333,8 @@ namespace LibraryOfAngela.Story
                     observer.matchedTimeline = data;
                     observer.onTimelineConflict = CheckTimelineConflict;
                     observer.onDisable = CheckStoryDisableFromOtherMod;
+
+                    icon.gameObject.AddComponent<Test>();
                     cnt++;
                 }
                 infos.Add(icon);
@@ -338,7 +359,7 @@ namespace LibraryOfAngela.Story
 
         private void CheckStoryDisableFromOtherMod(UIStoryProgressPanel root)
         {
-            if (CurrentTimeline is null || returnButton is null || !root.gameObject.activeSelf || isChanging) return;
+            if (CurrentTimeline is null || returnButton is null || !root.gameObject.activeInHierarchy || isChanging) return;
             if (!LoATimelineObserver.Instances[root].gameObject.activeSelf) return;
             Logger.Log("StoryIcon Disabled Without Return Button ... Maybe Other Mod Interaction?");
             returnButton.gameObject.SetActive(false);
@@ -356,6 +377,7 @@ namespace LibraryOfAngela.Story
                 returnButton.onClick.AddListener(() =>
                 {
                     var origin = returnButton.GetComponentInParent<UIStoryProgressPanel>();
+                    ResetTimeline(origin);
                     origin.SetStoryLine();
                 });
             }
@@ -392,5 +414,6 @@ namespace LibraryOfAngela.Story
             Vector2 originPos = leftObj.transform.localPosition;
             returnButton.transform.localPosition = originPos + data.model.returnButtonPosition;
         }
+
     }
 }

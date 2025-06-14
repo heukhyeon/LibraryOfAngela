@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,10 +18,15 @@ namespace LibraryOfAngela.Story
         public TimelinePatch.TimelineData matchedTimeline;
         private void OnEnable()
         {
-            if (matchedTimeline != TimelinePatch.Instance.CurrentTimeline)
+            root?.StartCoroutine(AwaitAndRecheck(() =>
             {
-                onTimelineConflict?.Invoke(root);
-            }
+                if (gameObject.activeInHierarchy && matchedTimeline != TimelinePatch.Instance.CurrentTimeline)
+                {
+                    // Logger.Log($"Timeline Diff : {matchedTimeline?.key}//{TimelinePatch.Instance.CurrentTimeline?.key}// {root} // {root.GetHashCode()}");
+                    onTimelineConflict?.Invoke(root);
+                }
+            }));
+
         }
 
         private void OnDisable()
@@ -28,7 +34,21 @@ namespace LibraryOfAngela.Story
             // 그냥 단순 열고 닫기는 감지 안함
             if (slot.openRect.activeSelf) return;
 
-            onDisable?.Invoke(root);
+            root?.StartCoroutine(AwaitAndRecheck(() =>
+            {
+                if (!gameObject.activeSelf) onDisable?.Invoke(root);
+            }));
+        }
+
+        /// <summary>
+        /// 스토리 제어중 다 끄고 다시 킬때 비활성화로 인식될수 있다.
+        /// 2프레임 기다린 후에도 꺼진거면 진짜 꺼진것.
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerator AwaitAndRecheck(Action check)
+        {
+            for (int i = 0; i < 2; i++) yield return YieldCache.waitFrame;
+            check();
         }
     }
 }

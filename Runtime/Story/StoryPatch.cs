@@ -129,7 +129,10 @@ namespace LibraryOfAngela.Story
                             icon.SetActiveStory(icon.storyData[0].currentState != StoryState.Close);
                         }
                     }
+                    var timeline = TimelinePatch.Instance.CurrentTimeline;
+                    // 어떤 다른 방법으로 서고 - 초대장간 싱크가 안맞는 경우 마지막 선택으로 맞추기 위해 강제 초기화
                     TimelinePatch.Instance.ResetTimeline(__instance);
+                    TimelinePatch.Instance.RestoreTimeline(__instance, timeline, false);
                 }
                 catch (Exception e)
                 {
