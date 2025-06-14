@@ -19,7 +19,7 @@ namespace LibraryOfAngela.Battle
     class CustomSetterOwner
     {
         public BattleUnitModel owner;
-        public ICustomCardSetter setter;
+        public IHandleAutoCardUse setter;
     }
 
     class PriorityInfo
@@ -102,7 +102,7 @@ namespace LibraryOfAngela.Battle
         }
 
         /// <summary>
-        /// <see cref="ICustomCardSetter"/> 를 보유한 사서 목록을 조회하고, 각 사서의 속도 주사위가 어떤 책장과 합할수 있는지를 처리
+        /// <see cref="IHandleAutoCardUse"/> 를 보유한 사서 목록을 조회하고, 각 사서의 속도 주사위가 어떤 책장과 합할수 있는지를 처리
         /// </summary>
         /// <returns></returns>
         private IEnumerable<CustomSetterOwner> GetCustomSetterOwners()
@@ -110,7 +110,7 @@ namespace LibraryOfAngela.Battle
             foreach (var unit in BattleObjectManager.instance.GetList())
             {
                 if (unit.faction == Faction.Enemy || unit.turnState == BattleUnitTurnState.BREAK || unit.IsDead() || !unit.IsActionable() || unit.IsControlable()) continue;
-                var setter = BattleInterfaceCache.Of<ICustomCardSetter>(unit).FirstOrDefault();
+                var setter = BattleInterfaceCache.Of<IHandleAutoCardUse>(unit).FirstOrDefault();
                 if (setter is null) continue;
                 var owner = new CustomSetterOwner { owner = unit, setter = setter };
                 for (int i = 0; i < unit.speedDiceCount; i++)

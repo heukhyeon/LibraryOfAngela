@@ -973,9 +973,9 @@ namespace LibraryOfAngela.Battle
         private static bool HandleSwitchableTarget(bool origin, BattleUnitModel target)
         {
             if (origin) return true;
-            foreach (var t in BattleInterfaceCache.Of<IAutoController>(target))
+            foreach (var t in BattleInterfaceCache.Of<IHandleAutoCardUse>(target))
             {
-                if (t.IsSwitchable)
+                if (t.IsParryigSwitchable)
                 {
                     return true;
                 }

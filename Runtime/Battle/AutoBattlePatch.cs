@@ -89,7 +89,7 @@ namespace LibraryOfAngela.Battle
         public static List<BattleUnitModel> FilterUnitsForCustomAI(List<BattleUnitModel> originalList)
         {
             if (originalList == null) return new List<BattleUnitModel>();
-            return originalList.Where(unit => BattleInterfaceCache.Of<ICustomCardSetter>(unit).FirstOrDefault() == null).ToList();
+            return originalList.Where(unit => BattleInterfaceCache.Of<IHandleAutoCardUse>(unit).FirstOrDefault() == null).ToList();
         }
 
         [HarmonyPatch(typeof(StageController), "SetAutoCardForNonControlablePlayer")]
