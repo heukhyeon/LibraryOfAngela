@@ -55,9 +55,14 @@ namespace LibraryOfAngela.Story
                     }
                     else if (state is LoAUnitReadyState.Replaced d3)
                     {
-                        var index = floor.addedunitList.IndexOf(unit);
-                        if (index >= 0) floor.addedunitList[index] = d3.replaceUnit;
-                        floor._unitList[i] = d3.replaceUnit;
+
+                        if (unit.unitData.name != d3.replaceUnit.unitData.name || unit.unitData.bookItem.BookId != d3.replaceUnit.unitData.bookItem.BookId)
+                        {
+                            var index = floor.addedunitList.IndexOf(unit);
+                            if (index >= 0) floor.addedunitList[index] = d3.replaceUnit;
+                            floor._unitList[i] = d3.replaceUnit;
+                        }
+
                     }
                     else if (state is LoAUnitReadyState.Removed d4)
                     {
