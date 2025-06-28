@@ -414,10 +414,14 @@ namespace LibraryOfAngela.Battle
             try
             {
                 __state.order = __instance._self.cardOrder;
-                if (__state.order >= 0)
+                if (__state.order >= 0 && __state.order < __instance.cardAry.Count)
                 {
                     __state.releasedCard = __instance.cardAry[__instance._self.cardOrder];
                 }
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                Logger.Log($"SelfOrder OutOfRange :: {__instance._self.faction}.{__instance._self.UnitData.unitData.name} // {__instance._self.cardOrder} // {__instance.cardAry.Count}");
             }
             catch (Exception e)
             {
