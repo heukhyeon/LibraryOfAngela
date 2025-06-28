@@ -97,16 +97,6 @@ namespace LoALoader
             Instance.observer.SaveSelectionDataComplete();
         }
 
-        [HarmonyPatch(typeof(ModContentManager), nameof(ModContentManager.AddErrorLog), argumentTypes:typeof(string))]
-        [HarmonyPostfix]
-        private static void After_AddErrorLog(string msg)
-        {
-            UnityEngine.Debug.Log(Environment.StackTrace);
-        }
-
-
-
-
         [HarmonyPatch(typeof(ModContent), nameof(ModContent.Loads))]
         [HarmonyPrefix]
         private static bool Before_Loads(ModContent __instance)

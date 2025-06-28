@@ -69,6 +69,13 @@ namespace LibraryOfAngela
             foreach (var pair in modBooks)
             {
                 BookXmlList.Instance._workshopBookDict.Remove(pair.Key);
+                pair.Value.ForEach(d =>
+                {
+                    if (d.TextId > 0)
+                    {
+                        d.InnerName = Singleton<BookDescXmlList>.Instance.GetBookName(new LorId(d.TextId));
+                    }
+                });
                 BookXmlList.Instance.AddEquipPageByMod(pair.Key, pair.Value);
             }
             foreach (var pair in modCards)
