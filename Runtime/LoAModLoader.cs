@@ -234,7 +234,6 @@ namespace LibraryOfAngela
 
                 LogProgress("AutoBattlePatch", 0.02f);
 
-                BattleResultPatch.Initialize();
                 BattleLogPatch.Instance.Initialize();
                 MovePatch.Initialize();
                 LogProgress("UIAndUtilPatches", 0.02f);
@@ -302,7 +301,7 @@ namespace LibraryOfAngela
             var du = callInitializerCompleteTime - time;
             var final = new StringBuilder($"Initialize Logic End, Duration : {(current - time) / 1000.0}s\n");
             final.AppendLine($"- Duration CallInitializer : {du / 1000.0}s");
-            final.AppendLine($"- Duration without CallInitializer : {(current - du) / 1000.0}s");
+            final.AppendLine($"- Duration without CallInitializer : {(current - time - du) / 1000.0}s");
             Logger.Log(final.ToString());
         }
 
