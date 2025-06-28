@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using LibraryOfAngela.Global;
 using LibraryOfAngela.Model;
 
 namespace LibraryOfAngela.Interface_Internal

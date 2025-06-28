@@ -2,8 +2,6 @@ using HarmonyLib;
 using LibraryOfAngela.CorePage;
 using LibraryOfAngela.EquipBook;
 using LibraryOfAngela.Extension;
-using LibraryOfAngela.Global;
-using LibraryOfAngela.Implement;
 using LibraryOfAngela.Interface_External;
 using LOR_DiceSystem;
 using System;
@@ -11,8 +9,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace LibraryOfAngela.Battle
@@ -29,14 +25,6 @@ namespace LibraryOfAngela.Battle
 
         private static List<LimbusLog> limbusDiceResults = new List<LimbusLog>();
         private static bool isExistLimbusResult = false;
-
-        public static void Initialize()
-        {
-            // StageController의 중첩 타입 패치가 필요하다면 추가
-            
-            Logger.Log("BattleResultPatch Start");
-            Logger.Log("LoA ::: BattleResultPatch Complete");
-        }
 
         public static void RegisterLibmusDice(LimbusDiceAbility ability)
         {
@@ -263,6 +251,12 @@ namespace LibraryOfAngela.Battle
                 var targetResult = targetResultIndex >= 0 ? limbusDiceResults[targetResultIndex].result : target.targetResult;
                 if (targetResult.vanillaDiceValueList.Count > 0)
                 {
+                    var owner = targetResult.behaviour.owner;
+                    if (owner.view == RencounterManager.Instance._enemy && RencounterManager.Instance.CurRencounterState >= RencounterManager.RencounterState.PrintLibrarianVanillaDice)
+                    {
+                        // 남은 주사위가 없는 경우, 이 경우 적의 주사위 판정이 이미 끝난 상태라 다시 적용하면 위력이 무시된 상태가 된다.
+                        return origin;
+                    }
                     var num = targetResult.vanillaDiceValueList[0];
                     targetResult.vanillaDiceValueList.RemoveAt(0);
                     targetResult.behaviour.owner.view.diceActionUI.SetDiceNew(
