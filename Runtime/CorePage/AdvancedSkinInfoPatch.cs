@@ -364,6 +364,14 @@ namespace LibraryOfAngela.CorePage
 
             foreach (var code in instructions)
             {
+                if (code.opcode == OpCodes.Stloc_3)
+                {
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BattleUnitView), nameof(BattleUnitView.model)));
+                    yield return new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(BattleUnitModel), "get_UnitData"));
+                    yield return new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UnitBattleDataModel), nameof(UnitBattleDataModel.unitData)));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(FacePatch), nameof(FacePatch.HandleLoAFaceBase)));
+                }
                 yield return code;
                 if (code.Calls(target))
                 {
@@ -394,6 +402,14 @@ namespace LibraryOfAngela.CorePage
 
             foreach (var code in instructions)
             {
+                if (code.opcode == OpCodes.Stloc_3)
+                {
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BattleUnitView), nameof(BattleUnitView.model)));
+                    yield return new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(BattleUnitModel), "get_UnitData"));
+                    yield return new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UnitBattleDataModel), nameof(UnitBattleDataModel.unitData)));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(FacePatch), nameof(FacePatch.HandleLoAFaceBase)));
+                }
                 yield return code;
                 if (code.Calls(target))
                 {
