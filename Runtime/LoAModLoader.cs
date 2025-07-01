@@ -102,13 +102,14 @@ namespace LibraryOfAngela
 
         // GC 방지
         private static Task loaLoadingTask;
+        private static long manualStartTime;
 
         public void Start()
         {
             modLoadingProgress = 0f;
             Debug.Log("LoA :: Initialize Start");
             modLoadingProgress += 0.1f;
-
+            manualStartTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             bool isSuccess = false;
             try
             {
@@ -133,6 +134,15 @@ namespace LibraryOfAngela
             try
             {
                 Debug.Log("LoARuntime Init Task Start");
+
+                var _ = Task.Run(async () =>
+                {
+                    while (modLoadingProgress < 1f)
+                    {
+                        await Task.Delay(5000);
+                        Logger.CheckFlush(modLoadingProgress);
+                    }
+                });
 
                 var callInitializerCompleteTask = FileParser.WaitCallInitializerComplete().ContinueWith((t) =>
                 {
@@ -299,7 +309,8 @@ namespace LibraryOfAngela
             }
             var current = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             var du = callInitializerCompleteTime - time;
-            var final = new StringBuilder($"Initialize Logic End, Duration : {(current - time) / 1000.0}s\n");
+            var final = new StringBuilder($"Initialize Logic End, Duration : {(current - manualStartTime) / 1000.0}s\n");
+            final.AppendLine($"- Duration Start Called And Task Create : {(time - manualStartTime) / 1000.0}s");
             final.AppendLine($"- Duration CallInitializer : {du / 1000.0}s");
             final.AppendLine($"- Duration without CallInitializer : {(current - time - du) / 1000.0}s");
             Logger.Log(final.ToString());

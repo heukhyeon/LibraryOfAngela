@@ -97,6 +97,37 @@ namespace LoALoader
             Instance.observer.SaveSelectionDataComplete();
         }
 
+        [HarmonyPatch(typeof(AssemblyManager), nameof(AssemblyManager.CallAllInitializer))]
+        [HarmonyTranspiler]
+        private static IEnumerable<CodeInstruction> Trans_CallAllInitializer(IEnumerable<CodeInstruction> instructions)
+        {
+            var initMethod = AccessTools.Method(typeof(ModInitializer), nameof(ModInitializer.OnInitializeMod));
+            foreach (var code in instructions)
+            {
+                if (code.opcode == OpCodes.Ldloc_1)
+                {
+                    yield return new CodeInstruction(OpCodes.Ldloc_1);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LoAInitializer), nameof(BeforeCall)));
+                }
+                yield return code;
+                if (code.Calls(initMethod))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldloc_1);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LoAInitializer), nameof(AfterCall)));
+                }
+            }
+        }
+
+        private static void BeforeCall(ModInitializer mod)
+        {
+            UnityEngine.Debug.Log($"Call Mod Before :" + mod.GetType().FullName + "// " + mod.GetType().Assembly.Location);
+        }
+
+        private static void AfterCall(ModInitializer mod)
+        {
+            UnityEngine.Debug.Log($"Call Mod After :" + mod.GetType().FullName + "// " + mod.GetType().Assembly.Location);
+        }
+
         [HarmonyPatch(typeof(ModContent), nameof(ModContent.Loads))]
         [HarmonyPrefix]
         private static bool Before_Loads(ModContent __instance)

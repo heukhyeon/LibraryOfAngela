@@ -274,6 +274,11 @@ namespace LibraryOfAngela.EquipBook
             }
             var bookItem = unit.CustomBookItem;
             var key = new SkinComponentKey { packageId = bookItem.ClassInfo.workshopID, skinName = bookItem.GetOriginalCharcterName() };
+            return LoadLoAPrefab(key, ready);
+        }
+
+        public static GameObject LoadLoAPrefab(SkinComponentKey key, bool ready)
+        {
             RemoveCheck(key.skinName);
             var obj = LoAAssetBundles.Instance.LoadAsset<GameObject>(key.packageId, Instance.prefabs[key] + (ready ? "_Ready" : ""), false);
             if (obj is null || ready) return obj;

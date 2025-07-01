@@ -1,3 +1,4 @@
+using HarmonyLib;
 using LibraryOfAngela;
 using LoALoader.Model;
 using LOR_DiceSystem;
@@ -35,10 +36,7 @@ namespace LoALoader
 
     public class FileParser
     {
-        static FileParser()
-        {
-            ThreadPool.QueueUserWorkItem(EnqueueJob);
-        }
+
 
         private static ConcurrentQueue<FileParseRequest> initQueue = new ConcurrentQueue<FileParseRequest>();
         private static ConcurrentQueue<FileParseRequest> queue = new ConcurrentQueue<FileParseRequest>();
@@ -51,6 +49,12 @@ namespace LoALoader
         private static List<Task> cardWorkTasks = new List<Task>();
         private static bool initCheckSkip = false;
         internal static ConcurrentQueue<FileParseRequest> assembliePaths = new ConcurrentQueue<FileParseRequest>();
+        private static Thread mainThread;
+
+        static FileParser()
+        {
+            ThreadPool.QueueUserWorkItem(EnqueueJob);
+        }
 
         internal static Task Enqueue(string packageId, string modName, string path, byte[] bytes, FileType type)
         {
@@ -99,6 +103,22 @@ namespace LoALoader
 
         private static void EnqueueJob(object param)
         {
+            var logger = new StringBuilder("\n");
+            var repeatCnt = 0;
+            bool firstStepOver = false;
+       
+            try
+            {
+                var method = AccessTools.Method(typeof(UnityEngine.Object), "CurrentThreadIsMainThread");
+                Debug.Log($"LoA Loader :: Enqueue Job Start, Current Thread is Main Thread :: " + method.Invoke(null, null));
+            }
+            catch (Exception e)
+            {
+                Debug.Log("LoALoader :: Thread Check Error");
+                Debug.LogError(e);
+
+            }
+
             while (true)
             {
                 if (!initCheckSkip) queueNotifier.WaitOne(300);
@@ -138,12 +158,45 @@ namespace LoALoader
                     // Debug.Log("LoA :: Wait 3" + flag);
                     if (!flag) break;
                 }
-                if (!initCheckSkip) continue;
+                if (!initCheckSkip)
+                {
+                    repeatCnt++;
+                    logger.AppendLine("LoA Loader :: Init Check Not Skip :" + repeatCnt);
+                    if (repeatCnt % 5 == 1)
+                    {
+                        Debug.Log(logger.ToString());
+                        logger = new StringBuilder("\n");
+                    }
+                    continue;
+                }
+                else if (!firstStepOver)
+                {
+                    firstStepOver = true;
+                    logger.AppendLine("LoA Loader :: Init Check Skip Detected :" + repeatCnt);
+                    repeatCnt = 0;
+                }
 
-                callInitalizerSource.Task.Wait();
+                if (!callInitalizerSource.Task.Wait(2000))
+                {
+                    repeatCnt++;
+                    logger.AppendLine("LoA Loader :: Call Initializer Not Completed, Repeat Wait : " + repeatCnt);
+                    if (repeatCnt % 20 == 1)
+                    {
+                        Debug.Log(logger.ToString());
+                        logger = new StringBuilder("\n");
+                    }
+                    continue;
+                }
 
                 // 런타임에서 명시적으로 data wait 을 호출해주지않았다면 더 추가될수있으므로 다시 루프
-                if (dataWaitSource is null) continue;
+                if (dataWaitSource is null)
+                {
+                    logger.AppendLine("LoA Loader :: Data Wait Source Not Init");
+                    Debug.Log(logger.ToString());
+                    logger = new StringBuilder("\n");
+                    Thread.Sleep(1000);
+                    continue;
+                }
 
                 try
                 {
@@ -160,11 +213,13 @@ namespace LoALoader
                 break;
             }
             Task.WhenAll(cardWorkTasks).Wait();
+            Debug.Log("LoA Loader :: CardWorkTask Complete");
             foreach (var d in cardworks)
             {
                 Singleton<CustomizingCardArtworkLoader>.Instance.AddArtworkData(d.packageId, d.datas);
             }
             cardWorkwaitSource.SetResult(true);
+            Debug.Log("LoA Loader :: CardWorkTask Add Complete");
         }
 
         private static void ParseData(string packageId, string path, byte[] bytes)

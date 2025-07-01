@@ -89,9 +89,20 @@ namespace LibraryOfAngela.BattleUI
             if (Instance.effectUI is null)
             {
                 Logger.Log("Create LoA Effect Canvas UI");
-                var targetCamera = GameObject.Find("[Camera]Overlay_UI").GetComponent<Camera>();
-                var targetCanvas = GameObject.Find("[Canvas]UnitCardsInHandUI").GetComponent<Canvas>();
-                Instance.effectUI = EffectCanvasUI.Create(targetCanvas, targetCamera);
+                int step = -1;
+                try
+                {
+                    var targetCamera = GameObject.Find("[Camera]Overlay_UI").GetComponent<Camera>();
+                    var targetCanvas = GameObject.Find("[Canvas]UnitCardsInHandUI").GetComponent<Canvas>();
+                    Instance.effectUI = EffectCanvasUI.Create(targetCanvas, targetCamera, out step);
+                }
+                catch (Exception e)
+                {
+                    Logger.Log("Create LoA Effect Canvas Error // Step : " + step);
+                    Logger.LogError(e);
+                    Instance.effectExists = false;
+                }
+
             }
             var target = Instance.currentEffects.Find(x => x.isValidCard(cardModel, unitModel));
             if (!Instance.handEffects.ContainsKey(__instance))

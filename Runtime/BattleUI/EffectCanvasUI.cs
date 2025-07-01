@@ -40,15 +40,20 @@ namespace LibraryOfAngela.BattleUI
         private const string RENDER_ASSET_PATH = "Assets/Bundle/Framework/EffectAsset.prefab";
         private const string RENDER_VOLUME_PATH = "Assets/Bundle/Framework/LoAPostProcessVolume.prefab";
 
-        public static EffectCanvasUI Create(Canvas origin, Camera originCamera)
+        public static EffectCanvasUI Create(Canvas origin, Camera originCamera, out int step)
         {
+            step = 0;
+
             var canvas = Instantiate(origin.gameObject, origin.transform.parent).GetComponent<Canvas>();
             foreach (Transform child in canvas.transform)
             {
                 Destroy(child.gameObject);
             }
+     
             Destroy(canvas.GetComponent<BattleUnitCardsInHandUI>());
             Destroy(canvas.GetComponent<BattleUnitInformationUI>());
+
+            step = 1;
             var renderCanvas = Instantiate(origin.gameObject, origin.transform.parent).GetComponent<Canvas>();
             foreach (Transform child in renderCanvas.transform)
             {
@@ -58,6 +63,7 @@ namespace LibraryOfAngela.BattleUI
             Destroy(renderCanvas.GetComponent<GraphicRaycaster>());
             Destroy(renderCanvas.GetComponent<BattleUnitInformationUI>());
 
+            step = 2;
             var ui = canvas.gameObject.AddComponent<EffectCanvasUI>();
             ui.canvas = canvas;
             ui.originCanvas = origin;
@@ -65,6 +71,8 @@ namespace LibraryOfAngela.BattleUI
             ui.canvas.gameObject.layer = LAYER;
             ui.gameObject.name = "LoACanvas";
             renderCanvas.gameObject.name = "LoARenderCanvus";
+
+            step = 3;
 
             ui.camera = Instantiate(originCamera.gameObject, originCamera.transform.parent).GetComponent<Camera>();
             ui.camera.CopyFrom(originCamera);
@@ -78,6 +86,7 @@ namespace LibraryOfAngela.BattleUI
             layer.volumeTrigger = ui.camera.transform;
             layer.volumeLayer = ui.camera.cullingMask;
 
+            step = 4;
             ui.renderImage = Instantiate(LoAFramework.BattleUiBundle.LoadAsset<GameObject>(RENDER_ASSET_PATH), renderCanvas.transform).GetComponent<RawImage>();
             ui.renderImage.raycastTarget = false;
             ui.texture = LoAFramework.BattleUiBundle.LoadAsset<RenderTexture>(RENDER_TEXTURE_PATH);
@@ -85,6 +94,7 @@ namespace LibraryOfAngela.BattleUI
             ui.camera.targetTexture = ui.texture;
             ui.renderImage.texture = ui.texture;
 
+            step = 5;
             Logger.Log("LoAEffectCanvasUI Create Success");
             return ui;
         }

@@ -360,12 +360,19 @@ namespace LibraryOfAngela.CorePage
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> Trans_ChangeEgoSkin(IEnumerable<CodeInstruction> instructions)
         {
+            var target = AccessTools.Method(typeof(AssetBundleManagerRemake), nameof(AssetBundleManagerRemake.LoadCharacterPrefab));
+
             foreach (var code in instructions)
             {
                 yield return code;
-                if (code.opcode == OpCodes.Call && (code.operand as MethodInfo)?.Name == "Instantiate")
+                if (code.Calls(target))
                 {
-                    yield return new CodeInstruction(OpCodes.Ldloc_1);
+                    yield return new CodeInstruction(OpCodes.Ldarg_1);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AdvancedSkinInfoPatch), nameof(FixValidChangePrefab)));
+                }
+                else if (code.opcode == OpCodes.Call && (code.operand as MethodInfo)?.Name == "Instantiate")
+                {
+                    yield return new CodeInstruction(OpCodes.Ldarg_1);
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AdvancedSkinInfoPatch), nameof(FixValidChangeSkin)));
                 }
             }
@@ -383,10 +390,17 @@ namespace LibraryOfAngela.CorePage
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> Trans_ChangeSkin(IEnumerable<CodeInstruction> instructions)
         {
+            var target = AccessTools.Method(typeof(AssetBundleManagerRemake), nameof(AssetBundleManagerRemake.LoadCharacterPrefab));
+
             foreach (var code in instructions)
             {
                 yield return code;
-                if (code.opcode == OpCodes.Call && (code.operand as MethodInfo)?.Name == "Instantiate")
+                if (code.Calls(target))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldarg_1);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AdvancedSkinInfoPatch), nameof(FixValidChangePrefab)));
+                }
+                else if (code.opcode == OpCodes.Call && (code.operand as MethodInfo)?.Name == "Instantiate")
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_1);
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AdvancedSkinInfoPatch), nameof(FixValidChangeSkin)));
@@ -570,6 +584,26 @@ namespace LibraryOfAngela.CorePage
 
             return SkinInfoProvider.ConvertValidSkinName(view.model?.customBook?._characterSkin ?? "", view.model.UnitData.unitData);
         }
+
+        private static GameObject FixValidChangePrefab(GameObject origin, string name)
+        {
+            if (origin is null)
+            {
+                if (LoAFramework.DEBUG)
+                {
+                    Logger.Log("ChangeSkin Called 2, But Object is null ...? :" + name);
+                }
+                return origin;
+            }
+
+            var info = Instance.infos.SafeGet(name);
+            if (info?.prefabKey != null && origin.name == "[Prefab]Appearance_Custom")
+            {
+                return SkinRenderPatch.LoadLoAPrefab(new SkinComponentKey { packageId = info.packageId, skinName = name }, false);
+            }
+            return origin;
+        }
+
     
         private static GameObject FixValidChangeSkin(GameObject origin, string name)
         {
@@ -577,7 +611,7 @@ namespace LibraryOfAngela.CorePage
             {
                 if (LoAFramework.DEBUG)
                 {
-                    Logger.Log("ChangeSkin Called, But Object is null ...? :" + name);
+                    Logger.Log("ChangeSkin Called 2, But Object is null ...? :" + name);
                 }
                 return origin;
             }
@@ -586,17 +620,20 @@ namespace LibraryOfAngela.CorePage
             {
                 name = name.StartsWith("[Prefab]") ? name.Substring(8) : name;
                 var data = Instance.infos.SafeGet(name);
+                if (!string.IsNullOrEmpty(data.prefabKey)) return origin;
+
                 if (data != null)
                 {
                     WorkshopSkinData workshopBookSkinData = Singleton<CustomizingBookSkinLoader>.Instance.GetWorkshopBookSkinData(
-        data.packageId,
-        name
-    );
+data.packageId,
+name
+);
                     WorkshopSkinDataSetter component = origin.GetComponent<WorkshopSkinDataSetter>();
                     if (workshopBookSkinData != null)
                     {
                         component.SetData(workshopBookSkinData);
                     }
+
                     Instance.isSkinChanged = true;
                 }
                 else if (LoAFramework.DEBUG)
