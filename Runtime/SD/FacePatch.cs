@@ -18,7 +18,7 @@ namespace LibraryOfAngela.SD
 {
     class FacePatch
     {
-        private static Dictionary<string, AdvancedSkinInfo> faceTargets;
+        private static Dictionary<string, AdvancedSkinInfo> faceTargets = new Dictionary<string, AdvancedSkinInfo>();
 
         public static void Initialize(List<AdvancedSkinInfo> infos)
         {
@@ -30,32 +30,6 @@ namespace LibraryOfAngela.SD
                 {
                     faceTargets[t.skinName] = t;
                 }
-            }
-            InternalExtension.SetRange(typeof(FacePatch));
-        }
-
-        /// <summary>
-        /// this.charAppearance.InitCustomData(customizeData, this.model.UnitData.unitData.defaultBook.GetBookClassInfoId());
-        /// ->
-        /// FacePatchComponent.InjectFacePatchComponent(this.charAppearance, this.model.UnitData.unitData).InitCustomData(customizeData, this.model.UnitData.unitData.defaultBook.GetBookClassInfoId());
-        /// </summary>
-        /// <param name="instructions"></param>
-        /// <returns></returns>
-        [HarmonyPatch(typeof(BattleUnitView), "ChangeSkin")]
-        [HarmonyTranspiler]
-        private static IEnumerable<CodeInstruction> Trans_ChangeSkin(IEnumerable<CodeInstruction> instructions)
-        {
-            var codes = new List<CodeInstruction>(instructions);
-            for (int i = 0; i < codes.Count; i++)
-            {
-                var code = codes[i];
-                if (code.opcode == OpCodes.Stloc_3)
-                {
-                    yield return new CodeInstruction(OpCodes.Ldarg_0);
-                    yield return new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BattleUnitView), "model"));
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(FacePatch), nameof(FacePatch.HandleLoAFace)));
-                }
-                yield return code;
             }
         }
 
@@ -129,68 +103,22 @@ namespace LibraryOfAngela.SD
             return false;
         }
 
-        private static UnitCustomizingData HandleLoAFace(UnitCustomizingData origin, BattleUnitModel owner)
-        {
-            try
-            {
-                var skin = AdvancedSkinInfoPatch.GetCurrentSkinName(owner.view);
-                var originSkin = owner.UnitData.unitData.workshopSkin;
-                if (string.IsNullOrEmpty(originSkin)) originSkin = owner.customBook.GetCharacterName();
-                var corePage = owner.Book.BookId;
-                var skinInfo = AdvancedSkinInfoPatch.Instance.infos.SafeGet(skin);
-                var faceBySkin = skinInfo?.overrideFace?.Invoke(skin, originSkin, origin);
-                var faceByCorePage = AdvancedEquipBookPatch.Instance.infos.SafeGet(corePage)?.overrideFace?.Invoke(skin, originSkin, origin);
-                if (faceBySkin != null)
-                {
-                    faceBySkin.packageId = skinInfo.packageId;
-                    faceBySkin._bUseCustomData = faceBySkin.IsDestroyOriginalFace(skin);
-                    return faceBySkin;
-                }
-                skinInfo = AdvancedSkinInfoPatch.Instance.infos.SafeGet(originSkin);
-                faceBySkin = skinInfo?.overrideFace?.Invoke(skin, originSkin, origin);
-                if (faceBySkin != null)
-                {
-                    faceBySkin.packageId = skinInfo.packageId;
-                    faceBySkin._bUseCustomData = faceBySkin.IsDestroyOriginalFace(skin);
-                    return faceBySkin;
-                }
-
-                if (faceByCorePage != null)
-                {
-                    faceByCorePage.packageId = corePage.packageId;
-                    faceByCorePage._bUseCustomData = faceByCorePage.IsDestroyOriginalFace(skin);
-                    return faceByCorePage;
-                }
-                if (skinInfo?.overrideFaceSprite != null)
-                {
-                    var f = new LegacyLoAFaceData(skinInfo);
-                    f._bUseCustomData = f.IsDestroyOriginalFace(skin);
-                    return f;
-                }
-                if (SkinInfoProvider.Instance.isPropertyEnabled(owner.UnitData.unitData, SkinProperty.KEY_ORIGIN_SKIN))
-                {
-                    var f = new OriginKeepFaceData();
-                    f._bUseCustomData = false;
-                    return f;
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogError(e);
-            }
-            return origin;
-        }
-
-        public static UnitCustomizingData HandleLoAFaceBase(UnitCustomizingData origin, UnitDataModel owner)
+        public static UnitCustomizingData HandleLoAFaceBase(UnitCustomizingData origin, UnitDataModel owner, string currentSkinName)
         {
             try
             {
                 var skin = owner.workshopSkin;
                 if (string.IsNullOrEmpty(skin)) skin = owner.CustomBookItem.GetCharacterName();
+                if (string.IsNullOrEmpty(currentSkinName)) currentSkinName = skin;
                 var corePage = owner.bookItem.BookId;
                 var skinInfo = AdvancedSkinInfoPatch.Instance.infos.SafeGet(skin);
-                var faceBySkin = skinInfo?.overrideFace?.Invoke(skin, skin, origin);
-                var faceByCorePage = AdvancedEquipBookPatch.Instance.infos.SafeGet(corePage)?.overrideFace?.Invoke(skin, skin, origin);
+                var faceBySkin = skinInfo?.overrideFace?.Invoke(currentSkinName, skin, origin);
+                if (faceBySkin == null)
+                {
+                    faceBySkin = AdvancedSkinInfoPatch.Instance.infos.SafeGet(currentSkinName)?.overrideFace?.Invoke(currentSkinName, skin, origin);
+                }
+
+                var faceByCorePage = AdvancedEquipBookPatch.Instance.infos.SafeGet(corePage)?.overrideFace?.Invoke(currentSkinName, skin, origin);
                 if (faceBySkin != null)
                 {
                     faceBySkin.packageId = skinInfo.packageId;

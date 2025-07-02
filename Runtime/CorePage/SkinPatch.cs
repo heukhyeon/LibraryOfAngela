@@ -53,6 +53,7 @@ namespace LibraryOfAngela.EquipBook
                 else if (code.opcode == OpCodes.Stloc_0)
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Ldnull);
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(FacePatch), nameof(FacePatch.HandleLoAFaceBase)));
                     yield return code;
                 }
@@ -139,6 +140,7 @@ namespace LibraryOfAngela.EquipBook
                 {
                     yield return code;
                     yield return new CodeInstruction(OpCodes.Ldarg_1);
+                    yield return new CodeInstruction(OpCodes.Ldnull);
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(FacePatch), nameof(FacePatch.HandleLoAFaceBase)));
                 }
                 else if (code.Is(OpCodes.Callvirt, getItemProperty))

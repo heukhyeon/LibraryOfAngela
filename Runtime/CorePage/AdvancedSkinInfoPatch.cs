@@ -370,6 +370,7 @@ namespace LibraryOfAngela.CorePage
                     yield return new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BattleUnitView), nameof(BattleUnitView.model)));
                     yield return new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(BattleUnitModel), "get_UnitData"));
                     yield return new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UnitBattleDataModel), nameof(UnitBattleDataModel.unitData)));
+                    yield return new CodeInstruction(OpCodes.Ldarg_1);
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(FacePatch), nameof(FacePatch.HandleLoAFaceBase)));
                 }
                 yield return code;
@@ -408,6 +409,7 @@ namespace LibraryOfAngela.CorePage
                     yield return new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BattleUnitView), nameof(BattleUnitView.model)));
                     yield return new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(BattleUnitModel), "get_UnitData"));
                     yield return new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(UnitBattleDataModel), nameof(UnitBattleDataModel.unitData)));
+                    yield return new CodeInstruction(OpCodes.Ldarg_1);
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(FacePatch), nameof(FacePatch.HandleLoAFaceBase)));
                 }
                 yield return code;
