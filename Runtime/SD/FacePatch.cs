@@ -90,15 +90,23 @@ namespace LibraryOfAngela.SD
 
         private static bool IsLoACustomFace(UICardEquipInfoSlot slot, CardOwnResult info)
         {
-            var key = info.unit.CustomBookItem._characterSkin;
-            if (faceTargets.ContainsKey(key))
+            try
             {
-                slot.faceEditor.InitBySephirah(new LorId(16));
-                var artwork = LoAModCache.Instance[faceTargets[key].packageId].Artworks;
-                slot.faceEditor.head.sprite = artwork[faceTargets[key].overrideFaceSprite + "_setting"];
-                slot.faceEditor.head.enabled = true;
-                slot.faceEditor.head.color = new UnityEngine.Color(1f, 1f, 1f, 1f);
-                return true;
+                var key = info.unit.CustomBookItem._characterSkin;
+                if (faceTargets.ContainsKey(key))
+                {
+                    slot.faceEditor.InitBySephirah(new LorId(16));
+                    var artwork = LoAModCache.Instance[faceTargets[key].packageId].Artworks;
+                    slot.faceEditor.head.sprite = artwork[faceTargets[key].overrideFaceSprite + "_setting"];
+                    slot.faceEditor.head.enabled = true;
+                    slot.faceEditor.head.color = new UnityEngine.Color(1f, 1f, 1f, 1f);
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
             }
             return false;
         }

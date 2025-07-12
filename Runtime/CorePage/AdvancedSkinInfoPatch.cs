@@ -638,7 +638,7 @@ namespace LibraryOfAngela.CorePage
             {
                 name = name.StartsWith("[Prefab]") ? name.Substring(8) : name;
                 var data = Instance.infos.SafeGet(name);
-                if (!string.IsNullOrEmpty(data.prefabKey)) return origin;
+                if (!string.IsNullOrEmpty(data?.prefabKey)) return origin;
 
                 if (data != null)
                 {
