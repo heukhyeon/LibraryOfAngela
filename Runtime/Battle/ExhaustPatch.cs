@@ -118,8 +118,11 @@ namespace LibraryOfAngela.Battle
 
         private static void ExhaustCards(BattleAllyCardDetail __instance, List<BattleDiceCardModel> cards)
         {
+            var effects = new HashSet<IOnExhaustCard>();
+
             foreach (var eff in BattleInterfaceCache.Of<IOnExhaustCard>(__instance._self))
             {
+                if (!effects.Add(eff)) continue;
                 foreach (var c in cards)
                 {
                     try
@@ -132,10 +135,33 @@ namespace LibraryOfAngela.Battle
                     }
                 }
             }
+
+            foreach (var card in cards)
+            {
+                if (card._script is IOnExhaustCard eff2 && effects.Add(eff2))
+                {
+                    try
+                    {
+                        eff2.OnExhaustCard(card);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e);
+                    }
+                }
+            }
+
+            effects.Clear();
+
+
         }
 
         private static BattleDiceCardModel ExhaustCard(BattleDiceCardModel c, BattleAllyCardDetail __instance)
         {
+
+            var effects = new HashSet<IOnExhaustCard>();
+
+
             foreach (var eff in BattleInterfaceCache.Of<IOnExhaustCard>(__instance._self))
             {
                 try
@@ -147,6 +173,21 @@ namespace LibraryOfAngela.Battle
                     Logger.LogError(e);
                 }
             }
+
+            if (c._script is IOnExhaustCard eff2 && effects.Add(eff2))
+            {
+                try
+                {
+                    eff2.OnExhaustCard(c);
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError(e);
+                }
+            }
+
+            effects.Clear();
+
             return c;
         }
 
@@ -154,6 +195,8 @@ namespace LibraryOfAngela.Battle
         {
             if (removed)
             {
+                var effects = new HashSet<IOnExhaustCard>();
+
                 foreach (var eff in BattleInterfaceCache.Of<IOnExhaustCard>(__instance._self))
                 {
                     try
@@ -165,6 +208,20 @@ namespace LibraryOfAngela.Battle
                         Logger.LogError(e);
                     }
                 }
+
+                if (c._script is IOnExhaustCard eff2 && effects.Add(eff2))
+                {
+                    try
+                    {
+                        eff2.OnExhaustCard(c);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e);
+                    }
+                }
+
+                effects.Clear();
             }
 
             return removed;
