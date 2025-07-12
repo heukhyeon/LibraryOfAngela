@@ -43,17 +43,12 @@ namespace LibraryOfAngela.Buf
 
         }
 
-        private void SinkingBreakDmg(BattleUnitModel actor, BattleUnitBuf_loaSinking buf) {
+        private int SinkingBreakDmg(BattleUnitModel actor, BattleUnitBuf_loaSinking buf) {
             var listeners = BattleInterfaceCache.Of<IHandleTakeSinking>(buf._owner).ToList();
-            var dmg = buf.stack;
-            var originDmg = dmg;
+
             var isBreaked = buf._owner.breakDetail.IsBreakLifeZero();
-            RunCatching("BeforeTakeBreakDamage", () => {
-                buf.BeforeTakeSinkingBreakDamage(ref dmg, originDmg);
-                foreach (var listener in listeners) {
-                    listener.BeforeTakeSinkingBreakDamage(buf, ref dmg, originDmg);
-                }
-            });
+
+            var dmg = GetSinkingDmg(buf);
             buf._owner.TakeBreakDamage(dmg, DamageType.Buf, buf._owner, keyword: LoAKeywordBuf.Sinking);
             RunCatching("OnTakeBreakDamage", () => {
                 buf.OnTakeSinkingBreakDamage(dmg);
@@ -69,6 +64,21 @@ namespace LibraryOfAngela.Buf
                     }
                 });
             }
+            return dmg;
+        }
+
+        private int GetSinkingDmg(BattleUnitBuf_loaSinking buf)
+        {
+            var dmg = buf.stack;
+            var originDmg = dmg;
+            RunCatching("BeforeTakeBreakDamage", () => {
+                buf.BeforeTakeSinkingBreakDamage(ref dmg, originDmg);
+                foreach (var listener in BattleInterfaceCache.Of<IHandleTakeSinking>(buf._owner))
+                {
+                    listener.BeforeTakeSinkingBreakDamage(buf, ref dmg, originDmg);
+                }
+            });
+            return dmg;
         }
 
         private void RunCatching(string key, Action action)
@@ -85,9 +95,25 @@ namespace LibraryOfAngela.Buf
         }
 
         private void EffectSinking(BattleUnitBuf_loaSinking buf) {
-            var b = BufAssetLoader.LoadObject("loa_debuff_sinking", buf._owner.view.atkEffectRoot, 2f);
-            b.transform.localPosition = new Vector3(0f, 1.7f, 0f);
-            b.transform.localScale = Vector3.one * 0.13f;
+            if (StageController.Instance.IsLogState())
+            {
+                bool flag = false;
+                buf._owner.battleCardResultLog.SetPrintEffectEvent(() =>
+                {
+                    if (flag) return;
+                    flag = true;
+                    var b = BufAssetLoader.LoadObject("loa_debuff_sinking", buf._owner.view.atkEffectRoot, 2f);
+                    b.transform.localPosition = new Vector3(0f, 1.7f, 0f);
+                    b.transform.localScale = Vector3.one * 0.13f;
+                });
+            }
+            else
+            {
+                var b = BufAssetLoader.LoadObject("loa_debuff_sinking", buf._owner.view.atkEffectRoot, 2f);
+                b.transform.localPosition = new Vector3(0f, 1.7f, 0f);
+                b.transform.localScale = Vector3.one * 0.13f;
+            }
+
         }
 
         public string GetBufActivatedText()
@@ -158,6 +184,55 @@ namespace LibraryOfAngela.Buf
                 Name = name,
                 Desc = desc
             };
+        }
+
+        void SinkingController.OnDeluge(BattleUnitBuf_loaSinking buf, BattleUnitModel attacker)
+        {
+            try
+            {
+                bool flag = true;
+                int totalDmg = 0;
+
+                while (!buf.IsDestroyed())
+                {
+                    if (flag)
+                    {
+                        var bp = buf._owner.breakDetail.breakGauge;
+                        OnRoundEndSinking(buf);
+                        if (bp == buf._owner.breakDetail.breakGauge)
+                        {
+                            flag = false;
+                        }
+                    }
+
+                    if (!flag)
+                    {
+                        var reducedValue = (buf.stack * 2) / 3;
+                        var reduceValue = buf.stack - reducedValue;
+                        totalDmg += GetSinkingDmg(buf);
+                        RunCatching("ReduceStack", () => {
+                            var value = reduceValue;
+                            buf.OnTakeSinkingReduceStack(ref value, reduceValue);
+                            foreach (var listener in BattleInterfaceCache.Of<IHandleTakeSinking>(buf._owner))
+                            {
+                                listener.OnTakeSinkingReduceStack(buf, ref value, reduceValue);
+                            }
+                            buf.stack -= value;
+                            buf.OnAddBuf(-value);
+                            if (buf.stack <= 0) buf.Destroy();
+                        });
+                    }
+                }
+
+                if (totalDmg > 0)
+                {
+                    buf._owner.TakeDamage(totalDmg, DamageType.Buf, attacker, buf.bufType);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
         }
     }
 }

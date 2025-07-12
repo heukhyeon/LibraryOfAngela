@@ -41,6 +41,15 @@ public class BattleUnitBuf_loaSinking : BattleUnitBuf
     }
 
     /// <summary>
+    /// 침잠쇄도
+    /// </summary>
+    /// <param name="attacker"></param>
+    public void Deluge(BattleUnitModel attacker)
+    {
+        controller.OnDeluge(this, attacker);
+    }
+
+    /// <summary>
     /// 자신에게 부여된 침잠이 턴 종료에 의해 수치 감소가 발생할때 호출
     /// </summary>
     public virtual void OnTakeSinkingReduceStack(ref int value, int originValue) { }
@@ -77,6 +86,8 @@ namespace LibraryOfAngela.Interface_Internal
         void OnRoundEndSinking(BattleUnitBuf_loaSinking buf);
 
         void OnAddBufSinking(BattleUnitBuf_loaSinking buf, int addedStack);
+
+        void OnDeluge(BattleUnitBuf_loaSinking buf, BattleUnitModel attacker);
     }
 }
 
