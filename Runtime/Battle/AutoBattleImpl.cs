@@ -244,17 +244,22 @@ namespace LibraryOfAngela.Battle
                     var targetables = dmgDic.Keys.Where(d => d.IsTargetable(ally.owner)).ToList();
 
                     var maxPlayPoint = ally.owner.MaxPlayPoint;
-                    foreach (var card in ally.owner.allyCardDetail._cardInHand)
+                    foreach (var flag in new bool[] { false, true })
                     {
-                        foreach (var enemy in targetables)
+                        foreach (var card in ally.owner.allyCardDetail._cardInHand)
                         {
-                            var p = GetOneSidePriority(card, ally, i, enemy, targetSlotOrder, maxPlayPoint);
-                            if (current.priority < p)
+                            foreach (var enemy in targetables)
                             {
-                                current = new PriorityInfo { target = enemy, index = i, priority = p, card = card };
+                                var p = GetOneSidePriority(card, ally, i, enemy, targetSlotOrder, maxPlayPoint, flag);
+                                if (current.priority < p)
+                                {
+                                    current = new PriorityInfo { target = enemy, index = i, priority = p, card = card };
+                                }
                             }
                         }
+                        if (current.card != null) break;
                     }
+   
                     if (current.card != null)
                     {
                         var targetCard = current.card;
@@ -400,7 +405,7 @@ namespace LibraryOfAngela.Battle
             return priority;
         }
 
-        private int GetOneSidePriority(BattleDiceCardModel card, CustomSetterOwner owner, int myIndex, BattleUnitModel target, int targetIndex, int maxPlayPoint)
+        private int GetOneSidePriority(BattleDiceCardModel card, CustomSetterOwner owner, int myIndex, BattleUnitModel target, int targetIndex, int maxPlayPoint, bool forceUseEvenIfEnemyZero)
         {
             // 기본 스크립트 우선도
             var priority = owner.setter.GetCustomizedCardPriority(owner.owner, card, owner.owner.GetSpeed(myIndex), myIndex, target, targetIndex, null, false, null, null) * 100;
@@ -410,9 +415,9 @@ namespace LibraryOfAngela.Battle
             if (cost > remainPlayPoint) return -10000;
 
 
-            // 이미 죽었을것같은 대상이라면
+            // 이미 죽었을것같은 대상이라면 건너뛰는걸 고려한다. 단, 그 막에 아예 주사위가 비려고 한다면 죽을거같은 여부를 생략한다.
             var currentRemainHp = dmgDic[target];
-            if (currentRemainHp <= 0f)
+            if (currentRemainHp <= 0f && !forceUseEvenIfEnemyZero)
             {
                 // 소모된 빛이 2 미만이라면 그냥 책장을 사용하지 않는다.
                 // 이게 0, 1번째여도 무시한다.
