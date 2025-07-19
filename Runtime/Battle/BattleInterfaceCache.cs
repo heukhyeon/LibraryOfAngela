@@ -83,15 +83,6 @@ namespace LibraryOfAngela.Battle
             bufs.Add(eff);
         }
 
-        // 버프 소멸
-        public void BufDestroyed(BattleUnitBuf buf)
-        {
-            if (buf is ILoABattleEffect eff && buf._destroyed && bufs != null)
-            {
-                bufs.Remove(eff);
-            }
-        }
-
         // 책장 효과 할당
         public void OnUseCard_before(BattlePlayingCardDataInUnitModel card)
         {
@@ -130,6 +121,8 @@ namespace LibraryOfAngela.Battle
         {
             var key = typeof(T);
             if (!stackCnt.ContainsKey(key)) stackCnt[key] = 0;
+
+            List<ILoABattleEffect> reserved = null;
             try
             {
                 if (++stackCnt[key] >= 5)
@@ -145,11 +138,18 @@ namespace LibraryOfAngela.Battle
                 {
                     yield return effect;
                 }
+
                 foreach (var effect in Emit<T>(bufs))
                 {
-                    if ((effect as BattleUnitBuf).IsDestroyed() != true)
+                    var b = (effect as BattleUnitBuf);
+                    if (b.IsDestroyed() != true)
                     {
                         yield return effect;
+                    }
+                    else
+                    {
+                        if (reserved == null) reserved = new List<ILoABattleEffect>();
+                        reserved.Add(effect);
                     }
                 }
 
@@ -163,6 +163,10 @@ namespace LibraryOfAngela.Battle
             finally
             {
                 stackCnt[key]--;
+                if (reserved != null)
+                {
+                    foreach (var r in reserved) bufs.Remove(r);
+                }
             }
         }
 
@@ -327,13 +331,6 @@ namespace LibraryOfAngela.Battle
                     Instance.caches.SafeGet(bufDetail._self)?.BufInit(eff);
                 }
             }
-        }
-
-        [HarmonyPatch(typeof(BattleUnitBuf), "Destroy")]
-        [HarmonyPostfix]
-        private static void After_BufDestroy(BattleUnitBuf __instance)
-        {
-            Instance.caches.SafeGet(__instance._owner)?.BufDestroyed(__instance);
         }
 
         [HarmonyPatch(typeof(BattlePlayingCardDataInUnitModel), "OnUseCard_before")]
