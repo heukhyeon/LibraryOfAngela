@@ -49,6 +49,7 @@ namespace LibraryOfAngela.Save
                 {
                     try
                     {
+                        m.SaveConfig.packageId = m.packageId;
                         var data = m.SaveConfig.GetSaveData(__instance);
                         wrapper.AddData(m.packageId, data);
                         cnt++;
@@ -113,6 +114,10 @@ namespace LibraryOfAngela.Save
                         try
                         {
                             var mod = LoAModCache.Instance[pair.Key]?.SaveConfig;
+                            if (mod != null)
+                            {
+                                mod.packageId = pair.Key;
+                            }
                             mod?.LoadFromSaveData(pair.Value);
                         }
                         catch (Exception e)
