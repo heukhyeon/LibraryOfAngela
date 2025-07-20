@@ -198,8 +198,6 @@ namespace LibraryOfAngela.BattleUI
 
                 ui.scrollView.content.sizeDelta = new Vector2(width, ui.scrollView.content.sizeDelta.y);
                 ui.scrollView.horizontalNormalizedPosition = 0f;
-                ui.scrollView.content.gameObject.SetActive(false);
-                ui.title.gameObject.SetActive(false);
                 volume.gameObject.SetActive(true);
                 if (string.IsNullOrEmpty(model.artwork))
                 {
@@ -210,8 +208,13 @@ namespace LibraryOfAngela.BattleUI
                     ui.artwork.transform.parent.gameObject.SetActive(true);
                     ui.artwork.sprite = UISpriteDataManager.instance.GetStoryIcon(model.artwork).icon;
                 }
-                isShowing = true;
-                ui.Show(model.color);
+                if (!isShowing)
+                {
+                    ui.scrollView.content.gameObject.SetActive(false);
+                    ui.title.gameObject.SetActive(false);
+                    isShowing = true;
+                    ui.Show(model.color);
+                }
             }
             catch (Exception e)
             {
