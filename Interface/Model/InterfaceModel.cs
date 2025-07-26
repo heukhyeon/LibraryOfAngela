@@ -67,8 +67,10 @@ namespace LibraryOfAngela.Model
         // 해당 핵심 책장의 장착 가능 여부를 설정합니다. 기본적으로 활성화이되, 기본 장착 불가 캐릭터에겐 장착 불가 상태입니다.
         public Func<UnitDataModel, bool> equipCondition = null;
 
-        // 현재 스킨, 캐릭터 설정시의 기존 스킨, 기존 커스터마이징 데이터, 결과값
-        public Func<string, string, UnitCustomizingData, LoACustomFaceData> overrideFace = null;
+        /// <summary>
+        /// 커스텀 얼굴 데이터를 반환합니다.
+        /// </summary>
+        public OverrideFaceDelegate overrideFace = null;
 
         public Func<LoAMovingStateHandler> movingStateHandler = null;
 
@@ -164,9 +166,9 @@ namespace LibraryOfAngela.Model
         public List<ActionDetail> overrideFaceTypes = new List<ActionDetail> { ActionDetail.Default };
 
         /// <summary>
-        /// 현재 스킨, 기존 커스터마이징 데이터, 결과값을 받아 커스텀 얼굴 데이터를 반환합니다.
+        /// 커스텀 얼굴 데이터를 반환합니다.
         /// </summary>
-        public Func<string, string, UnitCustomizingData, LoACustomFaceData> overrideFace = null;
+        public OverrideFaceDelegate overrideFace = null;
 
         /// <summary>
         /// 스킨 렌더링 시 스킨의 이펙트 등을 제어하는 컴포넌트의 타입을 반환합니다.
@@ -193,6 +195,10 @@ namespace LibraryOfAngela.Model
         }
     }
 
+    /// <summary>
+    /// 현재 스킨, 기존 커스터마이징 데이터, 결과값을 받아 커스텀 얼굴 데이터를 반환합니다.
+    /// </summary>
+    public delegate LoACustomFaceData OverrideFaceDelegate(string currentSkin, string originSkin, UnitDataModel unit);
 
     public struct CustomRairtyColor
     {

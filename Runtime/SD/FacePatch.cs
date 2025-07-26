@@ -120,13 +120,13 @@ namespace LibraryOfAngela.SD
                 if (string.IsNullOrEmpty(currentSkinName)) currentSkinName = skin;
                 var corePage = owner.bookItem.BookId;
                 var skinInfo = AdvancedSkinInfoPatch.Instance.infos.SafeGet(skin);
-                var faceBySkin = skinInfo?.overrideFace?.Invoke(currentSkinName, skin, origin);
+                var faceBySkin = skinInfo?.overrideFace?.Invoke(currentSkinName, skin, owner);
                 if (faceBySkin == null)
                 {
-                    faceBySkin = AdvancedSkinInfoPatch.Instance.infos.SafeGet(currentSkinName)?.overrideFace?.Invoke(currentSkinName, skin, origin);
+                    faceBySkin = AdvancedSkinInfoPatch.Instance.infos.SafeGet(currentSkinName)?.overrideFace?.Invoke(currentSkinName, skin, owner);
                 }
 
-                var faceByCorePage = AdvancedEquipBookPatch.Instance.infos.SafeGet(corePage)?.overrideFace?.Invoke(currentSkinName, skin, origin);
+                var faceByCorePage = AdvancedEquipBookPatch.Instance.infos.SafeGet(corePage)?.overrideFace?.Invoke(currentSkinName, skin, owner);
                 if (faceBySkin != null)
                 {
                     faceBySkin.packageId = skinInfo.packageId;
