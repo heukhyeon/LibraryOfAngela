@@ -1663,6 +1663,23 @@ namespace LibraryOfAngela.Battle
             return origin;
         }
 
+        [HarmonyPatch(typeof(BattleUnitModel), nameof(BattleUnitModel.OnDiscardByAbility))]
+        [HarmonyPostfix]
+        private static void After_OnDiscardByAbility(BattleUnitModel __instance, List<BattleDiceCardModel> cards)
+        {
+            try
+            {
+                foreach (var effect in BattleInterfaceCache.Of<IHandleDiscardByAbility>(__instance))
+                {
+                    effect.OnDiscardByAbility(cards);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+        }
+
 
     }
 
