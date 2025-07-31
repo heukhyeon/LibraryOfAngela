@@ -49,6 +49,11 @@ public class BattleUnitBuf_loaRupture : BattleUnitBuf
     /// </summary>
     public virtual void OnDieByRupture(BattleUnitModel actor) { }
 
+    /// <summary>
+    /// 자신의 파열을 감소시킴
+    /// </summary>
+    /// <param name="attacker"></param>
+    /// <param name="stack"></param>
     public void ReduceStack(BattleUnitModel attacker, int stack)
     {
         controller.OnReduceStack(this, attacker, stack);

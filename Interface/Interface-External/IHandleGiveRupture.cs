@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace LibraryOfAngela.Interface_External
 {
+    /// <summary>
+    /// 자신이 대상의 파열을 발동시킬때 주요 효과들을 제어.
+    /// </summary>
     public interface IHandleGiveRupture : ILoABattleEffect
     {
         /// <summary>

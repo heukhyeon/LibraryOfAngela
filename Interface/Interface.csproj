@@ -79,7 +79,7 @@
   <ItemGroup>
     <Compile Include="Artwork.cs" />
     <Compile Include="AssetBundle.cs" />
-    <Compile Include="Buf\BattleUnitBuf_loaBarrier.cs" />
+    <Compile Include="Buf\BattleUnitBuf_loaShield.cs" />
     <Compile Include="Buf\BattleUnitBuf_loaDimensionRift.cs" />
     <Compile Include="Buf\BattleUnitBuf_loaPoise.cs" />
     <Compile Include="Buf\BattleUnitBuf_loaRupture.cs" />

@@ -352,7 +352,7 @@
     <Compile Include="Battle\BattleUIPatch.cs" />
     <Compile Include="Battle\ExhaustPatch.cs" />
     <Compile Include="Battle\FixValidPatch.cs" />
-    <Compile Include="Buf\BarrierController.cs" />
+    <Compile Include="Buf\ShieldController.cs" />
     <Compile Include="Buf\BufAssetLoader.cs" />
     <Compile Include="Buf\BufControllerImpl.cs" />
     <Compile Include="Buf\DimensionRiftController.cs" />
