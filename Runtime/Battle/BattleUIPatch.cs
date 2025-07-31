@@ -1,4 +1,6 @@
+using BattleCharacterProfile;
 using HarmonyLib;
+using LibraryOfAngela.Buf;
 using LibraryOfAngela.Extension;
 using LibraryOfAngela.Implement;
 using LOR_DiceSystem;
@@ -69,6 +71,34 @@ namespace LibraryOfAngela.Battle
                 {
                     yield return code;
                 }
+            }
+        }
+
+        [HarmonyPatch(typeof(BattleCharacterProfileUI), nameof(BattleCharacterProfileUI.SetHpUI))]
+        [HarmonyPostfix]
+        public static void After_SetHpUI(BattleCharacterProfileUI __instance)
+        {
+            try
+            {
+                BarrierControllerImpl.Instance.OnUpdateCharacterProfile(__instance);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
+        }
+
+        [HarmonyPatch(typeof(RencounterManager), nameof(RencounterManager.EndRencounter))]
+        [HarmonyPostfix]
+        public static void After_EndRencounter()
+        {
+            try
+            {
+                BarrierControllerImpl.Instance.OnEndRencounter();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
             }
         }
 

@@ -34,6 +34,11 @@ public static class LoAKeywordBuf
     /// 차원 균열
     /// </summary>
     public static KeywordBuf DimensionRift { get; set; }
+
+    /// <summary>
+    /// 배리어
+    /// </summary>
+    public static KeywordBuf Barrier { get; set; }
     
     // 침잠쇄도는 '버프'가 아니므로 제외
 }

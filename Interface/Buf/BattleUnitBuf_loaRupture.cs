@@ -48,6 +48,11 @@ public class BattleUnitBuf_loaRupture : BattleUnitBuf
     /// 자신에게 부여된 파열에 의해 사망한경우 호출
     /// </summary>
     public virtual void OnDieByRupture(BattleUnitModel actor) { }
+
+    public void ReduceStack(BattleUnitModel attacker, int stack)
+    {
+        controller.OnReduceStack(this, attacker, stack);
+    }
 }
 
 namespace LibraryOfAngela.Interface_Internal
@@ -60,5 +65,7 @@ namespace LibraryOfAngela.Interface_Internal
 
         void OnRoundEndRupture(BattleUnitBuf_loaRupture buf);
         void OnTakeDamageByAttackRupture(BattleUnitBuf_loaRupture buf, BattleDiceBehavior atkDice, int dmg);
+
+        void OnReduceStack(BattleUnitBuf_loaRupture buf, BattleUnitModel attacker, int stack);
     }
 } 

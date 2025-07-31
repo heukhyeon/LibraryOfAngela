@@ -79,6 +79,7 @@
   <ItemGroup>
     <Compile Include="Artwork.cs" />
     <Compile Include="AssetBundle.cs" />
+    <Compile Include="Buf\BattleUnitBuf_loaBarrier.cs" />
     <Compile Include="Buf\BattleUnitBuf_loaDimensionRift.cs" />
     <Compile Include="Buf\BattleUnitBuf_loaPoise.cs" />
     <Compile Include="Buf\BattleUnitBuf_loaRupture.cs" />
@@ -144,6 +145,7 @@
     <Compile Include="Interface-External\IHandleStandbyDice.cs" />
     <Compile Include="Interface-External\IHandleTakePoise.cs" />
     <Compile Include="Interface-External\IHandleTakeRupture.cs" />
+    <Compile Include="Interface-External\IHandleTakeShield.cs" />
     <Compile Include="Interface-External\IHandleTakeSinking.cs" />
     <Compile Include="Interface-External\IHandleTakeTremor.cs" />
     <Compile Include="Interface-External\ILoABattleEffect.cs" />

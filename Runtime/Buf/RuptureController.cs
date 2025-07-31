@@ -18,7 +18,27 @@ namespace LibraryOfAngela.Buf
         public string keywordIconId => "loa_rupture_icon";
         public BufPositiveType positiveType => BufPositiveType.Negative;
         public void OnRoundEndRupture(BattleUnitBuf_loaRupture buf) {
-            buf.Destroy();
+            bool isDestroy = true;
+
+            RunCatching("OnRoundEndRupture", () => {
+                var takeListener = BattleInterfaceCache.Of<IHandleTakeRupture>(buf._owner).ToList();
+                foreach (var listener in takeListener)
+                {
+                    try
+                    {
+                        listener.OnRoundEndInRupture(buf, ref isDestroy);
+                    }
+                    catch (MissingMethodException)
+                    {
+
+                    }
+                }
+            });
+
+            if (isDestroy || buf.stack <= 0)
+            {
+                buf.Destroy();
+            }
         }
 
         public void OnTakeDamageByAttackRupture(BattleUnitBuf_loaRupture buf, BattleDiceBehavior atkDice, int dmg) {
@@ -68,20 +88,7 @@ namespace LibraryOfAngela.Buf
                     }
                 });
             }
-            RunCatching("ReduceStack", () => {
-                var reduceValue = (buf.stack) - ((buf.stack * 2) / 3);
-                var value = reduceValue;
-                buf.OnTakeRuptureReduceStack(attacker, ref value, reduceValue);
-                foreach (var listener in takeListener) {
-                    listener.OnTakeRuptureReduceStack(attacker, buf, ref value, reduceValue);
-                }
-                foreach (var listener in giveListener) {
-                    listener.OnGiveRuptureReduceStack(buf, ref value, reduceValue);
-                }
-                buf.stack -= value;
-                buf.OnAddBuf(-value);
-                if (buf.stack <= 0) buf.Destroy();
-            });
+            buf.ReduceStack(attacker, (buf.stack) - ((buf.stack * 2) / 3));
         }
 
         private void RunCatching(string key, Action action)
@@ -148,6 +155,27 @@ namespace LibraryOfAngela.Buf
         public void AddAdditionalKeywordDesc()
         {
 
+        }
+
+        void RuptureController.OnReduceStack(BattleUnitBuf_loaRupture buf, BattleUnitModel attacker, int stack)
+        {
+            RunCatching("ReduceStack", () => {
+                var takeListener = BattleInterfaceCache.Of<IHandleTakeRupture>(buf._owner).ToList();
+                var giveListener = BattleInterfaceCache.Of<IHandleGiveRupture>(attacker).ToList();
+                var value = stack;
+                buf.OnTakeRuptureReduceStack(attacker, ref value, stack);
+                foreach (var listener in takeListener)
+                {
+                    listener.OnTakeRuptureReduceStack(attacker, buf, ref value, stack);
+                }
+                foreach (var listener in giveListener)
+                {
+                    listener.OnGiveRuptureReduceStack(buf, ref value, stack);
+                }
+                buf.stack -= value;
+                buf.OnAddBuf(-value);
+                if (buf.stack <= 0) buf.Destroy();
+            });
         }
     }
 }

@@ -65,6 +65,14 @@ public class BattleUnitBuf_loaDimensionRift : BattleUnitBuf, IHandleTakeRupture
     public virtual void OnDieByRupture(BattleUnitModel actor, BattleUnitBuf_loaRupture buf) {
 
     }
+
+    /// <summary>
+    /// 자신에게 부여된 파열의 막 종료시 호출
+    /// </summary>
+    public virtual void OnRoundEndInRupture(BattleUnitBuf_loaRupture buf, ref bool setDestroy)
+    {
+        
+    }
 }
 
 namespace LibraryOfAngela.Interface_Internal

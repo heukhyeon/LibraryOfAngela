@@ -236,7 +236,7 @@ namespace LibraryOfAngela.Battle
                 {
                     if (ally.owner.cardSlotDetail.cardAry[i] != null || ally.owner.speedDiceResult[i].breaked) continue;
                     PriorityInfo current = new PriorityInfo();
-                    current.priority = 0;
+                    current.priority = int.MinValue;
 
                     // 실제로는 책장이 지정되지 않은 슬롯이라던가 그런걸 감안해야겠지만 일단 0으로 고정
                     var targetSlotOrder = 0;

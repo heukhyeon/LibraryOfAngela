@@ -31,5 +31,12 @@ namespace LibraryOfAngela.Interface_External
         /// 자신에게 부여된 파열에 의해 사망한경우 호출
         /// </summary>
         void OnDieByRupture(BattleUnitModel actor, BattleUnitBuf_loaRupture buf);
+
+        /// <summary>
+        /// 자신에게 부여된 파열에 대해 막 종료시 소멸할지, 혹은 다른 수단을 처리할지 여부입니다
+        /// </summary>
+        /// <param name="buf">대상 파열 버프입니다.</param>
+        /// <param name="setDestroy">모든 이 메소드를 처리후 파열을 소멸시킬지 결정합니다. 이 값이 false여도 파열이 0 이하라면 소멸합니다.</param>
+        void OnRoundEndInRupture(BattleUnitBuf_loaRupture buf, ref bool setDestroy);
     }
 }

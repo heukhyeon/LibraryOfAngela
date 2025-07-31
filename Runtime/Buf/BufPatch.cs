@@ -375,6 +375,12 @@ namespace LibraryOfAngela.Buf
                 info = AccessTools.Property(typeof(LoAKeywordBuf), "DimensionRift"),
                 targetBufType = typeof(BattleUnitBuf_loaDimensionRift)
             };
+
+            Instance.bufMatch[typeof(BattleUnitBuf_loaBarrier)] = new KeywordWrapper
+            {
+                info = AccessTools.Property(typeof(LoAKeywordBuf), "Barrier"),
+                targetBufType = typeof(BattleUnitBuf_loaBarrier)
+            };
         }
 
         internal static void InitLoABufEffectInfo()
