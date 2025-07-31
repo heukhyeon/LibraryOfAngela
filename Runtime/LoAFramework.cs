@@ -114,7 +114,7 @@ namespace LibraryOfAngela
             ServiceLocator.Instance.inject<SinkingController>((k) => new SinkingControllerImpl());
             ServiceLocator.Instance.inject<RuptureController>((k) => new RuptureControllerImpl());
             ServiceLocator.Instance.inject<DimensionRiftController>((k) => new DimensionRiftControllerImpl());
-            ServiceLocator.Instance.inject<BarrierController>((k) => BarrierControllerImpl.Instance);
+            ServiceLocator.Instance.inject<ShieldController>((k) => ShieldControllerImpl.Instance);
 
             typeof(UI.UIController).Patch("CallUIPhase", typeof(UIPhase));
 

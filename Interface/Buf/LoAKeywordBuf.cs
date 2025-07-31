@@ -36,9 +36,9 @@ public static class LoAKeywordBuf
     public static KeywordBuf DimensionRift { get; set; }
 
     /// <summary>
-    /// 배리어
+    /// 보호막
     /// </summary>
-    public static KeywordBuf Barrier { get; set; }
+    public static KeywordBuf Shield { get; set; }
     
     // 침잠쇄도는 '버프'가 아니므로 제외
 }

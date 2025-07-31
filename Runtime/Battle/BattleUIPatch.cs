@@ -80,7 +80,7 @@ namespace LibraryOfAngela.Battle
         {
             try
             {
-                BarrierControllerImpl.Instance.OnUpdateCharacterProfile(__instance);
+                ShieldControllerImpl.Instance.OnUpdateCharacterProfile(__instance);
             }
             catch (Exception e)
             {
@@ -94,7 +94,7 @@ namespace LibraryOfAngela.Battle
         {
             try
             {
-                BarrierControllerImpl.Instance.OnEndRencounter();
+                ShieldControllerImpl.Instance.OnEndRencounter();
             }
             catch (Exception e)
             {

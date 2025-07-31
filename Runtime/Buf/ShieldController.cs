@@ -14,7 +14,7 @@ using UnityEngine.UI;
 
 namespace LibraryOfAngela.Buf
 {
-    internal class BarrierControllerImpl : BarrierController
+    internal class ShieldControllerImpl : ShieldController
     {
         class BarrierHistoryData
         {
@@ -30,13 +30,13 @@ namespace LibraryOfAngela.Buf
 
         private bool isCheckRequire = false;
 
-        public static BarrierControllerImpl _instance;
+        public static ShieldControllerImpl _instance;
 
-        public static BarrierControllerImpl Instance
+        public static ShieldControllerImpl Instance
         {
             get
             {
-                if (_instance == null) _instance = new BarrierControllerImpl();
+                if (_instance == null) _instance = new ShieldControllerImpl();
                 return _instance;
             }
         }
@@ -51,7 +51,7 @@ namespace LibraryOfAngela.Buf
             return "";
         }
 
-        public string GetBufActivatedText(BattleUnitBuf_loaBarrier buf, string current)
+        public string GetBufActivatedText(BattleUnitBuf_loaShield buf, string current)
         {
             return string.Format("공격 주사위 피격시 그 피해량을 {0} 감소시키고, 감소시킨 피해량만큼 이 효과가 감소한다.", buf.stack);
         }
@@ -66,7 +66,7 @@ namespace LibraryOfAngela.Buf
             return "";
         }
 
-        public void OnCreate(BattleUnitBuf_loaBarrier buf)
+        public void OnCreate(BattleUnitBuf_loaShield buf)
         {
             var owner = buf._owner;
             if (!components.ContainsKey(owner))
@@ -96,7 +96,7 @@ namespace LibraryOfAngela.Buf
             }
         }
 
-        public void OnAddBuf(BattleUnitBuf_loaBarrier buf, int addedStack)
+        public void OnAddBuf(BattleUnitBuf_loaShield buf, int addedStack)
         {
             if (addedStack > 0)
             {
@@ -116,19 +116,19 @@ namespace LibraryOfAngela.Buf
             OnValueChanged(buf, buf.stack - addedStack);
         }
 
-        public void OnDestroy(BattleUnitBuf_loaBarrier buf)
+        public void OnDestroy(BattleUnitBuf_loaShield buf)
         {
             int s = buf.stack;
             buf.stack = 0;
             OnValueChanged(buf, s);
         }
 
-        public void OnHandleBreakDamage(BattleUnitBuf_loaBarrier buf, int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
+        public void OnHandleBreakDamage(BattleUnitBuf_loaShield buf, int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
         {
             // 기본적으로는 처리 안함
         }
 
-        public void OnHandleDamage(BattleUnitBuf_loaBarrier buf, int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
+        public void OnHandleDamage(BattleUnitBuf_loaShield buf, int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
         {
             if (resultDmg <= 0) return;
             int previous = buf.stack;
@@ -168,16 +168,16 @@ namespace LibraryOfAngela.Buf
                 switch (type)
                 {
                     case DamageType.Attack:
-                        buf.ReduceStack(new LoABarrierReduceRequest.AttackDamage(attacker.currentDiceAction?.currentBehavior, reduceStack));
+                        buf.ReduceStack(new LoAShieldReduceRequest.AttackDamage(attacker.currentDiceAction?.currentBehavior, reduceStack));
                         break;
                     default:
-                        buf.ReduceStack(new LoABarrierReduceRequest.AbilityDamage(attacker, reduceStack, type, keyword));
+                        buf.ReduceStack(new LoAShieldReduceRequest.AbilityDamage(attacker, reduceStack, type, keyword));
                         break;
                 }
             }
         }
 
-        public void OnValueChanged(BattleUnitBuf_loaBarrier buf, int previous)
+        public void OnValueChanged(BattleUnitBuf_loaShield buf, int previous)
         {
             if (StageController.Instance.IsLogState())
             {
@@ -241,7 +241,7 @@ namespace LibraryOfAngela.Buf
             isCheckRequire = false;
         }
 
-        public void OnReduceStack(BattleUnitBuf_loaBarrier buf, LoABarrierReduceRequest request)
+        public void OnReduceStack(BattleUnitBuf_loaShield buf, LoAShieldReduceRequest request)
         {
             var listeners = BattleInterfaceCache.Of<IHandleTakeShield>(buf._owner).ToList();
             int value = request.Stack;
