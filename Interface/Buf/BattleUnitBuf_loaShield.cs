@@ -44,6 +44,15 @@ public sealed class BattleUnitBuf_loaShield : BattleUnitBuf, IHandleChangeDamage
     }
 
     /// <summary>
+    /// 막 종료시 기본적으로 소멸합니다.
+    /// </summary>
+    public override void OnRoundEnd()
+    {
+        base.OnRoundEnd();
+        controller.OnRoundEnd(this);
+    }
+
+    /// <summary>
     /// 보호막을 소멸시킵니다.
     /// </summary>
     public override void Destroy()
@@ -211,5 +220,7 @@ namespace LibraryOfAngela.Interface_Internal
         void OnHandleBreakDamage(BattleUnitBuf_loaShield buf, int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword);
 
         void OnReduceStack(BattleUnitBuf_loaShield buf, LoAShieldReduceRequest request);
+
+        void OnRoundEnd(BattleUnitBuf_loaShield buf);
     }
 }

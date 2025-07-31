@@ -120,6 +120,22 @@ namespace LibraryOfAngela.Buf
             OnValueChanged(buf, buf.stack - addedStack);
         }
 
+        public void OnRoundEnd(BattleUnitBuf_loaShield buf)
+        {
+            bool callDestroy = true;
+            foreach (var effect in BattleInterfaceCache.Of<IHandleTakeShield>(buf._owner))
+            {
+                try
+                {
+                    effect.OnRoundEndInShield(buf, ref callDestroy);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                }
+            }
+        }
+
         public void OnDestroy(BattleUnitBuf_loaShield buf)
         {
             int s = buf.stack;
@@ -138,6 +154,7 @@ namespace LibraryOfAngela.Buf
             int previous = buf.stack;
             int firstDmg = resultDmg;
             int reduceStack = resultDmg > previous ? previous : resultDmg;
+            if (type != DamageType.Attack) reduceStack = 0;
             int next = resultDmg - reduceStack;
             var listeners = BattleInterfaceCache.Of<IHandleTakeShield>(buf._owner).ToList();
             foreach (var effect in listeners)
@@ -314,27 +331,27 @@ namespace LibraryOfAngela.Buf
             ui = GetComponent<BattleCharacterProfileUI>();
             //bars = BufAssetLoader.LoadObject("LoA_Barrier_Bar", ui.hpBar.img.transform.parent, -1f).GetComponentsInChildren<Image>();
             //RootBar.transform.localPosition = new Vector3(-243.9508f, -13.90003f, 0f);
-            RootBar = Instantiate(ui.hpBar.img, ui.hpBar.img.transform).GetComponent<Image>();
+            RootBar = Instantiate(ui.hpBar.img, ui.hpBar.img.transform.parent).GetComponent<Image>();
             RootBar.transform.localPosition = new Vector3(0f, -0.0001688004f, 0f);
-            RootBar.color = Color.blue;
+            RootBar.color = new Color(0.207f, 0.439f, 1.0f);
 
-/*            var c = DamagedBar.color;
-            c.a = 0f;
-            DamagedBar.color = c;
+            /*            var c = DamagedBar.color;
+                        c.a = 0f;
+                        DamagedBar.color = c;
 
-            c = HealBar.color;
-            c.a = 0f;
-            HealBar.color = c;
+                        c = HealBar.color;
+                        c.a = 0f;
+                        HealBar.color = c;
 
-            c = ChildBar.color;
-            c.a = 0f;
-            ChildBar.color = c;*/
+                        c = ChildBar.color;
+                        c.a = 0f;
+                        ChildBar.color = c;*/
 
             var com2 = BufAssetLoader.LoadObject("LoA_Barrier_Text", ui.uiRoot, -1f);
             com2.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
             com2.transform.localPosition = new Vector3(290f, 100f, 0f);
             text = com2.GetComponentInChildren<Text>(true);
-            text.color = Color.blue;
+            text.color = new Color(0.207f, 0.439f, 1.0f);
         }
 
         Coroutine latestCoroutine;
