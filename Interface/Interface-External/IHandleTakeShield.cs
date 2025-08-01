@@ -80,8 +80,8 @@ namespace LibraryOfAngela.Interface_External
         /// 보호막 소멸시 호출됩니다. 개별 모드등에서 임의로 Destroy를 호출한경우 호출되지 않습니다.
         /// </summary>
         /// <param name="buf">대상 보호막 버프</param>
-        /// <param name="request">소멸된 이유 (공격, 턴 종료 등)</param>
-        void OnDestroyShield(BattleUnitBuf_loaShield buf, LoAShieldDestroyRequest request);
+        /// <param name="reason">소멸된 이유 (공격, 턴 종료 등)</param>
+        void OnDestroyShield(BattleUnitBuf_loaShield buf, LoAShieldDestroyReason reason);
         
         /// <summary>
         /// 기본적으로 보호막은 막 종료시 소멸합니다. 막 종료시 소멸 여부를 관리합니다.
