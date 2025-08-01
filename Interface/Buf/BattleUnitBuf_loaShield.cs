@@ -117,7 +117,7 @@ public class LoAShieldDestroyReason {
     /// </summary>
     public class RoundEnd : LoAShieldDestroyReason {
         /// <summary>
-        /// 소멸 당시 기준 남은 보호막 수치. 기본적으로 보호막의 stack값과 동일합니다. 다른 모드에 의해 stack이 강제로 변경된 경우등을 고려해 별도 필드로 보존합니다.
+        /// 소멸 당시 기준 남은 보호막 수치. 보호막은 파괴될시 수치가 0이 되고 개별 인터페이스에 호출되는건 파괴 이후에 호출되므로, 파괴전 마지막 수치를 이 필드에 보존합니다.
         /// </summary>
         public readonly int remainStack;
 
