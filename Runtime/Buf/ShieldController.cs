@@ -73,25 +73,12 @@ namespace LibraryOfAngela.Buf
         public void OnCreate(BattleUnitBuf_loaShield buf)
         {
             var owner = buf._owner;
-            if (!components.ContainsKey(owner))
-            {
-                var target = SingletonBehavior<BattleManagerUI>.Instance.ui_unitListInfoSummary.allyarray.FirstOrDefault(d => d.UnitModel == owner);
-                if (target == null)
-                {
-                    target = SingletonBehavior<BattleManagerUI>.Instance.ui_unitListInfoSummary.enemyarray.FirstOrDefault(d => d.UnitModel == owner);
-                }
-                if (target != null)
-                {
-                    components[owner] = target.GetComponent<BarrierComponent>() ?? target.gameObject.AddComponent<BarrierComponent>();
-                }
-            }
-            //TODO 버프 객체 뭐라도 만들기 필요
-            GameObject obj = null;
+            
             foreach (var effect in BattleInterfaceCache.Of<IHandleTakeShield>(buf._owner))
             {
                 try
                 {
-                    effect.OnCreateShield(buf, ref obj);
+                    effect.OnCreateShield(buf);
                 }
                 catch (Exception e)
                 {
@@ -123,7 +110,8 @@ namespace LibraryOfAngela.Buf
         public void OnRoundEnd(BattleUnitBuf_loaShield buf)
         {
             bool callDestroy = true;
-            foreach (var effect in BattleInterfaceCache.Of<IHandleTakeShield>(buf._owner))
+            var listeners = BattleInterfaceCache.Of<IHandleTakeShield>(buf._owner).ToList();
+            foreach (var effect in listeners)
             {
                 try
                 {
@@ -132,6 +120,21 @@ namespace LibraryOfAngela.Buf
                 catch (Exception e)
                 {
                     Debug.LogError(e);
+                }
+            }
+            if (callDestroy) {
+                var reason = new LoAShieldDestroyReason.OnRoundEnd(buf.stack);
+                buf.Destroy();
+                foreach (var effect in listeners) 
+                {
+                    try
+                    {
+                        effect.OnDestroyShield(buf, reason);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e);
+                    }
                 }
             }
         }
@@ -143,9 +146,87 @@ namespace LibraryOfAngela.Buf
             OnValueChanged(buf, s);
         }
 
+        public void OnDestroyManually(BattleUnitBuf_loaShield buf, BattleUnitModel attacker) {
+            var request = new LoAShieldDestroyReason.Etc(attacker);
+            foreach (var effect in BattleInterfaceCache.Of<IHandleTakeShield>(buf._owner))
+            {
+                try
+                {
+                    effect.OnDestroyShield(buf, request);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                }
+            }
+        }
+
         public void OnHandleBreakDamage(BattleUnitBuf_loaShield buf, int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
         {
-            // 기본적으로는 처리 안함
+            if (resultDmg <= 0) return;
+            int previous = buf.stack;
+            int firstDmg = resultDmg;
+            int reduceStack = resultDmg > previous ? previous : resultDmg;
+            if (type != DamageType.Attack) reduceStack = 0;
+            int next = resultDmg - reduceStack;
+            var listeners = BattleInterfaceCache.Of<IHandleTakeShield>(buf._owner).ToList();
+            foreach (var effect in listeners)
+            {
+                try
+                {
+                    effect.BeforeHandleBreakDamageInShield(buf, resultDmg, type, attacker, keyword, ref next, ref reduceStack);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                }
+            }
+            bool isReduced = resultDmg != next;
+            resultDmg = next;
+            if (isReduced)
+            {
+                foreach (var effect in listeners)
+                {
+                    try
+                    {
+                        effect.AfterHandleBreakDamageInShield(buf, firstDmg, type, attacker, keyword, next);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError(e);
+                    }
+                }
+            }
+            if (reduceStack > 0)
+            {
+                switch (type)
+                {
+                    case DamageType.Attack:
+                        buf.ReduceStack(new LoAShieldReduceRequest.AttackBreakDamage(attacker.currentDiceAction?.currentBehavior, reduceStack));
+                        break;
+                    default:
+                        buf.ReduceStack(new LoAShieldReduceRequest.AbilityBreakDamage(attacker, reduceStack, type, keyword));
+                        break;
+                }
+
+                if (buf.stack <= 0) 
+                {
+                    var reason = new LoAShieldDestroyReason.StackZero(attacker);
+                    buf.Destroy();
+                    foreach (var effect in listeners) 
+                    {
+                        try
+                        {
+                            effect.OnDestroyShield(buf, reason);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.LogError(e);
+                        }
+                    }
+                }
+            }
+
         }
 
         public void OnHandleDamage(BattleUnitBuf_loaShield buf, int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
@@ -194,6 +275,23 @@ namespace LibraryOfAngela.Buf
                     default:
                         buf.ReduceStack(new LoAShieldReduceRequest.AbilityDamage(attacker, reduceStack, type, keyword));
                         break;
+                }
+
+                if (buf.stack <= 0) 
+                {
+                    var reason = new LoAShieldDestroyReason.StackZero(attacker);
+                    buf.Destroy();
+                    foreach (var effect in listeners) 
+                    {
+                        try
+                        {
+                            effect.OnDestroyShield(buf, reason);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.LogError(e);
+                        }
+                    }
                 }
             }
         }
