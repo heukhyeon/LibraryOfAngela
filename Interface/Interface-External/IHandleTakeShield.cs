@@ -16,8 +16,7 @@ namespace LibraryOfAngela.Interface_External
         /// 보호막이 소멸후 최초 생성될때 호출됩니다.
         /// </summary>
         /// <param name="buf">대상 버프</param>
-        /// <param name="shieldObject">캐릭터 객체에 표시될 이펙트 객체입니다. 최종적으로 null이면 기본 객체를 사용합니다.</param>
-        void OnCreateShield(BattleUnitBuf_loaShield buf, ref GameObject shieldObject);
+        void OnCreateShield(BattleUnitBuf_loaShield buf);
 
         /// <summary>
         /// 보호막의 값이 증가될때 호출됩니다.
@@ -77,14 +76,13 @@ namespace LibraryOfAngela.Interface_External
         void AfterHandleBreakDamageInShield(BattleUnitBuf_loaShield buf, int originDmg, DamageType type, BattleUnitModel attacker, KeywordBuf bufType, int resultDmg);
 
 
-
         /// <summary>
-        /// 보호막이 수치가 0으로 인해 소멸할때 호출됩니다
+        /// 보호막 소멸시 호출됩니다. 개별 모드등에서 임의로 Destroy를 호출한경우 호출되지 않습니다.
         /// </summary>
         /// <param name="buf">대상 보호막 버프</param>
-        /// <param name="attacker">공격자</param>
-        void OnDestroyShieldByStackZero(BattleUnitBuf_loaShield buf, BattleUnitModel attacker);
-
+        /// <param name="request">소멸된 이유 (공격, 턴 종료 등)</param>
+        void OnDestroyShield(BattleUnitBuf_loaShield buf, LoAShieldDestroyRequest request);
+        
         /// <summary>
         /// 기본적으로 보호막은 막 종료시 소멸합니다. 막 종료시 소멸 여부를 관리합니다.
         /// </summary>
