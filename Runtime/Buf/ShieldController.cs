@@ -123,7 +123,7 @@ namespace LibraryOfAngela.Buf
                 }
             }
             if (callDestroy) {
-                var reason = new LoAShieldDestroyReason.OnRoundEnd(buf.stack);
+                var reason = new LoAShieldDestroyReason.RoundEnd(buf.stack);
                 buf.Destroy();
                 foreach (var effect in listeners) 
                 {
@@ -163,7 +163,7 @@ namespace LibraryOfAngela.Buf
 
         public void OnHandleBreakDamage(BattleUnitBuf_loaShield buf, int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
         {
-            if (resultDmg <= 0) return;
+            if (resultDmg <= 0 || buf.IsDestroyed()) return;
             int previous = buf.stack;
             int firstDmg = resultDmg;
             int reduceStack = resultDmg > previous ? previous : resultDmg;
@@ -231,7 +231,7 @@ namespace LibraryOfAngela.Buf
 
         public void OnHandleDamage(BattleUnitBuf_loaShield buf, int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
         {
-            if (resultDmg <= 0) return;
+            if (resultDmg <= 0 || buf.IsDestroyed()) return;
             int previous = buf.stack;
             int firstDmg = resultDmg;
             int reduceStack = resultDmg > previous ? previous : resultDmg;
@@ -396,7 +396,7 @@ namespace LibraryOfAngela.Buf
                 {
                     try
                     {
-                        effect.OnDestroyShieldByStackZero(buf, request.Attacker);
+                        effect.OnDestroyShield(buf, new LoAShieldDestroyReason.StackZero(request.Attacker));
                     }
                     catch (Exception e)
                     {

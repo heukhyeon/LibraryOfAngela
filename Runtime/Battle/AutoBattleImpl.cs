@@ -412,7 +412,7 @@ namespace LibraryOfAngela.Battle
             var cost = card.GetCost();
             var remainPlayPoint = owner.owner.PlayPoint - owner.owner.cardSlotDetail.ReservedPlayPoint;
 
-            if (cost > remainPlayPoint) return -10000;
+            if (cost > remainPlayPoint) return int.MinValue;
 
 
             // 이미 죽었을것같은 대상이라면 건너뛰는걸 고려한다. 단, 그 막에 아예 주사위가 비려고 한다면 죽을거같은 여부를 생략한다.
