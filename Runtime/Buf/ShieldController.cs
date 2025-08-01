@@ -215,7 +215,7 @@ namespace LibraryOfAngela.Buf
             }
             else
             {
-                components.SafeGet(buf._owner)?.UpdateValue(previous, buf.stack, buf._owner.MaxHp);
+                GetComponent(buf._owner)?.UpdateValue(previous, buf.stack, buf._owner.MaxHp);
             }
         }
 
@@ -237,7 +237,7 @@ namespace LibraryOfAngela.Buf
                 var idx = reservedDataList.FindIndex(d => d.res == res);
                 if (idx < 0) return;
                 var data = reservedDataList[idx];
-                components.SafeGet(unit)?.UpdateValue(data.previous, data.value, data.max);
+                GetComponent(unit)?.UpdateValue(data.previous, data.value, data.max);
                 reservedDataList.RemoveAt(idx);
             }
             else
@@ -245,7 +245,7 @@ namespace LibraryOfAngela.Buf
                 var idx = reservedDataList.FindIndex(d => d.target == unit);
                 if (idx < 0) return;
                 var data = reservedDataList[idx];
-                components.SafeGet(unit)?.UpdateValue(data.previous, data.value, data.max);
+                GetComponent(unit)?.UpdateValue(data.previous, data.value, data.max);
                 reservedDataList.RemoveAt(idx);
             }
 
@@ -256,7 +256,7 @@ namespace LibraryOfAngela.Buf
         {
             foreach (var data in reservedDataList)
             {
-                components.SafeGet(data.target)?.UpdateValue(data.previous, data.value, data.max);
+                GetComponent(data.target)?.UpdateValue(data.previous, data.value, data.max);
             }
             reservedDataList.Clear();
             isCheckRequire = false;
@@ -307,6 +307,25 @@ namespace LibraryOfAngela.Buf
                 }
             }
         }
+
+        private BarrierComponent GetComponent(BattleUnitModel owner) {
+           var com = components.SafeGet(owner);
+           if (com?.IsDestroyed != false) {
+                var target = SingletonBehavior<BattleManagerUI>.Instance.ui_unitListInfoSummary.allyarray.FirstOrDefault(d => d.UnitModel == owner);
+                if (target == null)
+                {
+                    target = SingletonBehavior<BattleManagerUI>.Instance.ui_unitListInfoSummary.enemyarray.FirstOrDefault(d => d.UnitModel == owner);
+                }
+                if (target != null)
+                {
+                    com = target.GetComponent<BarrierComponent>() ?? target.gameObject.AddComponent<BarrierComponent>();
+                }
+                if (com != null) {
+                    components[owner] = com;
+                }
+           }
+           return com;
+        }
     }
 
     class BarrierComponent : MonoBehaviour
@@ -315,6 +334,8 @@ namespace LibraryOfAngela.Buf
         public Text text;
         //private Image[] bars;
         private Image RootBar;
+
+        public bool IsDestroyed { get; private set; } = false;
 
 /*        private Image RootBar => bars[0];
         private Image DamagedBar => bars[1];
@@ -358,13 +379,21 @@ namespace LibraryOfAngela.Buf
 
         public void UpdateValue(int previous, int next, int max)
         {
-            this.max = max;
-            if (!enabled)
+            try 
             {
-                enabled = true;
+                this.max = max;
+                if (!enabled)
+                {
+                    enabled = true;
+                }
+                if (latestCoroutine != null) StopCoroutine(latestCoroutine);
+                latestCoroutine = StartCoroutine(UpdateHpBar(previous, next));
             }
-            if (latestCoroutine != null) StopCoroutine(latestCoroutine);
-            latestCoroutine = StartCoroutine(UpdateHpBar(previous, next));
+            catch (Exception e) 
+            {
+                Logger.LogError(e);
+            }
+
         }
 
         IEnumerator UpdateHpBar(float previous, float value)
@@ -392,10 +421,10 @@ namespace LibraryOfAngela.Buf
             yield break;
         }
 
-        void Destroy()
-        {
-            Destroy(text.gameObject);
-            Destroy(RootBar.gameObject);
+        void OnDestroy() {
+           IsDestroyed = true;
+           Destroy(text.gameObject);
+           Destroy(text.gameObject);
         }
 
         void OnEnable()
