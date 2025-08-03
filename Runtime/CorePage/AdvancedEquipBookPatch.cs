@@ -34,7 +34,7 @@ namespace LibraryOfAngela.EquipBook
         private Dictionary<string, Type> effects;
         internal List<CorePageConfig> configs;
         public Dictionary<LorId, Model.AdvancedEquipBookInfo> infos;
-        private HashSet<LorId> hidePassives;
+        private HashSet<LorId> hidePassives = new HashSet<LorId>();
         private IEnumerable<string> equipModPackages;
         private Dictionary<LorId, List<DiceCardXmlInfo>> additionalOnlyCards;
 
@@ -429,7 +429,7 @@ namespace LibraryOfAngela.EquipBook
                 {
                     yield return codes[i];
                     yield return new CodeInstruction(OpCodes.Ldarg_S, 4);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AdvancedEquipBookPatch), "IsCostHidePassive"));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AdvancedEquipBookPatch), nameof(IsCostHidePassive)));
                 }
                 else yield return codes[i];
             }
@@ -584,7 +584,15 @@ namespace LibraryOfAngela.EquipBook
         }
         private static bool IsCostHidePassive(bool origin, BookPassiveInfo info)
         {
-            return origin || Instance.hidePassives.Contains(info.passive.id);
+            try
+            {
+                return origin || Instance.hidePassives.Contains(info.passive.id);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+                return origin;
+            }
         }
     }
 }
