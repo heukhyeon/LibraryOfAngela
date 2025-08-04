@@ -30,7 +30,7 @@ namespace LibraryOfAngela.Interface_External
         /// <summary>
         /// 자신의 진동의 수치감소가 발생할 경우 호출
         /// </summary>
-        void OnTakeTremorReduceStack(BattleUnitModel actor, BattleUnitBuf_loaTremor buf, ref int value, int originValue, bool isFromRoundEnd);
+        void OnTakeTremorReduceStack(BattleUnitBuf_loaTremor buf, LoAKeywordBufReduceRequest request, ref int value);
 
         /// <summary>
         /// 자신이 진동폭발의 처리도중 흐트러진경우 호출

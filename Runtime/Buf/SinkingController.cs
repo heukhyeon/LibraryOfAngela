@@ -26,16 +26,7 @@ namespace LibraryOfAngela.Buf
             var reducedValue = (buf.stack * 2) / 3;
             var reduceValue = buf.stack - reducedValue;
             SinkingBreakDmg(null, buf);
-            RunCatching("ReduceStack", () => {
-                var value = reduceValue;
-                buf.OnTakeSinkingReduceStack(ref value, reduceValue);
-                foreach (var listener in BattleInterfaceCache.Of<IHandleTakeSinking>(buf._owner)) {
-                    listener.OnTakeSinkingReduceStack(buf, ref value, reduceValue);
-                }
-                buf.stack -= value;
-                buf.OnAddBuf(-value);
-                if (buf.stack <= 0) buf.Destroy();
-            });
+
             EffectSinking(buf);
         }
 
@@ -75,7 +66,7 @@ namespace LibraryOfAngela.Buf
                 buf.BeforeTakeSinkingBreakDamage(ref dmg, originDmg);
                 foreach (var listener in BattleInterfaceCache.Of<IHandleTakeSinking>(buf._owner))
                 {
-                    listener.BeforeTakeSinkingBreakDamage(buf, ref dmg, originDmg);
+                    listener.BeforeTakeSinkingBreakDamage(buf, originDmg, ref dmg);
                 }
             });
             return dmg;
@@ -210,17 +201,7 @@ namespace LibraryOfAngela.Buf
                         var reducedValue = (buf.stack * 2) / 3;
                         var reduceValue = buf.stack - reducedValue;
                         totalDmg += GetSinkingDmg(buf);
-                        RunCatching("ReduceStack", () => {
-                            var value = reduceValue;
-                            buf.OnTakeSinkingReduceStack(ref value, reduceValue);
-                            foreach (var listener in BattleInterfaceCache.Of<IHandleTakeSinking>(buf._owner))
-                            {
-                                listener.OnTakeSinkingReduceStack(buf, ref value, reduceValue);
-                            }
-                            buf.stack -= value;
-                            buf.OnAddBuf(-value);
-                            if (buf.stack <= 0) buf.Destroy();
-                        });
+                        buf.ReduceStack(new LoASinkingReduceRequest.Deluge(attacker, reduceValue));
                     }
                 }
 
@@ -233,6 +214,21 @@ namespace LibraryOfAngela.Buf
             {
                 Logger.LogError(e);
             }
+        }
+
+        public void OnReduceStack(BattleUnitBuf_loaSinking buf, LoAKeywordBufReduceRequest request)
+        {
+            RunCatching("ReduceStack", () => {
+                var value = request.Stack;
+                buf.OnTakeSinkingReduceStack(ref value, request);
+                foreach (var listener in BattleInterfaceCache.Of<IHandleTakeSinking>(buf._owner))
+                {
+                    listener.OnTakeSinkingReduceStack(buf, request, ref value);
+                }
+                buf.stack -= value;
+                buf.OnAddBuf(-value);
+                if (buf.stack <= 0) buf.Destroy();
+            });
         }
     }
 }

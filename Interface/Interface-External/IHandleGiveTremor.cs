@@ -26,7 +26,7 @@ namespace LibraryOfAngela.Interface_External
         /// <summary>
         /// 자신이 대상 진동의 수치감소를 발생시켰을 경우 호출
         /// </summary>
-        void OnGiveTremorReduceStack(BattleUnitBuf_loaTremor buf, ref int value, int originValue, bool isFromRoundEnd);
+        void OnGiveTremorReduceStack(BattleUnitBuf_loaTremor buf, LoAKeywordBufReduceRequest request, ref int value);
 
         /// <summary>
         /// 자신이 발생시킨 진동폭발의 처리도중 대상이 흐트러진경우 호출

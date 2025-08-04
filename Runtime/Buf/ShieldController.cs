@@ -270,7 +270,7 @@ namespace LibraryOfAngela.Buf
                 switch (type)
                 {
                     case DamageType.Attack:
-                        buf.ReduceStack(new LoAShieldReduceRequest.AttackDamage(attacker.currentDiceAction?.currentBehavior, reduceStack));
+                        buf.ReduceStack(new LoAKeywordBufReduceRequest.Attack(attacker.currentDiceAction?.currentBehavior, reduceStack));
                         break;
                     default:
                         buf.ReduceStack(new LoAShieldReduceRequest.AbilityDamage(attacker, reduceStack, type, keyword));
@@ -360,7 +360,7 @@ namespace LibraryOfAngela.Buf
             isCheckRequire = false;
         }
 
-        public void OnReduceStack(BattleUnitBuf_loaShield buf, LoAShieldReduceRequest request)
+        public void OnReduceStack(BattleUnitBuf_loaShield buf, LoAKeywordBufReduceRequest request)
         {
             var listeners = BattleInterfaceCache.Of<IHandleTakeShield>(buf._owner).ToList();
             int value = request.Stack;
@@ -368,7 +368,7 @@ namespace LibraryOfAngela.Buf
             {
                 try
                 {
-                    effect.BeforeTakeShieldReduce(buf, ref value, request);
+                    effect.BeforeTakeShieldReduce(buf, request, ref value);
                 }
                 catch (Exception e)
                 {
@@ -382,7 +382,7 @@ namespace LibraryOfAngela.Buf
             {
                 try
                 {
-                    effect.AfterTakeShieldReduce(buf, value, request);
+                    effect.AfterTakeShieldReduce(buf, request, value);
                 }
                 catch (Exception e)
                 {

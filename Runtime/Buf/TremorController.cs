@@ -103,13 +103,13 @@ namespace LibraryOfAngela.Buf
             BufAssetLoader.PlaySfx("limbus_tremor_burst");
         }
 
-        public void ReduceStack(BattleUnitModel actor, BattleUnitBuf_loaTremor buf, int value, bool isRoundEnd)
+        public void ReduceStack(BattleUnitBuf_loaTremor buf, LoAKeywordBufReduceRequest request)
         {
-            var originValue = value;
-            buf.OnTakeTremorReduceStack(actor, ref value, originValue, isRoundEnd);
+            var value = request.Stack;
+            buf.OnTakeTremorReduceStack(ref value, request);
             foreach (var eff in GetTakeList(buf))
             {
-                eff.OnTakeTremorReduceStack(actor, buf, ref value, originValue, isRoundEnd);
+                eff.OnTakeTremorReduceStack(buf, request, ref value);
             }
             buf.stack -= value;
             if (buf.stack <= 0) buf.Destroy();
@@ -119,7 +119,7 @@ namespace LibraryOfAngela.Buf
         {
             var nextStack = (buf.stack * 2) / 3;
             var reduceValue = buf.stack - nextStack;
-            ReduceStack(null, buf, reduceValue, false);
+            ReduceStack(buf, new LoAKeywordBufReduceRequest.RoundEnd(reduceValue));
         }
 
         public T TremorTransform<T>(BattleUnitModel attacker, BattleUnitBuf_loaTremor current, bool isCard) where T : BattleUnitBuf_loaTremor, new()

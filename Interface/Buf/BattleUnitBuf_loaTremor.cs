@@ -56,9 +56,13 @@ public class BattleUnitBuf_loaTremor : BattleUnitBuf, IHandleAddNewKeywordBufInL
         controller.Burst(actor, this, false);
     }
 
-    public virtual void ReduceStack(bool isCard, int value, BattleUnitModel actor = null)
+    /// <summary>
+    /// 진동의 수치를 감소시킴.
+    /// </summary>
+    /// <param name="request">줄여지는 사유. '진동 폭발 후 대상의 진동을 n 감소'와 같은 효과가 있을때, 이 값은 <see cref="LoATremorReduceRequest.TremorBurst"/>를 사용하길 권합니다.</param>
+    public virtual void ReduceStack(LoAKeywordBufReduceRequest request)
     {
-        controller.ReduceStack(actor, this, value, isCard);
+        controller.ReduceStack(this, request);
     }
 
     /// <summary>
@@ -107,7 +111,7 @@ public class BattleUnitBuf_loaTremor : BattleUnitBuf, IHandleAddNewKeywordBufInL
     /// <summary>
     /// 자신의 진동의 수치감소가 발생할 경우 호출
     /// </summary>
-    public virtual void OnTakeTremorReduceStack(BattleUnitModel actor, ref int value, int originValue, bool isFromRoundEnd) { }
+    public virtual void OnTakeTremorReduceStack(ref int value, LoAKeywordBufReduceRequest request) { }
 
     /// <summary>
     /// 자신이 진동폭발의 처리도중 흐트러진경우 호출
@@ -133,6 +137,25 @@ public class BattleUnitBuf_loaTremor : BattleUnitBuf, IHandleAddNewKeywordBufInL
     }
 }
 
+public class LoATremorReduceRequest : LoAKeywordBufReduceRequest
+{
+    private LoATremorReduceRequest()
+    {
+
+    }
+
+    public class TremorBurst : LoATremorReduceRequest
+    {
+        public readonly bool isCard;
+        public TremorBurst(BattleUnitModel attacker, int stack, bool card)
+        {
+            Attacker = attacker;
+            Stack = stack;
+            isCard = card;
+        }
+    }
+}
+
 namespace LibraryOfAngela.Interface_Internal
 {
     internal interface TremorController
@@ -145,7 +168,7 @@ namespace LibraryOfAngela.Interface_Internal
         void OnRoundEndTremor(BattleUnitBuf_loaTremor buf);
         void Burst(BattleUnitModel actor, BattleUnitBuf_loaTremor buf, bool isCard);
 
-        void ReduceStack(BattleUnitModel actor, BattleUnitBuf_loaTremor buf, int value, bool isRoundEnd);
+        void ReduceStack(BattleUnitBuf_loaTremor buf, LoAKeywordBufReduceRequest request);
 
         T TremorTransform<T>(BattleUnitModel actor, BattleUnitBuf_loaTremor current, bool isCard) where T : BattleUnitBuf_loaTremor, new();
 

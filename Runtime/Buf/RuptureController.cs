@@ -61,10 +61,10 @@ namespace LibraryOfAngela.Buf
             RunCatching("BeforeTakeDamage", () => {
                 buf.BeforeTakeRuptureDamage(ref dmg, originDmg);
                 foreach (var listener in takeListener) {
-                    listener.BeforeTakeRuptureDamage(buf, ref dmg, originDmg);
+                    listener.BeforeTakeRuptureDamage(buf, originDmg, ref dmg);
                 }
                 foreach (var listener in giveListener) {
-                    listener.BeforeGiveRuptureDamage(buf, ref dmg, originDmg);
+                    listener.BeforeGiveRuptureDamage(buf, originDmg, ref dmg);
                 }
             });
             buf._owner.TakeDamage(dmg, DamageType.Buf, attacker, keyword: LoAKeywordBuf.Rupture);
@@ -88,7 +88,7 @@ namespace LibraryOfAngela.Buf
                     }
                 });
             }
-            buf.ReduceStack(attacker, (buf.stack) - ((buf.stack * 2) / 3));
+            buf.ReduceStack(new LoAKeywordBufReduceRequest.Attack(attacker.currentDiceAction.currentBehavior, (buf.stack) - ((buf.stack * 2) / 3)));
         }
 
         private void RunCatching(string key, Action action)
@@ -157,20 +157,20 @@ namespace LibraryOfAngela.Buf
 
         }
 
-        void RuptureController.OnReduceStack(BattleUnitBuf_loaRupture buf, BattleUnitModel attacker, int stack)
+        void RuptureController.OnReduceStack(BattleUnitBuf_loaRupture buf, LoAKeywordBufReduceRequest request)
         {
             RunCatching("ReduceStack", () => {
                 var takeListener = BattleInterfaceCache.Of<IHandleTakeRupture>(buf._owner).ToList();
-                var giveListener = BattleInterfaceCache.Of<IHandleGiveRupture>(attacker).ToList();
-                var value = stack;
-                buf.OnTakeRuptureReduceStack(attacker, ref value, stack);
+                var giveListener = BattleInterfaceCache.Of<IHandleGiveRupture>(request.Attacker).ToList();
+                var value = request.Stack;
+                buf.OnTakeRuptureReduceStack(request, ref value);
                 foreach (var listener in takeListener)
                 {
-                    listener.OnTakeRuptureReduceStack(attacker, buf, ref value, stack);
+                    listener.OnTakeRuptureReduceStack(buf, request, ref value);
                 }
                 foreach (var listener in giveListener)
                 {
-                    listener.OnGiveRuptureReduceStack(buf, ref value, stack);
+                    listener.OnGiveRuptureReduceStack(buf, request, ref value);
                 }
                 buf.stack -= value;
                 buf.OnAddBuf(-value);

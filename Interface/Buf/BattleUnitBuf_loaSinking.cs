@@ -41,6 +41,15 @@ public class BattleUnitBuf_loaSinking : BattleUnitBuf
     }
 
     /// <summary>
+    /// 침잠을 감소시킴
+    /// </summary>
+    /// <param name="request">감소시키는 이유(막 종료, 침잠쇄도 등)</param>
+    public void ReduceStack(LoAKeywordBufReduceRequest request)
+    {
+        controller.OnReduceStack(this, request);
+    }
+
+    /// <summary>
     /// 침잠쇄도
     /// </summary>
     /// <param name="attacker"></param>
@@ -52,7 +61,7 @@ public class BattleUnitBuf_loaSinking : BattleUnitBuf
     /// <summary>
     /// 자신에게 부여된 침잠이 턴 종료에 의해 수치 감소가 발생할때 호출
     /// </summary>
-    public virtual void OnTakeSinkingReduceStack(ref int value, int originValue) { }
+    public virtual void OnTakeSinkingReduceStack(ref int value, LoAKeywordBufReduceRequest request) { }
 
     /// <summary>
     /// 자신에게 부여된 침잠에 의해 흐트러짐 피해를 받을때 피해량 제어
@@ -69,6 +78,21 @@ public class BattleUnitBuf_loaSinking : BattleUnitBuf
     /// </summary>
     public virtual void OnBreakStateBySinking(BattleUnitModel actor) { }
 
+}
+
+public class LoASinkingReduceRequest : LoAKeywordBufReduceRequest
+{
+    /// <summary>
+    /// 침잠 쇄도에 의해 감소되는 경우. 한번에 전체 수치가 감소되는게 아닌 침잠 1회분의 요청이 반복적으로 들어옴
+    /// </summary>
+    public class Deluge : LoASinkingReduceRequest
+    {
+        internal Deluge(BattleUnitModel attacker, int value)
+        {
+            Attacker = attacker;
+            Stack = value;
+        }
+    }
 }
 
 namespace LibraryOfAngela.Interface_Internal
@@ -88,6 +112,8 @@ namespace LibraryOfAngela.Interface_Internal
         void OnAddBufSinking(BattleUnitBuf_loaSinking buf, int addedStack);
 
         void OnDeluge(BattleUnitBuf_loaSinking buf, BattleUnitModel attacker);
+
+        void OnReduceStack(BattleUnitBuf_loaSinking buf, LoAKeywordBufReduceRequest request);
     }
 }
 

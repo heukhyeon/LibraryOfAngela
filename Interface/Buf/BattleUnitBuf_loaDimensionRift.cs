@@ -38,17 +38,19 @@ public class BattleUnitBuf_loaDimensionRift : BattleUnitBuf, IHandleTakeRupture
     /// <summary>
     /// 자신에게 부여된 파열의 수치 감소가 발생할때 호출
     /// </summary>
-    public virtual void OnTakeRuptureReduceStack(BattleUnitModel actor, BattleUnitBuf_loaRupture buf, ref int value, int originValue) {
+    public virtual void OnTakeRuptureReduceStack(BattleUnitBuf_loaRupture buf, LoAKeywordBufReduceRequest request, ref int value)
+    {
         if (isActivated)
         {
-            controller.OnTakeRuptureReduceStack(actor, buf, this, ref value, originValue);
+            controller.OnTakeRuptureReduceStack(buf, this, ref value, request);
         }
     }
 
     /// <summary>
     /// 자신에게 부여된 파열에 의해 피해를 받을때 피해량 제어
     /// </summary>
-    public virtual void BeforeTakeRuptureDamage(BattleUnitBuf_loaRupture buf, ref int dmg, int originDmg) {
+    public virtual void BeforeTakeRuptureDamage(BattleUnitBuf_loaRupture buf, int originDmg, ref int dmg)
+    {
 
     }
 
@@ -85,6 +87,6 @@ namespace LibraryOfAngela.Interface_Internal
         BufPositiveType positiveType { get; }
         void OnRoundEndDimensionRift(BattleUnitBuf_loaDimensionRift buf);
 
-        void OnTakeRuptureReduceStack(BattleUnitModel actor, BattleUnitBuf_loaRupture rupture, BattleUnitBuf_loaDimensionRift buf, ref int value, int originValue);
+        void OnTakeRuptureReduceStack(BattleUnitBuf_loaRupture rupture, BattleUnitBuf_loaDimensionRift buf, ref int value, LoAKeywordBufReduceRequest request);
     }
 } 

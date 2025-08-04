@@ -37,8 +37,8 @@ namespace LibraryOfAngela.Buf
             b.transform.localScale = Vector3.one * 0.3f;
         }
 
-        public void OnTakeRuptureReduceStack(BattleUnitModel actor, BattleUnitBuf_loaRupture rupture, BattleUnitBuf_loaDimensionRift buf, ref int value, int originValue) {
-            if (buf.stack > 0) {
+        public void OnTakeRuptureReduceStack(BattleUnitBuf_loaRupture rupture, BattleUnitBuf_loaDimensionRift buf, ref int value, LoAKeywordBufReduceRequest request) {
+            if (request is LoAKeywordBufReduceRequest.Attack && buf.stack > 0) {
                 value = 0;
                 if (--buf.stack <= 0) {
                     buf.Destroy();

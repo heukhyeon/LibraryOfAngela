@@ -95,16 +95,16 @@ namespace LibraryOfAngela.Interface_External
         /// 자신에게 부여된 보호막의 수치가 감소되기 전에 호출
         /// </summary>
         /// <param name="buf">대상 보호막 버프</param>
-        /// <param name="value">최종 감소될 수치</param>
         /// <param name="request">감소 행위</param>
-        void BeforeTakeShieldReduce( BattleUnitBuf_loaShield buf, ref int value, LoAShieldReduceRequest request);
+        /// <param name="value">최종 감소될 수치</param>
+        void BeforeTakeShieldReduce(BattleUnitBuf_loaShield buf, LoAKeywordBufReduceRequest request, ref int value);
 
         /// <summary>
         /// 자신에게 부여된 보호막의 수치가 감소된 후에 호출
         /// </summary>
         /// <param name="buf">대상 보호막 버프</param>
-        /// <param name="value">최종 감소된 수치</param>
         /// <param name="request">감소 행위</param>
-        void AfterTakeShieldReduce(BattleUnitBuf_loaShield buf, int value, LoAShieldReduceRequest request);
+        /// <param name="value">최종 감소된 수치</param>
+        void AfterTakeShieldReduce(BattleUnitBuf_loaShield buf, LoAKeywordBufReduceRequest request, int value);
     }
 }

@@ -14,12 +14,12 @@ namespace LibraryOfAngela.Interface_External
         /// <summary>
         /// 자신의 공격에 의해 파열 수치가 감소할때 호출
         /// </summary>
-        void OnGiveRuptureReduceStack(BattleUnitBuf_loaRupture buf, ref int value, int originValue);
+        void OnGiveRuptureReduceStack(BattleUnitBuf_loaRupture buf, LoAKeywordBufReduceRequest request, ref int value);
 
         /// <summary>
         /// 자신의 공격에 의해 파열 피해를 줄 때 피해량 제어
         /// </summary>
-        void BeforeGiveRuptureDamage(BattleUnitBuf_loaRupture buf, ref int dmg, int originDmg);
+        void BeforeGiveRuptureDamage(BattleUnitBuf_loaRupture buf, int originDmg, ref int dmg);
 
         /// <summary>
         /// 자신의 공격에 의해 파열 피해를 준 경우 호출

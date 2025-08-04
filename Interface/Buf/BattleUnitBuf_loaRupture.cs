@@ -32,7 +32,7 @@ public class BattleUnitBuf_loaRupture : BattleUnitBuf
     /// <summary>
     /// 자신에게 부여된 파열의 수치 감소가 발생할때 호출
     /// </summary>
-    public virtual void OnTakeRuptureReduceStack(BattleUnitModel actor, ref int value, int originValue) { }
+    public virtual void OnTakeRuptureReduceStack(LoAKeywordBufReduceRequest request, ref int value) { }
 
     /// <summary>
     /// 자신에게 부여된 파열에 의해 피해를 받을때 피해량 제어
@@ -50,15 +50,16 @@ public class BattleUnitBuf_loaRupture : BattleUnitBuf
     public virtual void OnDieByRupture(BattleUnitModel actor) { }
 
     /// <summary>
-    /// 자신의 파열을 감소시킴
+    /// 자신의 파열을 감소시킨다
     /// </summary>
-    /// <param name="attacker"></param>
-    /// <param name="stack"></param>
-    public void ReduceStack(BattleUnitModel attacker, int stack)
+    /// <param name="request">감소 방법 (공격에 의함, 그 외 등등) </param>
+    public void ReduceStack(LoAKeywordBufReduceRequest request)
     {
-        controller.OnReduceStack(this, attacker, stack);
+        controller.OnReduceStack(this, request);
     }
 }
+
+
 
 namespace LibraryOfAngela.Interface_Internal
 {
@@ -71,6 +72,6 @@ namespace LibraryOfAngela.Interface_Internal
         void OnRoundEndRupture(BattleUnitBuf_loaRupture buf);
         void OnTakeDamageByAttackRupture(BattleUnitBuf_loaRupture buf, BattleDiceBehavior atkDice, int dmg);
 
-        void OnReduceStack(BattleUnitBuf_loaRupture buf, BattleUnitModel attacker, int stack);
+        void OnReduceStack(BattleUnitBuf_loaRupture buf, LoAKeywordBufReduceRequest request);
     }
 } 

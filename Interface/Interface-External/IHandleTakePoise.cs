@@ -15,7 +15,7 @@ namespace LibraryOfAngela.Interface_External
         /// <summary>
         /// 자신에게 부여된 호흡의 수치 감소가 발생할때 호출
         /// </summary>
-        void OnTakePoiseReduceStack(BattleUnitBuf_loaPoise buf, ref int value, int originValue);
+        void OnTakePoiseReduceStack(BattleUnitBuf_loaPoise buf, LoAKeywordBufReduceRequest request, ref int value);
 
         /// <summary>
         /// 자신에게 부여된 호흡의 크리티컬 발생 확률을 계산할때 호출. 수비주사위에 대해서도 호출되며 이 경우는 기본 chance가 0임
