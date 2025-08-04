@@ -59,7 +59,7 @@ namespace LibraryOfAngela.Buf
             var originDmg = dmg;
             var isDead = buf._owner.IsDead();
             RunCatching("BeforeTakeDamage", () => {
-                buf.BeforeTakeRuptureDamage(ref dmg, originDmg);
+                buf.BeforeTakeRuptureDamage(originDmg, ref dmg);
                 foreach (var listener in takeListener) {
                     listener.BeforeTakeRuptureDamage(buf, originDmg, ref dmg);
                 }

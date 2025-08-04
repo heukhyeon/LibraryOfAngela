@@ -37,7 +37,7 @@ public class BattleUnitBuf_loaRupture : BattleUnitBuf
     /// <summary>
     /// 자신에게 부여된 파열에 의해 피해를 받을때 피해량 제어
     /// </summary>
-    public virtual void BeforeTakeRuptureDamage(ref int dmg, int originDmg) { }
+    public virtual void BeforeTakeRuptureDamage(int originDmg, ref int dmg) { }
 
     /// <summary>
     /// 자신에게 부여된 파열에 의해 피해를 받은 경우 호출

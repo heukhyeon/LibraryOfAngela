@@ -29,7 +29,7 @@ namespace LibraryOfAngela.Buf
 
             RunCatching("BeforeTremorBurst", () =>
             {
-                buf.BeforeTakeTremorBurst(actor, ref value, originValue);
+                buf.BeforeTakeTremorBurst(actor, originValue, ref value);
                 foreach (var eff in giveList) eff.BeforeGiveTremorBurst(buf, ref value, originValue);
                 foreach (var eff in takeList) eff.BeforeTakeTremorBurst(actor, buf, ref value, originValue);
             });

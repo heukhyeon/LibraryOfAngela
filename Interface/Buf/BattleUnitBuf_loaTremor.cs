@@ -90,7 +90,7 @@ public class BattleUnitBuf_loaTremor : BattleUnitBuf, IHandleAddNewKeywordBufInL
     /// <summary>
     /// 자신에게 진동폭발이 발생한 경우 때 진동 폭발 흐트러짐 피해를 적용하기 전에 호출
     /// </summary>
-    public virtual void BeforeTakeTremorBurst(BattleUnitModel actor, ref int dmg, int originDmg) { }
+    public virtual void BeforeTakeTremorBurst(BattleUnitModel actor, int originDmg, ref int dmg) { }
 
     /// <summary>
     /// 자신에게 진동폭발이 발생한 경우 호출

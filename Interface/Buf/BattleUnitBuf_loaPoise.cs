@@ -29,17 +29,17 @@ public class BattleUnitBuf_loaPoise : BattleUnitBuf
     /// <summary>
     /// 자신에게 부여된 호흡의 수치 감소가 발생할때 호출
     /// </summary>
-    public virtual void OnTakePoiseReduceStack(ref int value, int originValue) { }
+    public virtual void OnTakePoiseReduceStack(int originValue, ref int value) { }
 
     /// <summary>
     /// 자신에게 부여된 호흡의 크리티컬 발생 확률을 계산할때 호출. 수비주사위에 대해서도 호출되며 이 경우는 기본 chance가 0임
     /// </summary>
-    public virtual void BeforeJudgingCritical(BattleDiceBehavior behaviour, ref float criticalChance, float originalChance) { }
+    public virtual void BeforeJudgingCritical(BattleDiceBehavior behaviour, float originalChance, ref float criticalChance) { }
 
     /// <summary>
     /// 크리티컬 발생시 호출
     /// </summary>
-    public virtual void OnCriticalActivated(BattleDiceBehavior behaviour, ref float currentDmgRate, float originalDmgRate, ref float currentBreakDmgRate, float originalBreakDmgRate) { }
+    public virtual void OnCriticalActivated(BattleDiceBehavior behaviour, float originalDmgRate, float originalBreakDmgRate, ref float currentDmgRate, ref float currentBreakDmgRate) { }
 
 }
 
