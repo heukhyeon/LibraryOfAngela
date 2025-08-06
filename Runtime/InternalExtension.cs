@@ -28,8 +28,18 @@ namespace LibraryOfAngela
 
         internal static Type PatchInternal(this Type type, string name, PatchInternalFlag flag, string patchName = "", params Type[] paramTypes)
         {
-            internalPatcher.PatchInternal(type, targetType, name, patchName, paramTypes, flag);
-            return type;
+            try
+            {
+                internalPatcher.PatchInternal(type, targetType, name, patchName, paramTypes, flag);
+                return type;
+            }
+            catch (Exception e)
+            {
+                Logger.Log($"Exception in PatchInternal, Target Patch : {type.Name}.{name} (patchName : {patchName})");
+                Logger.LogError(e);
+                return type;
+            }
+
         }
 
         public static void PatchEnd()

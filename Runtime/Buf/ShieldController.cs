@@ -47,7 +47,7 @@ namespace LibraryOfAngela.Buf
 
         public void AddAdditionalKeywordDesc()
         {
-            
+
         }
 
         public string GetBufActivatedText()
@@ -73,7 +73,7 @@ namespace LibraryOfAngela.Buf
         public void OnCreate(BattleUnitBuf_loaShield buf)
         {
             var owner = buf._owner;
-            
+
             foreach (var effect in BattleInterfaceCache.Of<IHandleTakeShield>(buf._owner))
             {
                 try
@@ -122,10 +122,11 @@ namespace LibraryOfAngela.Buf
                     Debug.LogError(e);
                 }
             }
-            if (callDestroy) {
+            if (callDestroy)
+            {
                 var reason = new LoAShieldDestroyReason.RoundEnd(buf.stack);
                 buf.Destroy();
-                foreach (var effect in listeners) 
+                foreach (var effect in listeners)
                 {
                     try
                     {
@@ -146,7 +147,8 @@ namespace LibraryOfAngela.Buf
             OnValueChanged(buf, s);
         }
 
-        public void OnDestroyManually(BattleUnitBuf_loaShield buf, BattleUnitModel attacker) {
+        public void OnDestroyManually(BattleUnitBuf_loaShield buf, BattleUnitModel attacker)
+        {
             var request = new LoAShieldDestroyReason.Etc(attacker);
             foreach (var effect in BattleInterfaceCache.Of<IHandleTakeShield>(buf._owner))
             {
@@ -209,11 +211,11 @@ namespace LibraryOfAngela.Buf
                         break;
                 }
 
-                if (buf.stack <= 0) 
+                if (buf.stack <= 0)
                 {
                     var reason = new LoAShieldDestroyReason.StackZero(attacker);
                     buf.Destroy();
-                    foreach (var effect in listeners) 
+                    foreach (var effect in listeners)
                     {
                         try
                         {
@@ -277,11 +279,11 @@ namespace LibraryOfAngela.Buf
                         break;
                 }
 
-                if (buf.stack <= 0) 
+                if (buf.stack <= 0)
                 {
                     var reason = new LoAShieldDestroyReason.StackZero(attacker);
                     buf.Destroy();
-                    foreach (var effect in listeners) 
+                    foreach (var effect in listeners)
                     {
                         try
                         {
@@ -406,9 +408,12 @@ namespace LibraryOfAngela.Buf
             }
         }
 
-        private BarrierComponent GetComponent(BattleUnitModel owner) {
-           var com = components.SafeGet(owner);
-           if (com?.IsDestroyed != false) {
+        private BarrierComponent GetComponent(BattleUnitModel owner)
+        {
+            if (owner == null) return null;
+            var com = components.SafeGet(owner);
+            if (com?.IsDestroyed != false)
+            {
                 var target = SingletonBehavior<BattleManagerUI>.Instance.ui_unitListInfoSummary.allyarray.FirstOrDefault(d => d.UnitModel == owner);
                 if (target == null)
                 {
@@ -418,11 +423,12 @@ namespace LibraryOfAngela.Buf
                 {
                     com = target.GetComponent<BarrierComponent>() ?? target.gameObject.AddComponent<BarrierComponent>();
                 }
-                if (com != null) {
+                if (com != null)
+                {
                     components[owner] = com;
                 }
-           }
-           return com;
+            }
+            return com;
         }
     }
 
@@ -435,12 +441,12 @@ namespace LibraryOfAngela.Buf
 
         public bool IsDestroyed { get; private set; } = false;
 
-/*        private Image RootBar => bars[0];
-        private Image DamagedBar => bars[1];
+        /*        private Image RootBar => bars[0];
+                private Image DamagedBar => bars[1];
 
-        private Image HealBar => bars[2];
+                private Image HealBar => bars[2];
 
-        private Image ChildBar => bars[3];*/
+                private Image ChildBar => bars[3];*/
 
         private float max;
 
@@ -477,7 +483,7 @@ namespace LibraryOfAngela.Buf
 
         public void UpdateValue(int previous, int next, int max)
         {
-            try 
+            try
             {
                 this.max = max;
                 if (!enabled)
@@ -487,7 +493,7 @@ namespace LibraryOfAngela.Buf
                 if (latestCoroutine != null) StopCoroutine(latestCoroutine);
                 latestCoroutine = StartCoroutine(UpdateHpBar(previous, next));
             }
-            catch (Exception e) 
+            catch (Exception e)
             {
                 Logger.LogError(e);
             }
@@ -508,7 +514,7 @@ namespace LibraryOfAngela.Buf
             {
                 e += Time.deltaTime;
                 RootBar.transform.localPosition = Vector3.Lerp(srcPos, dstPos, e);
-                text.text = ((int) Mathf.Lerp(previous, value, e)).ToString();
+                text.text = ((int)Mathf.Lerp(previous, value, e)).ToString();
                 yield return YieldCache.waitFrame;
             }
             if (value <= 0f)
@@ -519,10 +525,11 @@ namespace LibraryOfAngela.Buf
             yield break;
         }
 
-        void OnDestroy() {
-           IsDestroyed = true;
-           Destroy(text.gameObject);
-           Destroy(text.gameObject);
+        void OnDestroy()
+        {
+            IsDestroyed = true;
+            Destroy(text.gameObject);
+            Destroy(text.gameObject);
         }
 
         void OnEnable()
