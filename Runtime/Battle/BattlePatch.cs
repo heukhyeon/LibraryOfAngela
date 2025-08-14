@@ -1663,6 +1663,47 @@ namespace LibraryOfAngela.Battle
             return origin;
         }
 
+        [HarmonyPatch(typeof(BattleAllyCardDetail), nameof(BattleAllyCardDetail.DisCardACardRandom))]
+        [HarmonyPatch(typeof(BattleAllyCardDetail), nameof(BattleAllyCardDetail.DiscardACardHighest))]
+        [HarmonyPatch(typeof(BattleAllyCardDetail), nameof(BattleAllyCardDetail.DiscardACardLowest))]
+        private static void Before_DisCardACardRandom(BattleAllyCardDetail __instance)
+        {
+            ListenDiscardFailed(1, __instance);
+        }
+
+        [HarmonyPatch(typeof(BattleAllyCardDetail), nameof(BattleAllyCardDetail.DiscardACardRandomlyByAbility))]
+        private static void Before_DiscardACardRandomlyByAbility(int num, BattleAllyCardDetail __instance)
+        {
+            ListenDiscardFailed(num, __instance);
+        }
+
+        private static void ListenDiscardFailed(int expectedDiscard, BattleAllyCardDetail instance)
+        {
+            if (instance._cardInHand.Count >= expectedDiscard) return;
+
+            try
+            {
+                var handCount = instance._cardInHand.Count;
+                foreach (var effect in BattleInterfaceCache.Of<INotEnoughDiscardListener>(instance._self))
+                {
+                    effect.OnNotEnoughDiscard(expectedDiscard, handCount);
+                    var cnt = instance._cardInHand.Count;
+                    if (cnt != handCount)
+                    {
+                        if (expectedDiscard <= cnt)
+                        {
+                            return;
+                        }
+                        handCount = cnt;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+        }
+
         [HarmonyPatch(typeof(BattleUnitModel), nameof(BattleUnitModel.OnDiscardByAbility))]
         [HarmonyPostfix]
         private static void After_OnDiscardByAbility(BattleUnitModel __instance, List<BattleDiceCardModel> cards)

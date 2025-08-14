@@ -184,7 +184,7 @@ namespace LibraryOfAngela.Battle
         private void ExecuteParrying()
         {
             PriorityInfo current = new PriorityInfo();
-
+            current.priority = int.MinValue;
             var keys = parryTargets.Keys.OrderByDescending(d => d.speedDiceResultValue).ToList();
 
             for (int i = 0; i < keys.Count; i++)
@@ -195,7 +195,7 @@ namespace LibraryOfAngela.Battle
                     foreach (var card in parry.owner.owner.allyCardDetail._cardInHand)
                     {
                         var priority = GetParryingPriority(card, parry.owner, parry.index, targetCard);
-                        if (current.card is null || priority > current.priority)
+                        if (priority > current.priority)
                         {
                             current = new PriorityInfo { card = card, priority = priority, target = targetCard.owner, index = parry.index };
                         }
@@ -309,7 +309,7 @@ namespace LibraryOfAngela.Battle
             if (cost > remainPlayPoint)
             {
                 LoggingIfFull($"    - 빛 부족! 최종 우선도: -10000 (조기 반환)");
-                return -10000;
+                return int.MinValue;
             }
 
             var flag = false;

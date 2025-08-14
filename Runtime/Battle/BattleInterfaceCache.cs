@@ -123,6 +123,8 @@ namespace LibraryOfAngela.Battle
             if (!stackCnt.ContainsKey(key)) stackCnt[key] = 0;
 
             List<ILoABattleEffect> reserved = null;
+            int step = 0;
+
             try
             {
                 if (++stackCnt[key] >= 5)
@@ -130,16 +132,20 @@ namespace LibraryOfAngela.Battle
                     throw new Exception("LoA StackOverflow!!!!");
                 }
 
-                foreach (var effect in Emit<T>(emotions))
-                {
-                    yield return effect;
-                }
-                foreach (var effect in Emit<T>(passives))
+                step = 1;
+                foreach (var effect in Emit<T>(emotions, step))
                 {
                     yield return effect;
                 }
 
-                foreach (var effect in Emit<T>(bufs))
+                step = 2;
+                foreach (var effect in Emit<T>(passives, step))
+                {
+                    yield return effect;
+                }
+
+                step = 3;
+                foreach (var effect in Emit<T>(bufs, step))
                 {
                     var b = (effect as BattleUnitBuf);
                     if (b.IsDestroyed() != true)
@@ -153,9 +159,12 @@ namespace LibraryOfAngela.Battle
                     }
                 }
 
+                step = 4;
                 if (cardAbility is T card) yield return card;
 
-                foreach (var effect in Emit<T>(diceAbility))
+
+                step = 5;
+                foreach (var effect in Emit<T>(diceAbility, step))
                 {
                     yield return effect;
                 }
@@ -170,12 +179,36 @@ namespace LibraryOfAngela.Battle
             }
         }
 
-        private IEnumerable<T> Emit<T>(IEnumerable<ILoABattleEffect> effects) where T : ILoABattleEffect
+        private IEnumerable<T> Emit<T>(IEnumerable<ILoABattleEffect> effects, int step) where T : ILoABattleEffect
         {
             if (effects == null) yield break;
-            foreach (var effect in effects)
+            var iterator = effects.GetEnumerator();
+            while (true)
             {
-                if (effect is T ef) yield return ef;
+                T ret;
+                try
+                {
+                    if (!iterator.MoveNext())
+                    {
+                        break;
+                    }
+                    var current = iterator.Current;
+                    if (current is T d)
+                    {
+                        ret = d;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                    Logger.Log($"LoA :: Collection was Modified Detect, Step : {step} // {owner.UnitData.unitData.name} // {owner.IsDead()}");
+                    break;
+                }
+                // the yield statement is outside the try catch block
+                yield return ret;
             }
         }
     }
