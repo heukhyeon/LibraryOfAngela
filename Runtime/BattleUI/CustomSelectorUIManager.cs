@@ -49,7 +49,7 @@ namespace LibraryOfAngela.BattleUI
         }
 
         private CustomSelectorUI ui;
-        private CustomSelectorModel currentModel;
+        public CustomSelectorModel currentModel;
         private List<CustomSelectorUiComponent> components = new List<CustomSelectorUiComponent>();
         private int currentSelected = 0;
         private int currentMax = 0;
@@ -307,40 +307,33 @@ namespace LibraryOfAngela.BattleUI
         public bool isCardMode = true;
 
         public CustomSelectorUIManager manager;
+        private static int colorId = -1;
+
         public bool IsSelected
         {
             get
             {
-                if (selectedObj is null)
-                {
-                    var asset = LoAFramework.BattleUiBundle.LoadAsset<GameObject>("Assets/CustomSelector/LobgelaRe_UI_Card.prefab");
-                    selectedObj = Instantiate(asset, transform);
-                    selectedObj.gameObject.SetActive(false);
-                    selectedObj.transform.SetParent(emotion._rootRect.GetChild(0));
-                    //selectedObj.transform.SetParent(card.vibeRect);
-                    //selectedObj.transform.localPosition = new Vector3(120f, 550f, 0f);
-
-                }
+                if (selectedObj is null) InitSelect();
                 return selectedObj.activeSelf;
             }
             set
             {
                 if (value)
                 {
-                    if (selectedObj is null)
-                    {
-                        var asset = LoAFramework.BattleUiBundle.LoadAsset<GameObject>("Assets/CustomSelector/LobgelaRe_UI_Card.prefab");
-                        selectedObj = Instantiate(asset, transform);
-                    }
+
+                    if (selectedObj is null) InitSelect();
                     if (isCardMode)
                     {
+                        
                         selectedObj.transform.SetParent(card.vibeRect);
-                        selectedObj.transform.localPosition = new Vector3(120f, 550f, 0f);
+                        selectedObj.transform.localPosition = new Vector3(500f, -50f, 0f);
+                        selectedObj.transform.localScale = new Vector3(2.6f, 2.77f, 2.77f);
                     }
                     else
                     {
                         selectedObj.transform.SetParent(emotion._rootRect.GetChild(0));
-                        selectedObj.transform.localPosition = new Vector3(160f, 640f, 0f);
+                        selectedObj.transform.localPosition = new Vector3(550f, 0f, 0f);
+                        selectedObj.transform.localScale = new Vector3(2.8f, 2.8f, 2.8f);
                     }
                     selectedObj.SetActive(true);
                 }
@@ -401,6 +394,17 @@ namespace LibraryOfAngela.BattleUI
         }
 
 
+        private void InitSelect()
+        {
+            if (colorId == -1)
+            {
+                colorId = Shader.PropertyToID("_Color");
+            }
+            var asset = LoAFramework.BattleUiBundle.LoadAsset<GameObject>("Assets/CustomSelector/LoACustomSelectorSelected.prefab");
+            selectedObj = Instantiate(asset, transform);
+            selectedObj.GetComponent<Image>().material.SetColor(colorId, manager.currentModel.color);
+            selectedObj.SetActive(false);
+        }
 
         private void Awake()
         {
