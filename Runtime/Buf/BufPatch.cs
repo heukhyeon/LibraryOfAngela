@@ -135,7 +135,7 @@ namespace LibraryOfAngela.Buf
         private static IEnumerable<CodeInstruction> Trans_AddNewKeywordBufInList(IEnumerable<CodeInstruction> __instruction, ILGenerator generator)
         {
             var codes = new List<CodeInstruction>(__instruction);
-            var lastBrFalse = codes.Last(d => d.opcode == OpCodes.Brfalse_S || d.opcode == OpCodes.Brfalse);
+            var target = AccessTools.Method(typeof(BattleUnitBufListDetail), nameof(BattleUnitBufListDetail.CanAddBuf));
             int i = 0;
             while (true)
             {
@@ -218,15 +218,15 @@ namespace LibraryOfAngela.Buf
                         break;
                     }
                 }
-                else if (code == lastBrFalse)
+                else if (code.Calls(target))
                 {
-                   
+                    yield return code;
                     yield return new CodeInstruction(OpCodes.Ldarg_0);
                     yield return new CodeInstruction(OpCodes.Ldarg_1);
                     yield return new CodeInstruction(OpCodes.Ldarg_2);
+                    yield return new CodeInstruction(OpCodes.Ldloc_1);
                     yield return new CodeInstruction(OpCodes.Ldloca_S, 2);
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BufPatch), nameof(BufPatch.HandleAddNewKeywordBufInList)));
-                    yield return code;
                     i++;
                 }
                 else
@@ -237,10 +237,11 @@ namespace LibraryOfAngela.Buf
             }
         }
 
-        private static BattleUnitBuf HandleAddNewKeywordBufInList(BattleUnitBuf current, BattleUnitBufListDetail owner, BufReadyType readyType, KeywordBuf bufType, ref BattleUnitBuf replace)
+        private static bool HandleAddNewKeywordBufInList(bool origin, BattleUnitBufListDetail owner, BufReadyType readyType, KeywordBuf bufType, List<BattleUnitBuf> targetBufs, ref BattleUnitBuf replace)
         {
             try
             {
+                var current = replace;
                 foreach (var b in BattleInterfaceCache.Of<IHandleAddNewKeywordBufInList>(owner._self))
                 {
                     var next = b.OnAddNewKeywordBufInList(bufType, current, readyType);
@@ -251,14 +252,30 @@ namespace LibraryOfAngela.Buf
                 }
                 if (current != replace)
                 {
+                    if (current == null)
+                    {
+                        replace = null;
+                        // 버프 차단으로 간주
+                        return false;
+                    }
+                    var id = current.keywordId;
+                    foreach (var d in targetBufs)
+                    {
+                        if (d.keywordId == id)
+                        {
+                            // 이미 있으므로 중복 부여는 무시해야함
+                            return false;
+                        }
+                    }
                     replace = current;
+                    // 진짜로 새로 부여하는 경우, 원본대로 리스트 추가 로직을 따르게 함
                 }
             }
             catch (Exception e)
             {
                 Logger.LogError(e);
             }
-            return current;
+            return origin;
         }
 
         private static object HandleKeywordBufExtension(object origin, Type type)
