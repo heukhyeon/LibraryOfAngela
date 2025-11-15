@@ -105,6 +105,7 @@
     <Compile Include="Interface-External\IAfterTakeDamageListener.cs" />
     <Compile Include="Interface-External\IAggroAbility.cs" />
     <Compile Include="Interface-External\IAllCharacterBufController.cs" />
+    <Compile Include="Interface-External\IHandleEmotionCoinAdder.cs" />
     <Compile Include="Interface-External\INotEnoughDiscardListener.cs" />
     <Compile Include="Interface-External\IHandleAutoCardUse.cs" />
     <Compile Include="Interface-External\IDiceCardSelfAbilityOnWaveStart.cs" />
