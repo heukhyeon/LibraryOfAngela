@@ -257,7 +257,26 @@ namespace LibraryOfAngela.EquipBook
             {
                 return false;
             }
-            var key = new SkinComponentKey { packageId = bookItem.ClassInfo.workshopID, skinName = bookItem.GetOriginalCharcterName() };
+
+            var name = bookItem.GetOriginalCharcterName();
+            var name2 = SkinInfoProvider.ConvertValidSkinName(name, unit);
+            SkinComponentKey key;
+            if (name2 != name)
+            {
+                var packageId = AdvancedSkinInfoPatch.Instance.infos.SafeGet(name2)?.packageId;
+                if (packageId != null)
+                {
+                    key = new SkinComponentKey { packageId = packageId, skinName = name2 };
+                }
+                else
+                {
+                    key = new SkinComponentKey { packageId = bookItem.ClassInfo.workshopID, skinName = name };
+                }
+            }
+            else
+            {
+                key = new SkinComponentKey { packageId = bookItem.ClassInfo.workshopID, skinName = name };
+            }
             var prefab = Instance.prefabs.SafeGet(key);
             if (string.IsNullOrEmpty(prefab))
             {
@@ -272,8 +291,25 @@ namespace LibraryOfAngela.EquipBook
             {
                 return null;
             }
-            var bookItem = unit.CustomBookItem;
-            var key = new SkinComponentKey { packageId = bookItem.ClassInfo.workshopID, skinName = bookItem.GetOriginalCharcterName() };
+            var name = unit.CustomBookItem.GetOriginalCharcterName();
+            var name2 = SkinInfoProvider.ConvertValidSkinName(name, unit);
+            SkinComponentKey key;
+            if (name2 != name)
+            {
+                var packageId = AdvancedSkinInfoPatch.Instance.infos.SafeGet(name2)?.packageId;
+                if (packageId != null)
+                {
+                    key = new SkinComponentKey { packageId = packageId, skinName = name2 };
+                }
+                else
+                {
+                    key = new SkinComponentKey { packageId = unit.CustomBookItem.ClassInfo.workshopID, skinName = name };
+                }
+            }
+            else
+            {
+                key = new SkinComponentKey { packageId = unit.CustomBookItem.ClassInfo.workshopID, skinName = name };
+            }
             return LoadLoAPrefab(key, ready);
         }
 
