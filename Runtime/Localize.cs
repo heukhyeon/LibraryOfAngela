@@ -22,6 +22,7 @@ namespace LibraryOfAngela
         public string name;
         public string desc;
         public List<string> descs;
+        public object origin;
 
         public LocalizeData()
         {
@@ -33,6 +34,12 @@ namespace LibraryOfAngela
             type = "Card";
             name = desc.cardID.ToString();
             this.desc = desc.cardName;
+            var abilityExists = !string.IsNullOrEmpty(desc.ability);
+
+            if (abilityExists || desc.behaviourDescList != null)
+            {
+                origin = desc;
+            }
         }
 
         public LocalizeData(BattleCardAbilityDesc desc)
@@ -189,7 +196,12 @@ namespace LibraryOfAngela
                             }
                             break;
                         case "Card":
-                            ItemXmlDataList.instance.GetCardItem(new LorId(data.packageId, int.Parse(data.name))).workshopName = data.desc;
+                            var targetId = new LorId(data.packageId, int.Parse(data.name));
+                            ItemXmlDataList.instance.GetCardItem(targetId).workshopName = data.desc;
+                            if (data.origin != null)
+                            {
+                                BattleCardDescXmlList.Instance._dictionary[targetId] = data.origin as BattleCardDesc;
+                            }
                             break;
                         case "Ability":
                             rootDiceCardDictionary[data.name] = new BattleCardAbilityDesc { id = data.name, desc = new List<string> { data.desc } };
