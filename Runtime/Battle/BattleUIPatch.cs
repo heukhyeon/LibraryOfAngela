@@ -251,5 +251,75 @@ namespace LibraryOfAngela.Battle
             }
         }
 
+
+
+        // 최적화 패치용
+        private static Dictionary<BattleUnitInformationUI_PassiveList, List<PassiveAbilityBase>> infos = new Dictionary<BattleUnitInformationUI_PassiveList, List<PassiveAbilityBase>>();
+
+        /// <summary>
+        /// 여러 책장 선택할때 패시브 수에 따라서 불필요하게 다시 모든 데이터 설정하는게 렉 유발.
+        /// 캐싱해서 중복인경우 무시하게 수정
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="passivelist"></param>
+        /// <returns></returns>
+        [HarmonyPatch(typeof(BattleUnitInformationUI_PassiveList), nameof(BattleUnitInformationUI_PassiveList.SetData))]
+        [HarmonyPrefix]
+        private static bool Before_SetData(BattleUnitInformationUI_PassiveList __instance, List<PassiveAbilityBase> passivelist)
+        {
+            bool flag = false;
+            if (infos.ContainsKey(__instance))
+            {
+                var p = infos[__instance];
+                flag = CheckDiff(p, passivelist, (a1, a2) => a1.id == a2.id);
+            }
+            if (!flag)
+            {
+                infos[__instance] = passivelist;
+            }
+            return !flag;
+        }
+
+        /// <summary>
+        /// 여러 책장 선택할때 패시브 수에 따라서 불필요하게 다시 모든 데이터 설정하는게 렉 유발.
+        /// 캐싱해서 중복인경우 무시하게 수정
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="passivelist"></param>
+        /// <returns></returns>
+        [HarmonyPatch(typeof(BattleUnitInformationUI), nameof(BattleUnitInformationUI.SetAbnormalityCardList))]
+        [HarmonyPrefix]
+        private static bool Before_SetAbnormalityCardList(BattleUnitInformationUI __instance, List<BattleEmotionCardModel> cards)
+        {
+            var isEqual = CheckDiff(__instance.AbnormalityCardList.Where(d => d.Card != null), cards, (a, b) => a.Card == b.XmlInfo);
+            return !isEqual;
+        }
+
+        private static bool CheckDiff<T, R>(IEnumerable<T> a1, List<R> a2, Func<T, R, bool> diff)
+        {
+            try
+            {
+                int index = 0;
+                // 환상체 책장 초기화 문제
+                if (a2.Count == 0) return false;
+
+                foreach (var previous in a1)
+                {
+                    if (index >= a2.Count || !diff(previous, a2[index]))
+                    {
+                        return false;
+                    }
+                    index++;
+                }
+
+                return a2.Count == index - 1;
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+                return false;
+            }
+        }
+
     }
 }
