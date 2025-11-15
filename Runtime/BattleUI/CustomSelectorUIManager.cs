@@ -158,11 +158,16 @@ namespace LibraryOfAngela.BattleUI
                 {
                     flag = false;
                 }
-                else if (!isLoadRequire && BattleSceneRoot.Instance.currentMapObject.IsRunningEffect)
+                else if (!isLoadRequire && !BattleSceneRoot.Instance.currentMapObject.IsRunningEffect)
                 {
                     flag = false;
                 }
                 isLoadRequire = flag;
+                if (flag)
+                {
+                    BattleSceneRoot.Instance.currentMapObject.SetRunningState(true);
+                }
+
                 if (model.maxSelectCount > 0)
                 {
                     title += $" (0/{model.maxSelectCount})";
@@ -225,23 +230,14 @@ namespace LibraryOfAngela.BattleUI
 
         public void OnSelected(CustomSelectorUiComponent component)
         {
-            if (currentModel.maxSelectCount <= 0)
+            currentSelected += component.IsSelected ? -1 : 1;
+            component.IsSelected = !component.IsSelected;
+            if (currentSelected >= currentModel.maxSelectCount)
             {
-                if (component.isCardMode)
-                {
-                    currentModel.onSelect(new CustomSelectorModel.CardResult { cards = new List<DiceCardXmlInfo> { component.CardInfo } });
-                    Close();
-                }
-                else
-                {
-                    currentModel.onSelect(new CustomSelectorModel.EmotionResult { emotions = new List<EmotionCardXmlInfo> { component.EmotionInfo } });
-                    Close();
-                }
+                OnConfirm();
             }
-            else if (currentSelected < currentModel.maxSelectCount || component.IsSelected)
+            else if (currentModel.maxSelectCount > 0)
             {
-                currentSelected += component.IsSelected ? -1 : 1;
-                component.IsSelected = !component.IsSelected;
                 string title = currentModel.title + $" ({currentSelected}/{currentModel.maxSelectCount})";
                 ui.title.text = title;
             }
@@ -282,7 +278,7 @@ namespace LibraryOfAngela.BattleUI
             }
             else
             {
-                Logger.Log($"CustomSelector Hide :\n{Environment.StackTrace}");
+                Logger.Log($"CustomSelector Hide");
                 isShowing = false;
                 ui.Hide();
                 ui.title.gameObject.SetActive(false);
@@ -294,6 +290,7 @@ namespace LibraryOfAngela.BattleUI
                 });
                 if (isLoadRequire)
                 {
+                    BattleSceneRoot.Instance.enabled = true;
                     BattleSceneRoot.Instance.currentMapObject.SetRunningState(false);
                 }
             }
@@ -365,7 +362,14 @@ namespace LibraryOfAngela.BattleUI
                 if (card is null) return;
                 if (isCardMode)
                 {
-                    card.SetCard(BattleDiceCardModel.CreatePlayingCard(value));
+                    var c = BattleDiceCardModel.CreatePlayingCard(value);
+                    if (value.IsEgo())
+                    {
+                        c.ResetCoolTime();
+                        c.SetMaxCooltime();
+                        c.SetCurrentCostMax();
+                    }
+                    card.SetCard(c);
                     card.gameObject.SetActive(true);
                 }
                 else

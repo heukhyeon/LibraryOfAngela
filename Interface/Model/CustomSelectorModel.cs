@@ -110,12 +110,19 @@ namespace LibraryOfAngela.Model
                 return this;
             }
 
+            [Obsolete("Call SetMaxSelectCount")]
             public Builder SetSelectCount(int selectCount, int maxSelectCount = -1)
             {
-                this.selectCount = selectCount;
                 this.maxSelectCount = maxSelectCount;
                 return this;
             }
+
+            public Builder SetMaxSelectCount(int maxSelectCount)
+            {
+                this.maxSelectCount = maxSelectCount;
+                return this;
+            }
+
             public Builder SetStoryArtwork(string story)
             {
                 this.artwork = story;
