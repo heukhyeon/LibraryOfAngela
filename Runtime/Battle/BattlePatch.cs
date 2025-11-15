@@ -344,7 +344,28 @@ namespace LibraryOfAngela.Battle
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> Trans_CreateEmotionCoin(IEnumerable<CodeInstruction> instructions)
         {
-            return AddOnGetEmotionCoin(ConvertMaximumLevelWrapping(instructions, false));
+            var fired = false;
+            var target = AccessTools.Method(typeof(BattleUnitEmotionDetail), nameof(BattleUnitEmotionDetail.GetEmotionCoinAdder));
+            foreach (var code in instructions)
+            {
+                yield return code;
+                if (code.Calls(target))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Ldarga_S, 1);
+                    yield return new CodeInstruction(OpCodes.Ldarg_2);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), nameof(HandleEmotionCoinAdder)));
+
+                }
+                if (!fired && code.opcode == OpCodes.Starg_S && code.operand is byte b && b == 0x02)
+                {
+                    fired = true;
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Ldarg_1);
+                    yield return new CodeInstruction(OpCodes.Ldarg_2);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), nameof(HandleGetEmotionCoin)));
+                }
+            }
         }
 
         [HarmonyPatch(typeof(BattleCharacterProfileUI), "OnAcquireCoin")]
@@ -564,23 +585,6 @@ namespace LibraryOfAngela.Battle
                     }
 
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), "CheckGetEmotionCoin"));
-                }
-            }
-        }
-
-        private static IEnumerable<CodeInstruction> AddOnGetEmotionCoin(IEnumerable<CodeInstruction> origin)
-        {
-            var fired = false;
-            foreach (var code in origin)
-            {
-                yield return code;
-                if (!fired && code.opcode == OpCodes.Starg_S && code.operand is byte b && b == 0x02)
-                {
-                    fired = true;
-                    yield return new CodeInstruction(OpCodes.Ldarg_0);
-                    yield return new CodeInstruction(OpCodes.Ldarg_1);
-                    yield return new CodeInstruction(OpCodes.Ldarg_2);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), "HandleGetEmotionCoin"));
                 }
             }
         }
@@ -913,6 +917,35 @@ namespace LibraryOfAngela.Battle
                 }
             }
             return originMaxLevel;
+        }
+
+        private static int HandleEmotionCoinAdder(int origin, BattleUnitEmotionDetail instance, ref EmotionCoinType coinType, int count)
+        {
+            try
+            {
+                int current = origin;
+                var originType = coinType;
+                foreach (var effect in BattleInterfaceCache.Of<IHandleEmotionCoinAdder>(instance._self))
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        try
+                        {
+                            effect.OnHandleEmotionCoinAdder(ref coinType, ref current, count);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.LogError(e);
+                        }
+                    }
+                }
+                return current;
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+                return origin;
+            }
         }
 
         private static void HandleGetEmotionCoin(BattleUnitEmotionDetail instance, EmotionCoinType coinType, int count)
@@ -1666,12 +1699,14 @@ namespace LibraryOfAngela.Battle
         [HarmonyPatch(typeof(BattleAllyCardDetail), nameof(BattleAllyCardDetail.DisCardACardRandom))]
         [HarmonyPatch(typeof(BattleAllyCardDetail), nameof(BattleAllyCardDetail.DiscardACardHighest))]
         [HarmonyPatch(typeof(BattleAllyCardDetail), nameof(BattleAllyCardDetail.DiscardACardLowest))]
+        [HarmonyPrefix]
         private static void Before_DisCardACardRandom(BattleAllyCardDetail __instance)
         {
             ListenDiscardFailed(1, __instance);
         }
 
         [HarmonyPatch(typeof(BattleAllyCardDetail), nameof(BattleAllyCardDetail.DiscardACardRandomlyByAbility))]
+        [HarmonyPrefix]
         private static void Before_DiscardACardRandomlyByAbility(int num, BattleAllyCardDetail __instance)
         {
             ListenDiscardFailed(num, __instance);
@@ -1679,7 +1714,10 @@ namespace LibraryOfAngela.Battle
 
         private static void ListenDiscardFailed(int expectedDiscard, BattleAllyCardDetail instance)
         {
-            if (instance._cardInHand.Count >= expectedDiscard) return;
+            if (instance._cardInHand.Count >= expectedDiscard)
+            {
+                return;
+            }
 
             try
             {
