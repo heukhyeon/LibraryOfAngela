@@ -77,11 +77,22 @@ namespace LibraryOfAngela.EquipBook
                     hidePassives = new HashSet<LorId>();
                     foreach (var mod in configs)
                     {
-                        var infos = GetSafeAction(() => mod.GetAdvancedEquipBookInfos()) ?? new List<Model.AdvancedEquipBookInfo>();
-                        foreach (var info in infos)
+                       
+                        try
                         {
-                            this.infos[info.targetId] = info;
+                            var infos = mod.GetAdvancedEquipBookInfos();
+                            if (infos == null) continue;
+                            foreach (var info in infos)
+                            {
+                                this.infos[info.targetId] = info;
+                            }
                         }
+                        catch (Exception e)
+                        {
+                            Logger.Log("Error in EquipBookInfo Init : " + mod.packageId);
+                            Logger.LogError(e);
+                        }
+
                         try
                         {
                             mod.GetHideCostPassives().ForEach(x => hidePassives.Add(x));
@@ -197,10 +208,14 @@ namespace LibraryOfAngela.EquipBook
 
         [HarmonyPatch(typeof(UnitDataModel), "EquipBook")]
         [HarmonyPrefix]
-        private static void Before_EquipBook(UnitDataModel __instance, ref BookModel newBook, ref bool force)
+        private static void Before_EquipBook(UnitDataModel __instance, ref BookModel newBook, ref bool force, out BookModel __state)
         {
+            __state = __instance.bookItem;
             var id = newBook?.BookId;
+            if (id == null) return;
+
             var info = Instance.infos.SafeGet(id)?.equipCondition?.Invoke(__instance);
+
             if (info == true)
             {
                 force = true;
@@ -539,6 +554,7 @@ namespace LibraryOfAngela.EquipBook
             var info = Instance.infos.SafeGet(id);
             if (info == null) return originBlueReveration;
             var result = info.equipCondition?.Invoke(UI.UIController.Instance.CurrentUnit);
+
             if (result != null)
             {
                 if (current == "ui_bookinventory_equipbook" && result == false)
