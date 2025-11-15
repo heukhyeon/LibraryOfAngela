@@ -22,7 +22,7 @@ namespace LibraryOfAngela.SD
 
         public static void Initialize(List<AdvancedSkinInfo> infos)
         {
-            var targets = infos.Where(x => x.overrideFaceSprite != null && x.overrideFaceSprite.Length > 0);
+            var targets = infos.Where(x => (x.overrideFaceSprite != null && x.overrideFaceSprite.Length > 0) || (x.overrideFace != null));
             if (targets.Count() > 0)
             {
                 faceTargets = new Dictionary<string, AdvancedSkinInfo>();
@@ -97,7 +97,13 @@ namespace LibraryOfAngela.SD
                 {
                     slot.faceEditor.InitBySephirah(new LorId(16));
                     var artwork = LoAModCache.Instance[faceTargets[key].packageId].Artworks;
-                    slot.faceEditor.head.sprite = artwork[faceTargets[key].overrideFaceSprite + "_setting"];
+                    var sp = artwork.GetNullable(faceTargets[key].overrideFaceSprite + "_setting");
+                    if (sp == null)
+                    {
+                        sp = artwork.GetNullable(faceTargets[key].overrideFace.Invoke(key, key, info.unit).GetSettingFaceArtwork());
+                    }
+                    if (sp == null) return false;
+                    slot.faceEditor.head.sprite = sp;
                     slot.faceEditor.head.enabled = true;
                     slot.faceEditor.head.color = new UnityEngine.Color(1f, 1f, 1f, 1f);
                     return true;
@@ -118,6 +124,7 @@ namespace LibraryOfAngela.SD
                 var skin = owner.workshopSkin;
                 if (string.IsNullOrEmpty(skin)) skin = owner.CustomBookItem.GetCharacterName();
                 if (string.IsNullOrEmpty(currentSkinName)) currentSkinName = skin;
+                currentSkinName = SkinInfoProvider.ConvertValidSkinName(currentSkinName, owner);
                 var corePage = owner.bookItem.BookId;
                 var skinInfo = AdvancedSkinInfoPatch.Instance.infos.SafeGet(skin);
                 var faceBySkin = skinInfo?.overrideFace?.Invoke(currentSkinName, skin, owner);
@@ -172,10 +179,14 @@ namespace LibraryOfAngela.SD
                 if (key != null && faceTargets.ContainsKey(key))
                 {
                     var artwork = LoAModCache.Instance[faceTargets[key].packageId].Artworks;
-                    var sp = faceTargets[key].overrideFaceSprite;
-                    if (string.IsNullOrEmpty(sp)) return;
+                    var sp = artwork.GetNullable(faceTargets[key].overrideFaceSprite + "_setting");
+                    if (sp == null)
+                    {
+                        sp = artwork.GetNullable(faceTargets[key].overrideFace.Invoke(key, key, unit).GetSettingFaceArtwork());
+                    }
+                    if (sp == null) return;
                     ___faceEdit.InitBySephirah(new LorId(16));
-                    ___faceEdit.head.sprite = artwork[sp + "_setting"];
+                    ___faceEdit.head.sprite = sp;
                     ___faceEdit.head.enabled = true;
                     ___faceEdit.head.color = new UnityEngine.Color(1f, 1f, 1f, 1f);
                 }
