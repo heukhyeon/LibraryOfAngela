@@ -1,5 +1,6 @@
 ﻿using GameSave;
 using HarmonyLib;
+using LibraryOfAngela.EquipBook;
 using LibraryOfAngela.Extension;
 using LibraryOfAngela.Extension.Framework;
 using LibraryOfAngela.Implement;
@@ -249,6 +250,10 @@ namespace LibraryOfAngela.CorePage
             var id = __instance.BookId;
             var info = infos.SafeGet(id);
             if (info != null) InjectDeckOwner(__instance, info);
+            if (id.IsBasic()) return;
+
+            var config = AdvancedEquipBookPatch.Instance.configs.Find(d => d.packageId == id.packageId);
+            if (config != null) config.OnCorePageStateChange(__instance, id, EquipStateEvent.Loaded, __instance.owner);
         }
 
         [HarmonyPatch(typeof(BookInventoryModel), "CreateBook", new Type[] { typeof(BookXmlInfo) })]
@@ -263,7 +268,8 @@ namespace LibraryOfAngela.CorePage
             try
             {
                 LoAModCache.Instance[bookClassInfo.workshopID]?.CorePageConfig?.OnCreateCorePage(__result);
-
+                var config = AdvancedEquipBookPatch.Instance.configs.Find(d => d.packageId == id.packageId);
+                if (config != null) config.OnCorePageStateChange(__result, id, EquipStateEvent.Created, null);
             }
             catch (Exception e)
             {
@@ -547,10 +553,11 @@ namespace LibraryOfAngela.CorePage
         private static CardEquipState DisableByMultiDeckOnlyPage(CardEquipState origin, List<DiceCardItemModel> cards, int index)
         {
             if (origin != CardEquipState.Equippable) return origin;
-            if (cards is null || index < 0 || cards.Count >= index) return origin;
-            var id = cards[index].GetID();
+            if (cards is null || index < 0 || cards.Count <= index) return origin;
+     
             try
             {
+                var id = cards[index].GetID();
                 if (id.IsBasic() || !visibleConditionCards.ContainsKey(id))
                 {
                     if (currentVisibleCards?.Contains(id) == false)
@@ -673,8 +680,7 @@ namespace LibraryOfAngela.CorePage
         private bool init = false;
         private bool reduced = false;
         private LorId lastBookId = null;
-        private string[] lastTextNames = null;
-        private bool checkFlag = false;
+        private int checkFlag = 0;
         private MultiDeckInfo currentInfo;
         private MultiDeckButton[] buttons;
 
@@ -682,7 +688,19 @@ namespace LibraryOfAngela.CorePage
         {
             var bookId = unit.bookItem.BookId;
             // 같은 책이 또 보여진 경우는 처리 없이 무시
-            if (bookId == lastBookId) return;
+            if (bookId == lastBookId)
+            {
+                if (!reduced || currentInfo == null) return;
+                foreach (var b in buttons)
+                {
+                    if (b.IsInvalid)
+                    {
+                        Refresh();
+                        break;
+                    }
+                }
+            }
+
             lastBookId = bookId;
             var info = MultiDeckPatch.infos.SafeGet(bookId);
 
@@ -699,10 +717,19 @@ namespace LibraryOfAngela.CorePage
                     {
                         buttons[i].LastTextName = parent.deckTabsController.CustomTabs[i].TabName.text;
                     }
+                    var visible = i < count;
+                    if (visible)
+                    {
+                        buttons[i].matchedText = info.infos[i].name;
+                    }
+                    else
+                    {
+                        buttons[i].matchedText = null;
+                    }
                     buttons[i].Visible = i < count;
                 }
                 reduced = true;
-                checkFlag = false;
+                checkFlag = 3;
             }
             // 대응하는 멀티덱 정보가 없고, 이전에 개별 멀티덱용으로 줄인경우
             else if (reduced)
@@ -711,24 +738,39 @@ namespace LibraryOfAngela.CorePage
                 for (int i = 0; i < 4; i++)
                 {
                     buttons[i].tabText.text = buttons[i].LastTextName;
+                    buttons[i].matchedText = null;
                     buttons[i].Visible = true;
                 }
                 reduced = false;
-                checkFlag = true;
+                checkFlag = -1;
             }
 
             return;
         }
 
+        private void Refresh()
+        {
+            Logger.Log("Invalidate Multideck Layout");
+            foreach (var b in buttons)
+            {
+                b.tabText.text = b.matchedText;
+                b.Visible = b._visible;
+            }
+        }
+
         private void Update()
         {
-            if (reduced && !checkFlag)
+            if (reduced && checkFlag > 0)
             {
-                var count = Math.Min(currentInfo.infos.Count, 4);
-                for (int i = 0; i < count; i++)
+                foreach (var b in buttons)
                 {
-                    buttons[i].tabText.text = currentInfo.infos[i].name;
+                    if (b.IsInvalid)
+                    {
+                        Refresh();
+                        break;
+                    }
                 }
+                checkFlag--;
             }
         }
 
@@ -736,7 +778,7 @@ namespace LibraryOfAngela.CorePage
         {
             if (parent != null)
             {
-                checkFlag = false;
+                checkFlag = 3;
                 UpdateLayout(UI.UIController.Instance.CurrentUnit);
             }
         }
@@ -746,7 +788,6 @@ namespace LibraryOfAngela.CorePage
             init = true;
             parent.multiDeckLayout.gameObject.SetActive(true);
             linearLayout = GetComponentsInChildren<HorizontalLayoutGroup>().First(x => x.name == "CustomTabs");
-            lastTextNames = new string[4];
             buttons = parent.deckTabsController.CustomTabs.Select(x =>
             {
                 var com = x.gameObject.AddComponent<MultiDeckButton>();
@@ -767,6 +808,18 @@ namespace LibraryOfAngela.CorePage
             {
                 _lastTextName = value;
                 tabText.text = value;
+            }
+        }
+
+        public string matchedText;
+
+        public bool IsInvalid
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(matchedText)) return false;
+
+                return tabText.text != matchedText || _visible != gameObject.activeSelf;
             }
         }
 
