@@ -19,6 +19,12 @@ namespace LibraryOfAngela
 
         public virtual bool DiceTargetable { get => true; }
 
+        public override void Init(BattleUnitModel owner)
+        {
+            base.Init(owner);
+            ServiceLocator.Instance.GetInstance<ISpeedDiceControllerHandler>().Init(this);
+        }
+
         public override void OnTakeDamageByAttack(BattleDiceBehavior atkDice, int dmg)
         {
             base.OnTakeDamageByAttack(atkDice, dmg);
@@ -52,5 +58,10 @@ namespace LibraryOfAngela
             }
             return behaviour?.card?.targetSlotOrder == TargetSpeedDiceIndex;
         }
+    }
+
+    internal interface ISpeedDiceControllerHandler
+    {
+        void Init(SpeedDiceBindingBuf buf);
     }
 }

@@ -383,7 +383,7 @@
     <Compile Include="Battle\BattleLogPatch.cs" />
     <Compile Include="Battle\EgoPatch.cs" />
     <Compile Include="Buf\SceneBufPatch.cs" />
-    <Compile Include="Buf\SpeedDiceBufPatch.cs" />
+    <Compile Include="Buf\SpeedDiceControllerHandlerImpl.cs" />
     <Compile Include="SD\FacePatch.cs" />
     <Compile Include="CorePage\FacePatchComponent.cs" />
     <Compile Include="CorePage\SkinPatch.cs" />

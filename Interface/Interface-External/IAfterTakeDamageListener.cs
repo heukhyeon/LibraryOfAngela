@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace LibraryOfAngela.Interface_External
 {
+    [Obsolete("Please Use Instead IHandleTakeDamage", false)]
     public interface IAfterTakeDamageListener : ILoABattleEffect
     {
         void AfterTakeDamage(BattleUnitModel attacker, int dmg);

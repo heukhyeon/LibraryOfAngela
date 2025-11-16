@@ -224,7 +224,6 @@ namespace LibraryOfAngela
                 LogProgress("BattleInterfaceCache", 0.02f);
 
                 FixValidPatch.Initialize();
-                SpeedDiceBufPatch.Instance.Initialize();
                 LogProgress("ValidationPatches", 0.02f);
 
                 CustomCardEffect.Initialize();
@@ -330,7 +329,6 @@ namespace LibraryOfAngela
                 Patch(typeof(AutoBattlePatch));
                 Patch(typeof(BattleResultPatch));
                 Patch(typeof(BattleLogPatch));
-                Patch(typeof(SpeedDiceBufPatch));
                 Patch(typeof(FixValidPatch));
                 Patch(typeof(EmotionPatch));
                 Patch(typeof(BattlePagePatch));

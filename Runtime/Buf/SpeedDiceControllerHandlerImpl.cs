@@ -13,19 +13,11 @@ using HarmonyLib;
 
 namespace LibraryOfAngela.Buf
 {
-    class SpeedDiceBufPatch : Singleton<SpeedDiceBufPatch>
+    class SpeedDiceControllerHandlerImpl : ISpeedDiceControllerHandler
     {
-
-        public void Initialize()
+        public void Init(SpeedDiceBindingBuf buf)
         {
-            InternalExtension.SetRange(typeof(SpeedDiceBufPatch));
-        }
-
-        [HarmonyPatch(typeof(SpeedDiceBindingBuf), "Init")]
-        [HarmonyPostfix]
-        public static void After_Init(SpeedDiceBindingBuf __instance)
-        {
-            var target = __instance._owner?.view?.speedDiceSetterUI?.gameObject;
+            var target = buf._owner?.view?.speedDiceSetterUI?.gameObject;
             (target.GetComponent<SpeedDiceBufController>() ?? target.AddComponent<SpeedDiceBufController>()).Refresh();
         }
     }

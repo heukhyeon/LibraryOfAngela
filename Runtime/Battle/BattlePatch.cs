@@ -181,6 +181,7 @@ namespace LibraryOfAngela.Battle
         private static IEnumerable<CodeInstruction> Trans_TakeDamage(IEnumerable<CodeInstruction> instructions)
         {
             var targetMethod = AccessTools.Method(typeof(BattleUnitModel), "IsImmuneDmg", new Type[] { typeof(DamageType), typeof(KeywordBuf) });
+            var afterTarget = AccessTools.Method(typeof(BattleUnitModel), nameof(BattleUnitModel.AfterTakeDamage));
             var shotFlag = false;
             var flag = false;
             foreach (var code in instructions)
@@ -199,7 +200,17 @@ namespace LibraryOfAngela.Battle
                     yield return new CodeInstruction(OpCodes.Ldarg_2);
                     yield return new CodeInstruction(OpCodes.Ldarg_3);
                     yield return new CodeInstruction(OpCodes.Ldarg_S, 4);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), "HandleChangeDamage"));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), nameof(HandleChangeDamage)));
+                }
+                else if (code.Calls(afterTarget))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldloc_1);
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Ldarg_1);
+                    yield return new CodeInstruction(OpCodes.Ldarg_2);
+                    yield return new CodeInstruction(OpCodes.Ldarg_3);
+                    yield return new CodeInstruction(OpCodes.Ldarg_S, 4);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), nameof(BattlePatch.HandleAfterTakeDamage)));
                 }
             }
         }
@@ -209,7 +220,10 @@ namespace LibraryOfAngela.Battle
         private static IEnumerable<CodeInstruction> Trans_TakeBreakDamage(IEnumerable<CodeInstruction> instructions)
         {
             var targetMethod = AccessTools.Method(typeof(BattleUnitModel), "BeforeTakeBreakDamage");
+            var target2 = AccessTools.Method(typeof(BattleUnitPassiveDetail), nameof(BattleUnitPassiveDetail.IsDamageReductionForEvent));
+            var field = AccessTools.Field(typeof(BattleUnitBreakDetail), nameof(BattleUnitBreakDetail.breakGauge));
             var flag = false;
+            var flag2 = -1;
             foreach (var code in instructions)
             {
                 yield return code;
@@ -222,6 +236,21 @@ namespace LibraryOfAngela.Battle
                     yield return new CodeInstruction(OpCodes.Ldarg_3);
                     yield return new CodeInstruction(OpCodes.Ldarg_S, 5);
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), "HandleChangeBreakDamage"));
+                }
+                if (flag2 == -1 && code.Calls(target2))
+                {
+                    flag2 = 0;
+                }
+                if (flag2 == 0 && code.Is(OpCodes.Stfld, field))
+                {
+                    flag2 = 1;
+                    yield return new CodeInstruction(OpCodes.Ldloc_1);
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Ldarg_1);
+                    yield return new CodeInstruction(OpCodes.Ldarg_2);
+                    yield return new CodeInstruction(OpCodes.Ldarg_3);
+                    yield return new CodeInstruction(OpCodes.Ldarg_S, 5);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), nameof(BattlePatch.HandleAfterTakeBreakDamage)));
                 }
             }
         }
@@ -827,6 +856,11 @@ namespace LibraryOfAngela.Battle
         {
             try
             {
+                foreach (var t in BattleInterfaceCache.Of<IHandleTakeDamage>(owner))
+                {
+                    t.BeforeTakeDamage(damage, ref originRef, type, attacker, bufType);
+                }
+
                 foreach (var effect in BattleInterfaceCache.Of<IHandleChangeDamage>(owner))
                 {
                     effect.HandleDamage(damage, ref originRef, type, attacker, bufType);
@@ -844,6 +878,11 @@ namespace LibraryOfAngela.Battle
         {
             try
             {
+                foreach (var effect in BattleInterfaceCache.Of<IHandleTakeDamage>(owner._self))
+                {
+                    effect.BeforeTakeBreakDamage(originRef, ref originRef, type, attacker, bufType);
+                }
+
                 foreach (var effect in BattleInterfaceCache.Of<IHandleChangeDamage>(owner._self))
                 {
                     effect.HandleBreakDamage(originRef, ref originRef, type, attacker, bufType);
@@ -857,7 +896,36 @@ namespace LibraryOfAngela.Battle
             }
         }
 
+        private static void HandleAfterTakeDamage(int current, BattleUnitModel owner, int damage, DamageType type, BattleUnitModel attacker, KeywordBuf bufType)
+        {
+            try
+            {
+                var ret = current;
+                foreach (var t in BattleInterfaceCache.Of<IHandleTakeDamage>(owner))
+                {
+                    t.AfterTakeDamage(damage, ret, type, attacker, bufType);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+        }
 
+        private static void HandleAfterTakeBreakDamage(int current, BattleUnitBreakDetail owner, int damage, DamageType type, BattleUnitModel attacker, KeywordBuf bufType)
+        {
+            try
+            {
+                foreach (var t in BattleInterfaceCache.Of<IHandleTakeDamage>(owner._self))
+                {
+                    t.AfterTakeBreakDamage(damage, current, type, attacker, bufType);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+        }
 
 
         private static Faction FixValidFaction(Faction origin, RencounterManager instance)

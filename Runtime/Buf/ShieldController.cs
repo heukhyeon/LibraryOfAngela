@@ -477,6 +477,10 @@ namespace LibraryOfAngela.Buf
             com2.transform.localPosition = new Vector3(290f, 100f, 0f);
             text = com2.GetComponentInChildren<Text>(true);
             text.color = new Color(0.207f, 0.439f, 1.0f);
+            if (ui.UnitModel?.faction == Faction.Enemy)
+            {
+                text.transform.rotation = Quaternion.identity;
+            }
         }
 
         Coroutine latestCoroutine;
