@@ -350,18 +350,33 @@ namespace LibraryOfAngela.Battle
             Instance.caches.SafeGet(__instance?._self)?.DestroyPassive();
         }
 
-        [HarmonyPatch(typeof(BattleUnitBuf), "Init")]
+        [HarmonyPatch(typeof(BattleUnitBuf), nameof(BattleUnitBuf.Init))]
         [HarmonyPostfix]
         private static void After_BufInit(BattleUnitBuf __instance)
         {
-            if (!__instance.IsDestroyed() && __instance is ILoABattleEffect eff)
+            if (__instance.IsDestroyed())
+            {
+                //Logger.Log($"버프 파괴됨 ?? : {__instance._owner?.UnitData?.unitData.name}:{__instance.GetType().FullName}");
+                return;
+            }
+
+            if (__instance is ILoABattleEffect eff)
             {
                 var bufDetail = __instance._owner?.bufListDetail;
-                if (bufDetail is null) return;
+                if (bufDetail is null)
+                {
+                    Logger.Log($"대상 버프 없음 ?? : {__instance._owner?.UnitData?.unitData.name}:{__instance.GetType().FullName}");
+                    return;
+                }
 
                 if (bufDetail._bufList.Contains(__instance))
                 {
-                    Instance.caches.SafeGet(bufDetail._self)?.BufInit(eff);
+                    var dic = Instance.caches.SafeGet(bufDetail._self);
+                    dic?.BufInit(eff);
+                    if (dic == null)
+                    {
+                        Logger.Log($"버프 오너 없음 ?? : {__instance._owner?.UnitData?.unitData.name}\n{Environment.StackTrace}");
+                    }
                 }
             }
         }

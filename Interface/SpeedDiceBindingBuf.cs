@@ -19,16 +19,6 @@ namespace LibraryOfAngela
 
         public virtual bool DiceTargetable { get => true; }
 
-        public override void Init(BattleUnitModel owner)
-        {
-            base.Init(owner);
-        }
-
-        public override void Destroy()
-        {
-            base.Destroy();
-        }
-
         public override void OnTakeDamageByAttack(BattleDiceBehavior atkDice, int dmg)
         {
             base.OnTakeDamageByAttack(atkDice, dmg);

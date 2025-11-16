@@ -423,6 +423,7 @@ namespace LibraryOfAngela.Battle
 
         struct UseRecord
         {
+            public BattleDiceCardModel appliedCard;
             public BattlePlayingCardDataInUnitModel releasedCard;
             public int order;
         }
@@ -434,10 +435,11 @@ namespace LibraryOfAngela.Battle
             __state = new UseRecord();
             try
             {
+                __state.appliedCard = card;
                 __state.order = __instance._self.cardOrder;
                 if (__state.order >= 0 && __state.order < __instance.cardAry.Count)
                 {
-                    __state.releasedCard = __instance.cardAry[__instance._self.cardOrder];
+                    __state.releasedCard = __instance.cardAry[__state.order];
                 }
             }
             catch (ArgumentOutOfRangeException)
@@ -452,17 +454,25 @@ namespace LibraryOfAngela.Battle
 
         [HarmonyPatch(typeof(BattlePlayingCardSlotDetail), "AddCard")]
         [HarmonyPostfix]
-        private static void After_AddCard(BattlePlayingCardSlotDetail __instance, BattleDiceCardModel card, UseRecord __state)
+        private static void After_AddCard(BattlePlayingCardSlotDetail __instance, UseRecord __state)
         {
             try
             {
-                var appliedCard = __instance.cardAry.Find(c => c?.card == card);
-                if (appliedCard is null && __state.releasedCard is null) return;
-
+                BattlePlayingCardDataInUnitModel appliedCard = null;
+                
                 foreach (var x in BattleInterfaceCache.Of<IHandleAddCard>(__instance._self))
                 {
                     try
                     {
+                        if (appliedCard == null)
+                        {
+                            appliedCard = __instance.cardAry.Find(c => c != null && c?.card == __state.appliedCard);
+                            if (__state.appliedCard is null && __state.releasedCard is null)
+                            {
+                                Logger.Log("추가카드 제거카드 둘다 없음??");
+                                return;
+                            }
+                        }
                         x.OnAddCard(appliedCard, __state.releasedCard);
                     }
                     catch (Exception e)
