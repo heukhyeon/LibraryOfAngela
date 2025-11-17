@@ -163,41 +163,43 @@ namespace LibraryOfAngela.Buf
             }
         }
 
-        public void OnHandleBreakDamage(BattleUnitBuf_loaShield buf, int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
+        public void OnHandleBreakDamage(BattleUnitBuf_loaShield buf, int originDmg, int resultDmg, int beforeBp, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
         {
-            if (resultDmg <= 0 || buf.IsDestroyed()) return;
-            int previous = buf.stack;
+            if (buf.IsDestroyed()) return;
             int firstDmg = resultDmg;
-            int reduceStack = resultDmg > previous ? previous : resultDmg;
-            if (type != DamageType.Attack) reduceStack = 0;
+            int reduceStack = 0;
             int next = resultDmg - reduceStack;
             var listeners = BattleInterfaceCache.Of<IHandleTakeShield>(buf._owner).ToList();
             foreach (var effect in listeners)
             {
                 try
                 {
-                    effect.BeforeHandleBreakDamageInShield(buf, resultDmg, type, attacker, keyword, ref next, ref reduceStack);
+                    effect.BeforeHandleBreakDamageInShield(buf, originDmg, type, attacker, keyword, ref next, ref reduceStack);
                 }
                 catch (Exception e)
                 {
                     Debug.LogError(e);
                 }
             }
+            var recover = resultDmg - next;
             bool isReduced = resultDmg != next;
-            resultDmg = next;
             if (isReduced)
             {
                 foreach (var effect in listeners)
                 {
                     try
                     {
-                        effect.AfterHandleBreakDamageInShield(buf, firstDmg, type, attacker, keyword, next);
+                        effect.AfterHandleBreakDamageInShield(buf, originDmg, type, attacker, keyword, next);
                     }
                     catch (Exception e)
                     {
                         Debug.LogError(e);
                     }
                 }
+                var realDamage = beforeBp - buf._owner.breakDetail.breakGauge;
+                // 최대 흐트러짐 저항을 초과해 피해를 입힌경우, 그 수치만큼은 경감량에서 더 뺀다
+                int delta = resultDmg - realDamage;
+                buf._owner.breakDetail.breakGauge += (recover - delta);
             }
             if (reduceStack > 0)
             {
@@ -231,9 +233,9 @@ namespace LibraryOfAngela.Buf
 
         }
 
-        public void OnHandleDamage(BattleUnitBuf_loaShield buf, int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
+        public void OnHandleDamage(BattleUnitBuf_loaShield buf, int originDmg, int resultDmg, float beforeHp, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
         {
-            if (resultDmg <= 0 || buf.IsDestroyed()) return;
+            if (buf.IsDestroyed()) return;
             int previous = buf.stack;
             int firstDmg = resultDmg;
             int reduceStack = resultDmg > previous ? previous : resultDmg;
@@ -244,22 +246,27 @@ namespace LibraryOfAngela.Buf
             {
                 try
                 {
-                    effect.BeforeHandleDamageInShield(buf, resultDmg, type, attacker, keyword, ref next, ref reduceStack);
+                    effect.BeforeHandleDamageInShield(buf, originDmg, type, attacker, keyword, ref next, ref reduceStack);
                 }
                 catch (Exception e)
                 {
                     Debug.LogError(e);
                 }
             }
+            var recover = resultDmg - next;
             bool isReduced = resultDmg != next;
-            resultDmg = next;
             if (isReduced)
             {
+                // 최대 체력을 초과해 피해를 입힌경우, 그 수치만큼은 경감량에서 더 뺀다
+                var realDamage = beforeHp - buf._owner.hp;
+                float delta = resultDmg - realDamage;
+                buf._owner.hp += (recover - delta);
+
                 foreach (var effect in listeners)
                 {
                     try
                     {
-                        effect.AfterHandleDamageInShield(buf, firstDmg, type, attacker, keyword, next);
+                        effect.AfterHandleDamageInShield(buf, originDmg, type, attacker, keyword, next);
                     }
                     catch (Exception e)
                     {
@@ -474,12 +481,13 @@ namespace LibraryOfAngela.Buf
 
             var com2 = BufAssetLoader.LoadObject("LoA_Barrier_Text", ui.uiRoot, -1f);
             com2.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
-            com2.transform.localPosition = new Vector3(290f, 100f, 0f);
             text = com2.GetComponentInChildren<Text>(true);
             text.color = new Color(0.207f, 0.439f, 1.0f);
+            com2.transform.localPosition = new Vector3(290f, 100f, 0f);
             if (ui.UnitModel?.faction == Faction.Enemy)
             {
-                text.transform.rotation = Quaternion.identity;
+                text.transform.localPosition = text.transform.localPosition - new Vector3(150f, 0f, 0f);
+                text.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
             }
         }
 

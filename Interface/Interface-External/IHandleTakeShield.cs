@@ -29,9 +29,10 @@ namespace LibraryOfAngela.Interface_External
         /// 보호막이 있는 상태에서 체력 피해를 받을시 호출됩니다.
         /// 기본적으로 <see cref="DamageType.Attack"/>이 아닐때 보호막은 피해 경감 처리를 하지 않습니다. 버프 데미지등 다른 타입에 대해 처리를 하려는 경우 이 효과에서 자체적으로 <paramref name="resultDmg"/> 와 <paramref name="reducedStack"/>를 제어해야합니다.
         /// 이 메소드에서 <paramref name="reducedStack"/>를 변경해도 실제 스택 변경에 대해서는 <see cref="OnTakeShieldReduceStack(BattleUnitModel, BattleUnitBuf_loaShield, ref int, LoAShieldReduceRequest)"/>가 추가로 호출됩니다.
+        /// 이 클래스의 피해량 경감은 기본적으로 공격자의 피해량을 감소시키지 않습니다 (경감된 피해량만큼 hp를 증가시키는 형태로 적용합니다)
         /// </summary>
         /// <param name="buf">대상 보호막 버프</param>
-        /// <param name="originDmg">보호막에서 피해 처리 수행시 최초의 피해량</param>
+        /// <param name="originDmg">최초의 피해량 (실제 보호막 처리시에는 해당 값에 비해 증감됬을수 있습니다)</param>
         /// <param name="type"></param>
         /// <param name="attacker"></param>
         /// <param name="bufType"></param>
@@ -43,13 +44,14 @@ namespace LibraryOfAngela.Interface_External
         /// 보호막이 있는 상태에서 흐트러짐 피해를 받을시 호출됩니다.
         /// 기본적으로 보호막은 흐트러짐 피해 경감 처리를 하지 않습니다. 버프 데미지등 다른 타입에 대해 처리를 하려는 경우 이 효과에서 자체적으로 <paramref name="resultDmg"/> 와 <paramref name="reducedStack"/>를 제어해야합니다.
         /// 이 메소드에서 <paramref name="reducedStack"/>를 변경해도 실제 스택 변경에 대해서는 <see cref="OnTakeShieldReduceStack(BattleUnitModel, BattleUnitBuf_loaShield, ref int, LoAShieldReduceRequest)"/>가 추가로 호출됩니다.
+        /// 이 클래스의 피해량 경감은 기본적으로 공격자의 피해량을 감소시키지 않습니다 (경감된 피해량만큼 bp를 증가시키는 형태로 적용합니다)
         /// </summary>
         /// <param name="buf">대상 보호막 버프</param>
-        /// <param name="originDmg">보호막에서 피해 처리 수행시 최초의 피해량</param>
-        /// <param name="type"></param>
+        /// <param name="originDmg">최초의 피해량 (실제 보호막 처리시에는 해당 값에 비해 증감됬을수 있습니다)</param>
+        /// <param name="type">공격 타입.</param>
         /// <param name="attacker"></param>
         /// <param name="bufType"></param>
-        /// <param name="resultDmg">공격 타입. <paramref name="type"/>이 <see cref="DamageType.Attack"/>이 아니면 기본적으로 <paramref name="originDmg"/>와 동일합니다.</param>
+        /// <param name="resultDmg">보호막 처리 이후 최종 받을 피해량. <paramref name="type"/>이 <see cref="DamageType.Attack"/>이 아니면 기본적으로 <paramref name="originDmg"/>와 동일합니다.</param>
         /// <param name="reducedStack">감소될 스택. <paramref name="type"/>이 <see cref="DamageType.Attack"/>이 아니면 기본적으로 0입니다. 이 값이 최종적으로 1 이상이라면 <see cref="OnTakeShieldReduceStack(BattleUnitModel, BattleUnitBuf_loaShield, ref int, LoAShieldReduceRequest)"/> 호출 후 스택을 수정합니다.</param>
         void BeforeHandleBreakDamageInShield(BattleUnitBuf_loaShield buf, int originDmg, DamageType type, BattleUnitModel attacker, KeywordBuf bufType, ref int resultDmg, ref int reducedStack);
 
@@ -57,7 +59,7 @@ namespace LibraryOfAngela.Interface_External
         /// 보호막이 있는 상태에서 피해를 경감받은 경우 호출됩니다. 피해가 경감되지 않은 경우 호출되지 않습니다.
         /// </summary>
         /// <param name="buf">대상 보호막 버프</param>
-        /// <param name="originDmg">보호막이 없을때 받았을 피해</param>
+        /// <param name="originDmg">최초의 피해량 (실제 보호막 처리시에는 해당 값에 비해 증감됬을수 있습니다)</param>
         /// <param name="type">공격 타입</param>
         /// <param name="attacker">공격자</param>
         /// <param name="bufType">버프로 피해 부여시 해당 버프 피해</param>
@@ -68,7 +70,7 @@ namespace LibraryOfAngela.Interface_External
         /// 보호막이 있는 상태에서 흐트러짐 피해를 경감받은 경우 호출됩니다. 피해가 경감되지 않은 경우 호출되지 않습니다.
         /// </summary>
         /// <param name="buf">대상 보호막 버프</param>
-        /// <param name="originDmg">보호막이 없을때 받았을 피해</param>
+        /// <param name="originDmg">최초의 피해량 (실제 보호막 처리시에는 해당 값에 비해 증감됬을수 있습니다)</param>
         /// <param name="type">공격 타입</param>
         /// <param name="attacker">공격자</param>
         /// <param name="bufType">버프로 피해 부여시 해당 버프 피해</param>

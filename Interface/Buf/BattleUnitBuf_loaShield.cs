@@ -12,7 +12,7 @@ using UnityEngine;
 /// 보호막 클래스
 /// 보호막간 충돌을 막기 위해 이 버프는 상속이 불가능하며, UI 버프 목록에 표시되지 않습니다.
 /// </summary>
-public sealed class BattleUnitBuf_loaShield : BattleUnitBuf, IHandleChangeDamage
+public sealed class BattleUnitBuf_loaShield : BattleUnitBuf, IHandleTakeDamage
 {
     ShieldController controller;
 
@@ -61,16 +61,6 @@ public sealed class BattleUnitBuf_loaShield : BattleUnitBuf, IHandleChangeDamage
         base.Destroy();
     }
 
-    void IHandleChangeDamage.HandleDamage(int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf buf)
-    {
-        controller.OnHandleDamage(this, originDmg, ref resultDmg, type, attacker, buf);
-    }
-
-    void IHandleChangeDamage.HandleBreakDamage(int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf buf)
-    {
-        controller.OnHandleBreakDamage(this, originDmg, ref resultDmg, type, attacker, buf);
-    }
-
     /// <summary>
     /// 보호막 수치를 감소시킵니다.
     /// </summary>
@@ -86,6 +76,29 @@ public sealed class BattleUnitBuf_loaShield : BattleUnitBuf, IHandleChangeDamage
     /// <param name="attacker">호출자</param>
     public void DestroyManually(BattleUnitModel attacker) {
         controller.OnDestroyManually(this, attacker);
+    }
+
+    float hp = 0;
+    int bp = 0;
+
+    public void BeforeTakeDamage(int originDamage, ref int resultDamage, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
+    {
+        hp = _owner.hp;
+    }
+
+    public void BeforeTakeBreakDamage(int originDamage, ref int resultDamage, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
+    {
+        bp = _owner.breakDetail.breakGauge;
+    }
+
+    public void AfterTakeDamage(int originDmg, int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
+    {
+        controller.OnHandleDamage(this, originDmg, resultDmg, hp, type, attacker, keyword);
+    }
+
+    public void AfterTakeBreakDamage(int originDmg, int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword)
+    {
+        controller.OnHandleBreakDamage(this, originDmg, resultDmg, bp, type, attacker, keyword);
     }
 }
 
@@ -206,9 +219,9 @@ namespace LibraryOfAngela.Interface_Internal
 
         void OnDestroy(BattleUnitBuf_loaShield buf);
 
-        void OnHandleDamage(BattleUnitBuf_loaShield buf, int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword);
+        void OnHandleDamage(BattleUnitBuf_loaShield buf, int originDmg, int resultDmg, float beforeHp, DamageType type, BattleUnitModel attacker, KeywordBuf keyword);
 
-        void OnHandleBreakDamage(BattleUnitBuf_loaShield buf, int originDmg, ref int resultDmg, DamageType type, BattleUnitModel attacker, KeywordBuf keyword);
+        void OnHandleBreakDamage(BattleUnitBuf_loaShield buf, int originDmg, int resultDmg, int beforeBp, DamageType type, BattleUnitModel attacker, KeywordBuf keyword);
 
         void OnReduceStack(BattleUnitBuf_loaShield buf, LoAKeywordBufReduceRequest request);
 
