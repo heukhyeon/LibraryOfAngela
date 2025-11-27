@@ -1325,35 +1325,42 @@ namespace LibraryOfAngela.Battle
         [HarmonyPostfix]
         private static void After_GetDecisionResult(BattleParryingManager.ParryingTeam teamA, BattleParryingManager.ParryingTeam teamB, ref BattleParryingManager.ParryingDecisionResult __result)
         {
-            var result = __result;
-            var enemyHandlers = BattleInterfaceCache.Of<IHandleParryingResult>(teamA.unit).Select(x => x.OnDecisionResult(DecisionToResult(result, true)))
-                .Where(x => x != null)
-                .OfType<Result>()
-                .OrderBy(x => (int)x)
-                .ToList();
-
-            var allyHandlers = BattleInterfaceCache.Of<IHandleParryingResult>(teamB.unit).Select(x => x.OnDecisionResult(DecisionToResult(result, false)))
-                .Where(x => x != null)
-                .OfType<Result>()
-                .OrderBy(x => (int)x)
-                .ToList();
-
-            var enemyExists = enemyHandlers.Count() > 0;
-            var librarianExists = allyHandlers.Count() > 0;
-
-            if (!enemyExists && !librarianExists) return;
-            // 아군만 합 강제 조정을 하는 경우
-            else if (!enemyExists && librarianExists)
+            try
             {
-                var handlerB = allyHandlers.First();
-                __result = handlerB == Result.Win ? BattleParryingManager.ParryingDecisionResult.WinLibrarian : handlerB == Result.Draw ? BattleParryingManager.ParryingDecisionResult.Draw : BattleParryingManager.ParryingDecisionResult.WinEnemy;
+                var result = __result;
+                var enemyHandlers = BattleInterfaceCache.Of<IHandleParryingResult>(teamA.unit).Select(x => x.OnDecisionResult(DecisionToResult(result, true)))
+                    .Where(x => x != null)
+                    .OfType<Result>()
+                    .OrderBy(x => (int)x)
+                    .ToList();
 
+                var allyHandlers = BattleInterfaceCache.Of<IHandleParryingResult>(teamB.unit).Select(x => x.OnDecisionResult(DecisionToResult(result, false)))
+                    .Where(x => x != null)
+                    .OfType<Result>()
+                    .OrderBy(x => (int)x)
+                    .ToList();
+
+                var enemyExists = enemyHandlers.Count() > 0;
+                var librarianExists = allyHandlers.Count() > 0;
+
+                if (!enemyExists && !librarianExists) return;
+                // 아군만 합 강제 조정을 하는 경우
+                else if (!enemyExists && librarianExists)
+                {
+                    var handlerB = allyHandlers.First();
+                    __result = handlerB == Result.Win ? BattleParryingManager.ParryingDecisionResult.WinLibrarian : handlerB == Result.Draw ? BattleParryingManager.ParryingDecisionResult.Draw : BattleParryingManager.ParryingDecisionResult.WinEnemy;
+
+                }
+                // 적만 합 조정을 하거나 , 혹은 양 쪽이 다 하는경우
+                else
+                {
+                    var handlerA = enemyHandlers.First();
+                    __result = handlerA == Result.Win ? BattleParryingManager.ParryingDecisionResult.WinEnemy : handlerA == Result.Draw ? BattleParryingManager.ParryingDecisionResult.Draw : BattleParryingManager.ParryingDecisionResult.WinLibrarian;
+                }
             }
-            // 적만 합 조정을 하거나 , 혹은 양 쪽이 다 하는경우
-            else
+            catch (Exception e)
             {
-                var handlerA = enemyHandlers.First();
-                __result = handlerA == Result.Win ? BattleParryingManager.ParryingDecisionResult.WinEnemy : handlerA == Result.Draw ? BattleParryingManager.ParryingDecisionResult.Draw : BattleParryingManager.ParryingDecisionResult.WinLibrarian;
+                Logger.LogError(e);
             }
         }
 
