@@ -126,14 +126,14 @@ namespace LibraryOfAngela.SD
                 if (string.IsNullOrEmpty(currentSkinName)) currentSkinName = skin;
                 currentSkinName = SkinInfoProvider.ConvertValidSkinName(currentSkinName, owner);
                 var corePage = owner.bookItem.BookId;
-                var skinInfo = AdvancedSkinInfoPatch.Instance.infos.SafeGet(skin);
+                // 현재 변경된 스킨의 얼굴 오버라이드 우선
+                var skinInfo = AdvancedSkinInfoPatch.Instance.infos.SafeGet(currentSkinName);
                 var faceBySkin = skinInfo?.overrideFace?.Invoke(currentSkinName, skin, owner);
                 if (faceBySkin == null)
                 {
-                    faceBySkin = AdvancedSkinInfoPatch.Instance.infos.SafeGet(currentSkinName)?.overrideFace?.Invoke(currentSkinName, skin, owner);
+                    skinInfo = AdvancedSkinInfoPatch.Instance.infos.SafeGet(skin);
+                    faceBySkin = skinInfo?.overrideFace?.Invoke(currentSkinName, skin, owner);
                 }
-
-                var faceByCorePage = AdvancedEquipBookPatch.Instance.infos.SafeGet(corePage)?.overrideFace?.Invoke(currentSkinName, skin, owner);
                 if (faceBySkin != null)
                 {
                     faceBySkin.packageId = skinInfo.packageId;
@@ -141,6 +141,7 @@ namespace LibraryOfAngela.SD
                     return faceBySkin;
                 }
 
+                var faceByCorePage = AdvancedEquipBookPatch.Instance.infos.SafeGet(corePage)?.overrideFace?.Invoke(currentSkinName, skin, owner);
                 if (faceByCorePage != null)
                 {
                     faceByCorePage.packageId = corePage.packageId;

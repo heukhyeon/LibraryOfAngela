@@ -322,8 +322,8 @@ namespace LibraryOfAngela.Buf
         {
             try
             {
-                if (!(__result is null)) return;
                 if (__instance.Hide) return;
+                if (!(__result is null)) return;
                 var key = __instance.keywordIconId;
                 if (string.IsNullOrEmpty(key)) return;
                 var art = LoABufIcon(key);
@@ -372,11 +372,29 @@ namespace LibraryOfAngela.Buf
             }
         }
 
+        static HashSet<string> invalidBufIcons = new HashSet<string>();
+
         internal static Sprite ModBufIcon(string keyword, object target)
         {
-            var artwork = LoAModCache.FromAssembly(target)?.Artworks;
+            var modCache = LoAModCache.FromAssembly(target);
+            if (modCache == null) return null;
+
+            var artwork = modCache?.Artworks;
             if (artwork == null) return null;
-            return artwork[keyword];
+            var sp = artwork.GetNullable(keyword);
+            var key = modCache.packageId + "," + keyword;
+            if (sp != null)
+            {
+                invalidBufIcons.Remove(key);
+                return sp;
+            }
+            else if (!invalidBufIcons.Contains(key))
+            {
+                var stageId = StageController.Instance.GetStageModel()?.ClassInfo?.id;
+                Logger.Log($"Buf Icon Requested But Not Exists : {keyword}, Please Check Your ArtworkConfig\n- TargetMod : {modCache.packageId}\n- Target Reception : {stageId}");
+                invalidBufIcons.Add(key);
+            }
+            return null;
         }
 
         internal static void InitLoABufInject()
