@@ -99,6 +99,10 @@ namespace LibraryOfAngela.Model
                 borderFrame.transform.localScale = new Vector3(BORDER_SCALE, BORDER_SCALE, 1f);
 
                 Destroy(kether.gameObject);
+                if (data.mapDialogs != null && data.mapDialogs.Length > 0)
+                {
+                    SetTextIdDialogs(data.mapDialogs.ToList());
+                }
             }
             else
             {
@@ -225,9 +229,14 @@ namespace LibraryOfAngela.Model
             CreatureDlgManagerUI.Instance.Init(isDialogSet);
         }
 
-        public void SetTextIdDialogs(List<string> dialogs)
+        public void SetTextIdDialogs(IEnumerable<string> dialogs)
         {
-            SetRawTextDialogs(dialogs.Select(d => TextDataModel.GetText(d)).ToList());
+            var d = new List<string>();
+            foreach (var l in dialogs)
+            {
+                d.Add(TextDataModel.GetText(l));
+            }
+            SetRawTextDialogs(d);
         }
 
         protected virtual void OnCreateDialog(CreatureDlgEffectUI effect, int idx)
