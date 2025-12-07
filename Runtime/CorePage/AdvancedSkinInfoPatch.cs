@@ -468,17 +468,17 @@ namespace LibraryOfAngela.CorePage
         /// <returns></returns>
         private static bool IsUnitStartMoveHold(bool origin, BattleUnitModel unit)
         {
-            if (origin) return true;
+            if (origin) return origin;
 
             try
             {
                 // 현재 대상이 원거리 반격 (공격) 주사위를 가진 경우
-                if (TargetIsStandbyRangeAttack(unit) || TargetIsStandbyRangeAttack(unit.currentDiceAction.target))
+/*                if (TargetIsStandbyRangeAttack(unit) || TargetIsStandbyRangeAttack(unit.currentDiceAction.target))
                 {
                     unit.moveDetail.Stop();
                     unit.currentDiceAction.target.moveDetail.Stop();
                     return true;
-                }
+                }*/
                 if (!string.IsNullOrEmpty(unit.currentDiceAction?.card?.XmlData?.SkinChange)) return origin;
                 var info = Instance.infos.SafeGet(GetCurrentSkinName(unit.view));
                 if (info == null) return origin;

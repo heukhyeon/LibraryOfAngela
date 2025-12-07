@@ -93,7 +93,7 @@ namespace LibraryOfAngela.Battle
                  * flag3 = BattlePatch.WrapValidRangeDice((this._currentEnemyBehaviourResult.behaviourRawData.Type == BehaviourType.Atk), this._currentEnemyBehaviourResult)
                  * 
                  */
-                if (code.opcode == OpCodes.Stloc_S)
+/*                if (code.opcode == OpCodes.Stloc_S)
                 {
                     var targetIndex = (code.operand as LocalBuilder)?.LocalIndex ?? -1;
                     if (targetIndex == 6)
@@ -116,7 +116,7 @@ namespace LibraryOfAngela.Battle
                             yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleResultPatch), "WrapValidRangeDice"));
                         }
                     }
-                }
+                }*/
                 yield return code;
                 if (!enemyFired && index == 7)
                 {
@@ -124,7 +124,7 @@ namespace LibraryOfAngela.Battle
                     yield return new CodeInstruction(OpCodes.Ldloc_S, 0x05);
                     yield return new CodeInstruction(OpCodes.Ldarg_0);
                     yield return new CodeInstruction(OpCodes.Ldloca_S, 0x03);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleResultPatch), "IsEnemyMoveable"));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleResultPatch), nameof(IsEnemyMoveable)));
                 }
                 else if (!allyFired && index == 11)
                 {
@@ -132,7 +132,7 @@ namespace LibraryOfAngela.Battle
                     yield return new CodeInstruction(OpCodes.Ldloc_S, 0x09);
                     yield return new CodeInstruction(OpCodes.Ldarg_0);
                     yield return new CodeInstruction(OpCodes.Ldloca_S, 0x02);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleResultPatch), "IsAllyMoveable"));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleResultPatch), nameof(IsAllyMoveable)));
                 }
             }
         }
@@ -173,20 +173,6 @@ namespace LibraryOfAngela.Battle
                     yield return new CodeInstruction(OpCodes.Ldloc_S, 10);
                     yield return new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(List<BattleUnitModel>), "get_Item"));
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AdvancedSkinInfoPatch), "IsUnitStartMoveHold"));
-                }
-                /**
-                 * 				target2.moveDetail.Move(arrivedUnit, 15f, true);
-                 *               this.StartParrying(arrivedUnit.currentDiceAction, target2.cardSlotDetail.keepCard);
-                 *               
-                 *               target2.moveDetail.Move(arrivedUnit, 15f, true);
-                 *               BattlePatch.CheckStopStandbyFarDice(target2);
-                 *               this.StartParrying(arrivedUnit.currentDiceAction, target2.cardSlotDetail.keepCard);
-                 * 
-                 */
-                if (code.Is(OpCodes.Callvirt, moveMethod))
-                {
-                    yield return new CodeInstruction(OpCodes.Ldloc_S, 17);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleResultPatch), "CheckStopStandbyFarDice"));
                 }
             }
         }
@@ -382,31 +368,10 @@ namespace LibraryOfAngela.Battle
 
         private static bool WrapValidRangeDice(bool origin, BattleCardBehaviourResult result)
         {
-            if (origin) return true;
+            return origin;
+         /*   if (origin) return true;
             if (result.behaviourRawData.Type == BehaviourType.Def) return false;
-            return result.behaviour.IsAttackDice(result.behaviour.Detail);
-        }
-
-        private static void CheckStopStandbyFarDice(BattleUnitModel target)
-        {
-            var flag = false;
-            if (target.cardSlotDetail?.keepCard?.card?.GetSpec().Ranged == CardRange.Far)
-            {
-                var behaviour = target.cardSlotDetail.keepCard.cardBehaviorQueue.FirstOrDefault();
-                flag = behaviour != null && behaviour.IsAttackDice(behaviour.Detail) == true;
-            }
-            if (!flag && target.IsBreakLifeZero())
-            {
-                flag = true;
-            }
-            if (flag)
-            {
-                target.moveDetail.Stop();
-                if (target.view.charAppearance.GetCurrentMotionDetail() == ActionDetail.Move)
-                {
-                    target.view.charAppearance.ChangeMotion(target.IsBreakLifeZero() ? ActionDetail.Damaged : ActionDetail.Default);
-                }
-            }
+            return result.behaviour.IsAttackDice(result.behaviour.Detail);*/
         }
 
         /// <summary>
