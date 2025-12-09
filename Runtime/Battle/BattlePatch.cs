@@ -1646,6 +1646,16 @@ namespace LibraryOfAngela.Battle
                 }
                 var next = b.HandleParryingOneside(current);
                 if (next is null || next == current) continue;
+                if (next is ParryingOneSideAction.OneSide one && one.victim == one.card?.owner)
+                {
+                    Logger.Log("Force Action Handle Error :: One-sided processing was requested, but the attacker and the victim are the same. Therefore, this action is not processed. Correct the action for that class properly : " + b.GetType().FullName);
+                    continue;
+                }
+                if (next is ParryingOneSideAction.Parrying pa && (pa.card1?.owner == pa.card1?.target || pa.card2?.owner == pa.card2?.owner || pa.card1?.owner == pa.card2?.owner))
+                {
+                    Logger.Log("Force Action Handle Error :: Parrying was requested, but the two subjects for parrying are the same subject. Therefore, this action is not processed. Correct the action for that class properly :" + b.GetType().FullName);
+                    continue;
+                }
                 isChanged = true;
                 current = next;
                 Logger.Log($"Force Action Handle Detect From Parrying, Controller : {b.GetType().FullName}");
