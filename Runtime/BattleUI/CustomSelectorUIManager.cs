@@ -53,9 +53,12 @@ namespace LibraryOfAngela.BattleUI
         private List<CustomSelectorUiComponent> components = new List<CustomSelectorUiComponent>();
         private int currentSelected = 0;
         private int currentMax = 0;
+        private int expectedMax = 0;
         private bool isLoadRequire = false;
         private Queue<CustomSelectorModel> modelQueue = new Queue<CustomSelectorModel>();
         private GameObject volume;
+        private BattleDiceCardUI originCard;
+        private EmotionPassiveCardUI originEmotion;
         private const string RENDER_VOLUME_PATH = "Assets/Bundle/Framework/LoAPostProcessVolume.prefab";
         public static bool IsSaveLoaded = false;
         public static bool IsAssetLoaded = false;
@@ -85,6 +88,9 @@ namespace LibraryOfAngela.BattleUI
             ui.title.fontSize = 30f;
 
             // ui.scrollView.horizontalScrollbarVisibility = ScrollRect.ScrollbarVisibility.Permanent;
+            expectedMax = 10;
+            originCard = BattleManagerUI.Instance.ui_levelup._canvas.GetComponentInChildren<BattleDiceCardUI>(true);
+            originEmotion = BattleManagerUI.Instance.ui_levelup._canvas.GetComponentInChildren<EmotionPassiveCardUI>(true);
             GameSceneManager.Instance.StartCoroutine(LazyInstantiate());
             volume = Instantiate(LoAFramework.BattleUiBundle.LoadAsset<GameObject>(RENDER_VOLUME_PATH), transform.parent);
 
@@ -101,21 +107,12 @@ namespace LibraryOfAngela.BattleUI
         {
             yield return new WaitForSeconds(1f);
             var width = 300f;
-            var originCard = BattleManagerUI.Instance.ui_levelup._canvas.GetComponentInChildren<BattleDiceCardUI>(true);
-            var originEmotion = BattleManagerUI.Instance.ui_levelup._canvas.GetComponentInChildren<EmotionPassiveCardUI>(true);
-            for (int i = 0; i < 20; i++)
+            var start = currentMax;
+
+            for (int i = start; i < expectedMax; i++)
             {
-                var c = new GameObject($"LoASelector{i + 1}");
-                c.transform.SetParent(ui.scrollView.content);
-                c.transform.localScale = new Vector3(1f, 1f, 1f);
-                c.transform.localPosition = new Vector3(400f + (i * 350), -130f, 0f);
-                var com = c.gameObject.AddComponent<CustomSelectorUiComponent>();
-                com.manager = this;
-                com.Init(originCard, originEmotion);
-                components.Add(com);
-                currentMax++;
-                width += 400f;
-                for (int j = 0; j < 30; j++) yield return YieldCache.waitFrame;
+                width = CreateCom();
+                for (int j = 0; j < 20; j++) yield return YieldCache.waitFrame;
             }
             ui.scrollView.content.sizeDelta = new Vector2(width, ui.scrollView.content.sizeDelta.y);
             ui.scrollView.horizontalScrollbar.value = 0f;
@@ -131,6 +128,22 @@ namespace LibraryOfAngela.BattleUI
                 volume.SetActive(false);
             }
 
+        }
+
+        private int CreateCom()
+        {
+            var i = currentMax;
+            var c = new GameObject($"LoASelector{i + 1}");
+            c.transform.SetParent(ui.scrollView.content);
+            c.transform.localScale = new Vector3(1f, 1f, 1f);
+            c.transform.localPosition = new Vector3(400f + (i * 350), -130f, 0f);
+            var com = c.gameObject.AddComponent<CustomSelectorUiComponent>();
+            com.manager = this;
+            com.Init(originCard, originEmotion);
+            components.Add(com);
+            currentMax++;
+            // scrollView width
+            return 300 + (currentMax * 400);
         }
 
         private void OnDestroy()
@@ -178,9 +191,13 @@ namespace LibraryOfAngela.BattleUI
 
                 if (isCardMode)
                 {
-                    int max = model.cards.Count - 1;
-
-                    if (max > currentMax) max = currentMax;
+                    int max = model.cards.Count -1;
+                    if (max + 1 > expectedMax)
+                    {
+                        expectedMax = max;
+                        var c = LazyInstantiate();
+                        while (c.MoveNext()) { }
+                    }
                     for (int i = 0; i < currentMax; i++)
                     {
                         components[i].CardInfo = i <= max ? model.cards[i] : null;
@@ -191,7 +208,12 @@ namespace LibraryOfAngela.BattleUI
                 else
                 {
                     int max = model.emotions.Count - 1;
-                    if (max > currentMax) max = currentMax;
+                    if (max + 1 > expectedMax)
+                    {
+                        expectedMax = max;
+                        var c = LazyInstantiate();
+                        while (c.MoveNext()) { }
+                    }
                     for (int i = 0; i < currentMax; i++)
                     {
                         components[i].EmotionInfo = i <= max ? model.emotions[i] : null;
