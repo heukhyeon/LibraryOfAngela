@@ -57,8 +57,6 @@ namespace LibraryOfAngela.CorePage
                     }
                 }
             }
-
-            InternalExtension.SetRange(typeof(MultiDeckPatch));
         }
 
         // 데이터 초기화 이후에 되야함
@@ -276,6 +274,7 @@ namespace LibraryOfAngela.CorePage
                 Logger.LogError(e);
             }
         }
+
 
         [HarmonyPatch(typeof(UIEquipDeckCardList), "OnChangeDeckTab")]
         [HarmonyPostfix]

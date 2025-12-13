@@ -254,7 +254,6 @@ namespace LibraryOfAngela.Battle
                     }
                 }
             }
-            AdvancedSkinInfoPatch.Instance.RegisterDialog(unit.UnitData.unitData);
         }
 
         [HarmonyPatch(typeof(BattleUnitModel), "OnDie")]

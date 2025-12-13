@@ -85,6 +85,44 @@ namespace LibraryOfAngela.EquipBook
                 else yield return code;
             }
         }
+
+        /// <summary>
+        /// 접대중 패시브등으로 스킨이 바뀔때 이름까지 바뀌어야하는 경우 처리
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="__state"></param>
+        [HarmonyPatch(typeof(BattleUnitView), nameof(BattleUnitView.CreateSkin))]
+        [HarmonyPrefix]
+        private static void Before_CreateSkin(BattleUnitView __instance, out string __state)
+        {
+            try
+            {
+                __state = __instance.charAppearance?.gameObject?.name;
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+                __state = null;
+            }
+        }
+        [HarmonyPatch(typeof(BattleUnitView), nameof(BattleUnitView.CreateSkin))]
+        [HarmonyPostfix]
+        private static void After_CreateSkin(BattleUnitView __instance, string __state)
+        {
+            try
+            {
+                if (__state != __instance.charAppearance?.gameObject?.name)
+                {
+                    AdvancedSkinInfoPatch.Instance.RegisterDialog(__instance.model.UnitData.unitData);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+        }
+
+
         [HarmonyPatch(typeof(SdCharacterUtil), "LoadAppearance")]
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> Trans_LoadAppearance(IEnumerable<CodeInstruction> instructions)

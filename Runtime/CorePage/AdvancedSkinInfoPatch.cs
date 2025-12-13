@@ -181,6 +181,14 @@ namespace LibraryOfAngela.CorePage
             
         }
 
+        [HarmonyPatch(typeof(BattleDialogueModel), "GetBattleDlg", new Type[] { typeof(DialogType), typeof(string) })]
+        [HarmonyPostfix]
+        private static void After_GetBattleDlgSpecial(DialogType dlgType, string id, BattleDialogueModel __instance, ref string __result)
+        {
+            var dlg = Instance.mappingDialogs.SafeGet(__instance);
+            if (dlg != null) __result = dlg.GetBattleDlg(dlgType, id);
+        }
+
         /// <summary>
         /// 무대가 시작될때마다 다이얼로그 매핑을 초기화합니다.
         /// </summary>
@@ -221,7 +229,8 @@ namespace LibraryOfAngela.CorePage
                 BattleDialogueModel dialog = FrameworkExtension.GetSafeAction(() => info?.overrideDialog?.Invoke(unit));
                 if (dialog is null)
                 {
-                    dialog = Instance.infos.SafeGet(unit.CustomBookItem._characterSkin)?.customDialog?.Invoke();
+                    var skinName = SkinInfoProvider.ConvertValidSkinName(unit.CustomBookItem._characterSkin, unit);
+                    dialog = Instance.infos.SafeGet(skinName)?.customDialog?.Invoke();
                     if (dialog == null)
                         dialog = AdvancedEquipBookPatch.Instance.infos.SafeGet(unit.bookItem.BookId)?.customDialog?.Invoke();
                 }
