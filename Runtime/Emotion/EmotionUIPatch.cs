@@ -250,7 +250,7 @@ namespace LibraryOfAngela.Emotion
                 {
                     yield return new CodeInstruction(OpCodes.Ldarg_0);
                     yield return new CodeInstruction(OpCodes.Ldfld, field);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(EmotionUIPatch), "ConvertModSprite"));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(EmotionUIPatch), nameof(ConvertModSprite)));
                 }
             }
         }
@@ -266,7 +266,7 @@ namespace LibraryOfAngela.Emotion
                 var key = LoAEmotionDictionary.Instance.infoPackageIdDictionary.SafeGet(card);
                 if (key is null) return origin;
                 var artwork = card.Artwork;
-                sp = CustomizingCardArtworkLoader.Instance.GetSpecificArtworkSprite(key, artwork.EndsWith(".png") ? artwork : $"{artwork}.png");
+                sp = CustomizingCardArtworkLoader.Instance.GetSpecificArtworkSprite(key, artwork.EndsWith(".jpg") ? artwork : artwork.EndsWith(".png") ? artwork : $"{artwork}.png");
                 if (sp is null)
                 {
                     sp = LoAModCache.Instance[key]?.Artworks[card.Artwork];
