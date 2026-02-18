@@ -451,6 +451,11 @@ namespace LibraryOfAngela
                
                 }
 
+/*                if (!success)
+                {
+                    Logger.Log($"Bundle Load Fail....? : {node.info.path}");
+                }*/
+
                 LoAArtworks.Instance.OnAssetBundleLoaded(node.info, node.packageId, node.Bundle);
             }
             catch (Exception e)

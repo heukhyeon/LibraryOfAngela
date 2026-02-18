@@ -91,7 +91,12 @@ namespace LibraryOfAngela.Model
         // 나중에 넣어줍니다.
         public string packageId;
         public int id;
-        public Func<bool> visibleCondition = () => true;
+        [Obsolete("StoryConfig.IsStoryOpened 으로 마이그레이션해주세요.", true)]
+        public Func<bool> visibleCondition = null;
+
+        [Obsolete("내부 한정 메소드.", false)]
+        internal Func<bool> VisibleConditionInternal => visibleCondition;
+
         public Func<UnitDataModel , BattleDialogueModel> overrideDialog = (unit) => null;
         public List<ClearReward> rewards = new List<ClearReward>();
         public bool skipResult = false;

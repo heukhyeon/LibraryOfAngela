@@ -27,6 +27,7 @@ namespace LibraryOfAngela.Battle
                 yield return c;
                 if (c.Calls(method))
                 {
+                    //yield return new CodeInstruction(OpCodes.Ldarg_0);
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AutoBattlePatch), nameof(CheckIsForceInjecting)));
                 }
             }

@@ -1497,34 +1497,39 @@ namespace LibraryOfAngela.Battle
         [HarmonyPrefix]
         private static void Before_NextDice(BattlePlayingCardDataInUnitModel __instance)
         {
-            BattleResultPatch.SaveLibmusDice(__instance.currentBehavior);
-            var owner = __instance.owner;
-            if (owner == null) return;
-            Stack<BattleDiceBehavior> items = null;
-            foreach (var passive in BattleInterfaceCache.Of<IHandleNextDice>(__instance.owner))
+            try
             {
-                try
+                BattleResultPatch.SaveLibmusDice(__instance.currentBehavior);
+                var owner = __instance.owner;
+                if (owner == null) return;
+                Stack<BattleDiceBehavior> items = null;
+                foreach (var passive in BattleInterfaceCache.Of<IHandleNextDice>(__instance.owner))
                 {
-                    foreach (var dice in passive.BeforeNextDice(__instance))
+                    try
                     {
-                        if (items is null)
+                        foreach (var dice in passive.BeforeNextDice(__instance))
                         {
-                            items = new Stack<BattleDiceBehavior>();
+                            if (items is null)
+                            {
+                                items = new Stack<BattleDiceBehavior>();
+                            }
+                            items.Push(dice);
                         }
-                        items.Push(dice);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e);
                     }
                 }
-                catch (Exception e)
+                if (items != null)
                 {
-                    Logger.LogError(e);
+                    __instance.cardBehaviorQueue = new Queue<BattleDiceBehavior>(Enumerable.Concat(items, __instance.cardBehaviorQueue));
                 }
             }
-            if (items != null)
+            catch (Exception e)
             {
-                __instance.cardBehaviorQueue = new Queue<BattleDiceBehavior>(Enumerable.Concat(items, __instance.cardBehaviorQueue));
+                Logger.LogError(e);
             }
-
-            return;
         }
 
         [HarmonyPatch(typeof(BattleAllyCardDetail), "Init")]

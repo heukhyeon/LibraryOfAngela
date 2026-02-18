@@ -37,22 +37,30 @@ namespace LibraryOfAngela.Battle
         public static void SaveLibmusDice(BattleDiceBehavior behaviour)
         {
             if (!isExistLimbusResult) return;
-            var result = behaviour.owner.battleCardResultLog.CurbehaviourResult;
-            var match = limbusDiceResults.Find(d => d.result == result);
-            if (!match.IsValid || !match.ability.isWin || !match.ability.isForceReuse) return;
-            match.ability.isWin = false;
-            // 원거리는 카피하므로 어빌리티의 현 주인이 다른거라면 복제된 주사위가 들어간것
-            if (behaviour.card.cardBehaviorQueue.Contains(behaviour) || match.ability.behavior != behaviour)
+            try
             {
-                return;
-            }
+                var result = behaviour.owner.battleCardResultLog.CurbehaviourResult;
+                var match = limbusDiceResults.Find(d => d.result == result);
+                if (!match.IsValid || !match.ability.isWin || !match.ability.isForceReuse) return;
+                match.ability.isWin = false;
+                // 원거리는 카피하므로 어빌리티의 현 주인이 다른거라면 복제된 주사위가 들어간것
+                if (behaviour.card.cardBehaviorQueue.Contains(behaviour) || match.ability.behavior != behaviour)
+                {
+                    return;
+                }
 
-            if (LoAFramework.DEBUG)
+                if (LoAFramework.DEBUG)
+                {
+                    Logger.Log($"다이스 저장 : {behaviour.card.owner.UnitData.unitData.name} // {behaviour.card.card.GetName()} // {behaviour.Index} // {behaviour.isBonusAttack} // {behaviour.card.cardBehaviorQueue.Contains(behaviour)}");
+                }
+
+                behaviour.owner.currentDiceAction.AddDiceFront(behaviour);
+            }
+            catch (Exception e)
             {
-                Logger.Log($"다이스 저장 : {behaviour.card.owner.UnitData.unitData.name} // {behaviour.card.card.GetName()} // {behaviour.Index} // {behaviour.isBonusAttack} // {behaviour.card.cardBehaviorQueue.Contains(behaviour)}");
+                Logger.LogError(e);
+                isExistLimbusResult = false;
             }
-
-            behaviour.owner.currentDiceAction.AddDiceFront(behaviour);
         }
 
 

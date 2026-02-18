@@ -40,6 +40,7 @@ namespace LibraryOfAngela.Story
         public Dictionary<LorId, Func<bool>> visibleConditions;
         public Dictionary<LorId, CustomStoryInfo> storyInfos = new Dictionary<LorId, CustomStoryInfo>(); 
         private List<UIStoryProgressPanel> iconAddedContainers;
+        private HashSet<LorId> modStoryIds = new HashSet<LorId>();
         private Image ketherIconReplacer = null;
         private Image originKetherIcon = null;
         private StageStoryInfo currentStory;
@@ -60,6 +61,23 @@ namespace LibraryOfAngela.Story
     .First(c => c.Name.Contains("GetWorkshopDataFromBooks") && c.ReturnType == typeof(bool));
 
             method.DeclaringType.PatchInternal(method.Name, flag: PatchInternalFlag.POSTFIX, patchName: "HandleStoryVisible");
+            foreach (var d in LoAModCache.StoryConfigs)
+            {
+                try
+                {
+                    foreach (var d2 in d.GetStoryIcons())
+                    {
+                        foreach (var d3 in d2.stageIds)
+                        {
+                            modStoryIds.Add(new LorId(d.packageId, d3.id));
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError(e);
+                }
+            }
         }
 
         public static void AddStoryIcon(UIStoryProgressIconSlot slot, CustomStoryIconInfo info)
@@ -67,7 +85,7 @@ namespace LibraryOfAngela.Story
             Instance.slotInfo[slot] = info;
             foreach (var d in info.stageIds)
             {
-                Instance.storyInfos[new LorId(d.packageId, d.id)] = d;
+                Instance.storyInfos[new LorId(info.packageId, d.id)] = d;
             }
         }
 
@@ -202,7 +220,13 @@ namespace LibraryOfAngela.Story
             modIcon.stageIds.ForEach(x =>
             {
                 x.packageId = packageId;
-                Instance.visibleConditions[new LorId(packageId, x.id)] = x.visibleCondition;
+#pragma warning disable 612, 618, CS0619
+                if (x.VisibleConditionInternal != null)
+                {
+                    Instance.visibleConditions[new LorId(packageId, x.id)] = x.VisibleConditionInternal;
+                }
+#pragma warning restore 612, 618, CS0619
+
             });
             AddStoryIcon(iconObj, modIcon);
 
@@ -416,7 +440,16 @@ namespace LibraryOfAngela.Story
             try
             {
                 if (__result == false) return;
-                if (Instance.visibleConditions.SafeGet(infoList.id)?.Invoke() == false)
+                var origin = Instance.visibleConditions.SafeGet(infoList.id)?.Invoke() == false;
+                var id = infoList.id;
+                var config = LoAModCache.Instance[id.packageId]?.StoryConfig;
+                if (config != null)
+                {
+                    origin = !config.IsStoryOpened(id.id, !origin);
+                }
+
+
+                if (Instance.modStoryIds.Contains(id) || origin)
                 {
                     __result = false;
                 }
@@ -433,6 +466,13 @@ namespace LibraryOfAngela.Story
         {
             if (__result == StoryState.Close) return;
             var condition = Instance.visibleConditions.SafeGet(__instance.id)?.Invoke() ?? true;
+            var id = __instance.id;
+            var config = LoAModCache.Instance[id.packageId]?.StoryConfig;
+            if (config != null)
+            {
+                condition = config.IsStoryOpened(id.id, condition);
+            }
+
             if (condition) return;
             else __result = StoryState.Close;
         }

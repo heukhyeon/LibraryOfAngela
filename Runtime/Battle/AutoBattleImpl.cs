@@ -39,7 +39,7 @@ namespace LibraryOfAngela.Battle
             Simple,
             Full,
         }
-
+        //private LoggingLevel level = LoggingLevel.Full;
         private LoggingLevel level = LoAFramework.DEBUG ? LoggingLevel.Full : LoggingLevel.None;
         private StringBuilder totalLogger = new StringBuilder();
         private List<CustomSetterOwner> allyOwners = new List<CustomSetterOwner>();
@@ -50,7 +50,19 @@ namespace LibraryOfAngela.Battle
         public void Execute()
         {
             totalLogger = new StringBuilder("전투 매칭 로깅\n");
-            foreach (var card in GetEnemyCards())
+
+            RunFaction(Faction.Enemy);
+            RunFaction(Faction.Player);
+
+            if (level >= LoggingLevel.Simple)
+            {
+                Logger.Log(totalLogger.ToString());
+            }
+        }
+
+        private void RunFaction(Faction faction)
+        {
+            foreach (var card in GetTargetCards(faction))
             {
                 enemyCards.Add(card);
                 // 롤랑 같은 경우처럼 마지막 다이스에만 지정불가가 걸릴때 그것도 합하는 경우가 있음
@@ -60,36 +72,37 @@ namespace LibraryOfAngela.Battle
                 }
             }
 
-            allyOwners.AddRange(GetCustomSetterOwners());
+            allyOwners.AddRange(GetCustomSetterOwners(faction));
 
-            // 아군 제어가능 아군이 없을땐 판단 생략
-            if (allyOwners.Count == 0) return;
-
-            foreach (var allyOwner in allyOwners)
+            // 아군 제어가능 아군이 있을때만 판단
+            if (allyOwners.Count > 0)
             {
-                ExecuteInstance(allyOwner, allyOwner.owner.allyCardDetail._cardInHand);
-                ExecuteInstance(allyOwner, allyOwner.owner.personalEgoDetail._cardInHand);
+                foreach (var allyOwner in allyOwners)
+                {
+                    ExecuteInstance(allyOwner, allyOwner.owner.allyCardDetail._cardInHand);
+                    ExecuteInstance(allyOwner, allyOwner.owner.personalEgoDetail._cardInHand);
+                }
+
+                ExecuteParrying();
+
+                ExecuteOneSide();
             }
 
-            ExecuteParrying();
-
-            ExecuteOneSide();
-
-            if (level >= LoggingLevel.Simple)
-            {
-                Logger.Log(totalLogger.ToString());
-            }
+            allyOwners.Clear();
+            enemyCards.Clear();
+            parryTargets.Clear();
+            dmgDic.Clear();
         }
 
         /// <summary>
         /// 현재 활동중인 적들이 사용하는 전체 카드의 정보
         /// </summary>
         /// <returns></returns>
-        private IEnumerable<BattlePlayingCardDataInUnitModel> GetEnemyCards()
+        private IEnumerable<BattlePlayingCardDataInUnitModel> GetTargetCards(Faction faction)
         {
             foreach (var enemy in BattleObjectManager.instance.GetList())
             {
-                if (enemy.IsDead() || enemy.faction == Faction.Player) continue;
+                if (enemy.IsDead() || enemy.faction == faction) continue;
                 foreach (var card in enemy.cardSlotDetail.cardAry)
                 {
                     if (card != null) yield return card;
@@ -98,6 +111,7 @@ namespace LibraryOfAngela.Battle
                 var minHp = enemy.GetMinHp();
                 if (minHp < 0) minHp = 0;
                 dmgDic[enemy] = enemy.hp - minHp;
+                totalLogger.AppendLine($"팩션 {faction}, 대상 적 : {enemy.UnitData.unitData.name}");
             }
         }
 
@@ -105,11 +119,11 @@ namespace LibraryOfAngela.Battle
         /// <see cref="IHandleAutoCardUse"/> 를 보유한 사서 목록을 조회하고, 각 사서의 속도 주사위가 어떤 책장과 합할수 있는지를 처리
         /// </summary>
         /// <returns></returns>
-        private IEnumerable<CustomSetterOwner> GetCustomSetterOwners()
+        private IEnumerable<CustomSetterOwner> GetCustomSetterOwners(Faction faction)
         {
             foreach (var unit in BattleObjectManager.instance.GetList())
             {
-                if (unit.faction == Faction.Enemy || unit.turnState == BattleUnitTurnState.BREAK || unit.IsDead() || !unit.IsActionable() || unit.IsControlable()) continue;
+                if (unit.faction != faction || unit.turnState == BattleUnitTurnState.BREAK || unit.IsDead() || !unit.IsActionable() || (unit.IsControlable() && faction == Faction.Player)) continue;
                 var setter = BattleInterfaceCache.Of<IHandleAutoCardUse>(unit).FirstOrDefault();
                 if (setter is null) continue;
                 var owner = new CustomSetterOwner { owner = unit, setter = setter };
@@ -263,6 +277,13 @@ namespace LibraryOfAngela.Battle
                     if (current.card != null)
                     {
                         var targetCard = current.card;
+                        var lastIdx = current.target.speedDiceCount - 1;
+                        targetSlotOrder = RandomUtil.Range(0, lastIdx);
+                        if (targetSlotOrder > 0 && targetSlotOrder == lastIdx && !current.target.IsTargetable_theLast())
+                        {
+                            targetSlotOrder--;
+                        }
+
                         BattleUnitModel originTarget = null;
                         int originTargetSlotOrder = 0;
                         var originTargetCard = current.target.cardSlotDetail.cardAry[targetSlotOrder];

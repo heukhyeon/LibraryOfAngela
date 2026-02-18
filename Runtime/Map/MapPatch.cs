@@ -89,6 +89,54 @@ namespace LibraryOfAngela.Map
             }
         }
 
+        [HarmonyPatch(typeof(StageController), nameof(StageController.AddEgoMapByAssimilation))]
+        [HarmonyTranspiler]
+        private static IEnumerable<CodeInstruction> Trans_AddEgoMapByAssimilation(IEnumerable<CodeInstruction> instructions)
+        {
+            var target = AccessTools.Method(typeof(global::Util), nameof(global::Util.LoadPrefab), parameters: new Type[] { typeof(string), typeof(Transform) });
+            foreach (var code in instructions)
+            {
+                yield return code;
+                if (code.Calls(target))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldarg_1);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(MapPatch), nameof(ReplaceMapFromAssimilation)));
+                }
+            }
+        }
+
+        private static GameObject ReplaceMapFromAssimilation(GameObject origin, string mapName)
+        {
+            if (origin != null) return origin;
+            var logger = new StringBuilder("Requested Map Change By Assimilation  :" + mapName + "\n");
+            try
+            {
+                var target = Instance.maps.Find(x => x.mapName == mapName);
+                if (target != null)
+                {
+                    var replaceMap = LoAMapManager.Create(StageController.Instance.CurrentFloor, target, true, (ILoACustomMapMod)LoAModCache.Instance[target.packageId].mod);
+                    replaceMap.transform.SetParent(BattleSceneRoot.Instance.transform);
+                    replaceMap.isSpecialPick = true;
+                    BattleSceneRoot.Instance._addedMapList.Add(replaceMap);
+                    logger.AppendLine("Create Success");
+                    Logger.Log(logger.ToString());
+                    return replaceMap.gameObject;
+                }
+                else
+                {
+                    logger.AppendLine("Not Exists Map");
+                    Logger.Log(logger.ToString());
+                }
+            }
+            catch (Exception e)
+            {
+                logger.AppendLine("Error");
+                Logger.Log(logger.ToString());
+                Logger.LogError(e);
+            }
+            return origin;
+        }
+
         /// <summary>
         /// Util.LoadPrefab("InvitationMaps/InvitationMap_" + text, SingletonBehavior<BattleSceneRoot>.Instance.transform)
         /// ->

@@ -92,6 +92,18 @@ namespace LibraryOfAngela.Model
 
         }
 
+        /// <summary>
+        /// 해당 모드 내 접대의 참여 가능 여부를 제어합니다.
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="origin">기존 해당 값입니다. 기본적으로 true이지만 <see cref="CustomStoryInfo.visibleCondition"/>을 정의한경우 해당 값을 따릅니다. </param>
+        /// <returns></returns>
+        public virtual bool IsStoryOpened(int id, bool origin)
+        {
+            return origin;
+        }
+
         public virtual CustomStoryHandle HandleStoryOpen(string story) 
         {
             return null;

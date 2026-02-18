@@ -116,11 +116,6 @@ namespace LibraryOfAngela.CorePage
             }
         }
 
-        public static AdvancedSkinInfo GetInfo(BattleUnitModel model)
-        {
-            return Instance.infos.SafeGet(GetCurrentSkinName(model.view));
-        }
-
         [HarmonyPatch(typeof(UICustomizeMainTap), "init")]
         [HarmonyPostfix]
         private static void After_init(UICustomizeMainTap __instance)
@@ -163,6 +158,36 @@ namespace LibraryOfAngela.CorePage
             {
                 Logger.LogError(e);
             }
+        }
+
+        [HarmonyPatch(typeof(UICustomizePopup), nameof(UICustomizePopup.Open))]
+        [HarmonyPatch(typeof(UICustomizeNamePanel), nameof(UICustomizeNamePanel.Show))]
+        [HarmonyTranspiler]
+        private static IEnumerable<CodeInstruction> Trans_Open(IEnumerable<CodeInstruction> instructions)
+        {
+            var target = AccessTools.Field(typeof(UnitDataModel), nameof(UnitDataModel.isSephirah));
+            foreach (var c in instructions)
+            {
+                yield return c;
+                if (c.opcode == OpCodes.Ldfld && (c.operand as FieldInfo) == target)
+                {
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AdvancedSkinInfoPatch), nameof(IsLockUnit)));
+                }
+            }
+        }
+
+        private static bool IsLockUnit(bool origin)
+        {
+            if (origin) return origin;
+            var unit = UI.UIController.Instance.CurrentUnit;
+            var name = unit.workshopSkin;
+            if (string.IsNullOrEmpty(name)) name = unit.CustomBookItem.GetCharacterName();
+            name = SkinInfoProvider.ConvertValidSkinName(name, unit);
+            var info = Instance.infos.SafeGet(name)?.customOwnerName;
+            if (info == null) info = AdvancedEquipBookPatch.Instance.infos.SafeGet(unit.bookItem.BookId)?.customOwnerName;
+
+            //Logger.Log($"유닛 락 : {unit.name} // {info != null} // {name}");
+            return info != null;
         }
 
         /// <summary>

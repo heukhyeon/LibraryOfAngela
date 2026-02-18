@@ -290,7 +290,9 @@ namespace LibraryOfAngela.Story
             modIcon.stageIds.ForEach(x =>
             {
                 x.packageId = modIcon.packageId;
-                StoryPatch.Instance.visibleConditions[new LorId(x.packageId, x.id)] = x.visibleCondition;
+#pragma warning disable 612, 618, CS0619
+                StoryPatch.Instance.visibleConditions[new LorId(x.packageId, x.id)] = x.VisibleConditionInternal;
+#pragma warning restore 612, 618, CS0619
             });
 
             var lines = FrameworkExtension.GetSafeAction(() => modIcon.lines);

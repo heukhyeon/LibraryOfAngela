@@ -227,6 +227,7 @@ namespace LibraryOfAngela.Model
                 _dlgEffect?.FadeOut();
             }
             CreatureDlgManagerUI.Instance.Init(isDialogSet);
+            _dlgEffect = null;
         }
 
         public void SetTextIdDialogs(IEnumerable<string> dialogs)

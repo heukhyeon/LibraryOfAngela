@@ -104,11 +104,11 @@ public class LoAKeywordBufReduceRequest
     /// <summary>
     /// 주사위 효과로 인해 버프가 감소될 때의 요청
     /// </summary>
-    internal class Attack : LoAKeywordBufReduceRequest
+    public class Attack : LoAKeywordBufReduceRequest
     {
         public readonly BattleDiceBehavior trigger;
 
-        public Attack(BattleDiceBehavior behavior, int value)
+        internal Attack(BattleDiceBehavior behavior, int value)
         {
             Attacker = behavior.owner;
             Stack = value;
@@ -119,11 +119,11 @@ public class LoAKeywordBufReduceRequest
     /// <summary>
     /// 환상체 책장 효과로 인해 버프가 감소될 때의 요청
     /// </summary>
-    internal class Emotion : LoAKeywordBufReduceRequest
+    public class Emotion : LoAKeywordBufReduceRequest
     {
         public readonly EmotionCardAbilityBase trigger;
 
-        public Emotion(EmotionCardAbilityBase ability, int value)
+        internal Emotion(EmotionCardAbilityBase ability, int value)
         {
             // 가정: EmotionCardAbilityBase에 'owner' 속성이 존재함
             Attacker = ability._owner;
@@ -135,11 +135,11 @@ public class LoAKeywordBufReduceRequest
     /// <summary>
     /// 다른 버프의 효과로 인해 버프가 감소될 때의 요청
     /// </summary>
-    internal class Buf : LoAKeywordBufReduceRequest
+    public class Buf : LoAKeywordBufReduceRequest
     {
         public readonly BattleUnitBuf trigger;
 
-        public Buf(BattleUnitBuf buf, int value)
+        internal Buf(BattleUnitBuf buf, int value)
         {
             Attacker = buf._owner;
             Stack = value;
@@ -150,11 +150,11 @@ public class LoAKeywordBufReduceRequest
     /// <summary>
     /// 패시브 능력으로 인해 버프가 감소될 때의 요청
     /// </summary>
-    internal class Passive : LoAKeywordBufReduceRequest
+    public class Passive : LoAKeywordBufReduceRequest
     {
         public readonly PassiveAbilityBase trigger;
 
-        public Passive(PassiveAbilityBase ability, int value)
+        internal Passive(PassiveAbilityBase ability, int value)
         {
             Attacker = ability.owner;
             Stack = value;
@@ -165,11 +165,11 @@ public class LoAKeywordBufReduceRequest
     /// <summary>
     /// 카드 자체의 능력(SelfAbility)으로 인해 버프가 감소될 때의 요청
     /// </summary>
-    internal class CardAbility : LoAKeywordBufReduceRequest
+    public class CardAbility : LoAKeywordBufReduceRequest
     {
         public readonly DiceCardSelfAbilityBase trigger;
 
-        public CardAbility(DiceCardSelfAbilityBase ability, int value)
+        internal CardAbility(DiceCardSelfAbilityBase ability, int value)
         {
             Attacker = ability.owner;
             Stack = value;
@@ -180,11 +180,11 @@ public class LoAKeywordBufReduceRequest
     /// <summary>
     /// 카드 내 주사위의 능력(Ability)으로 인해 버프가 감소될 때의 요청
     /// </summary>
-    internal class DiceAbility : LoAKeywordBufReduceRequest
+    public class DiceAbility : LoAKeywordBufReduceRequest
     {
         public readonly DiceCardAbilityBase trigger;
 
-        public DiceAbility(DiceCardAbilityBase ability, int value)
+        internal DiceAbility(DiceCardAbilityBase ability, int value)
         {
             // 가정: DiceCardAbilityBase에 'owner' 속성이 존재함
             Attacker = ability.owner;
@@ -196,9 +196,9 @@ public class LoAKeywordBufReduceRequest
     /// <summary>
     /// 라운드 종료 시점에 버프가 감소될 때의 요청
     /// </summary>
-    internal class RoundEnd : LoAKeywordBufReduceRequest
+    public class RoundEnd : LoAKeywordBufReduceRequest
     {
-        public RoundEnd(int value)
+        internal RoundEnd(int value)
         {
             Attacker = null; // 라운드 종료는 특정 공격자가 없음
             Stack = value;
