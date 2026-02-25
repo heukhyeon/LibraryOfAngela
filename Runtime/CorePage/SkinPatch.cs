@@ -43,6 +43,8 @@ namespace LibraryOfAngela.EquipBook
             var codes = new List<CodeInstruction>(instructions);
             var skins = AccessTools.Field(typeof(BookXmlInfo), "CharacterSkin");
             var getItem = AccessTools.Method(typeof(List<string>), "get_Item");
+            var target3 = AccessTools.Method(typeof(BookModel), "get_IsWorkshop");
+            var target3Fired = false;
             for (int i = 0; i < codes.Count; i++)
             {
                 var code = codes[i];
@@ -81,6 +83,14 @@ namespace LibraryOfAngela.EquipBook
                         }
          
                     }
+                }
+                else if (!target3Fired && code.Calls(target3))
+                {
+                    // LoACharacterApperance로 프리팹 렌더링했는데 쓸데없이 Debug.Log(unit.bookItem.BookId.packageId + "  " + unit.bookItem.ClassInfo.CharacterSkin[0] + " Character Render Failed"); 로그 뜨는거 방지용
+                    target3Fired = true;
+                    yield return code;
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(SkinPatch), nameof(HandleRenderWorkshopSkin)));
                 }
                 else yield return code;
             }
@@ -249,7 +259,7 @@ namespace LibraryOfAngela.EquipBook
             return __exception;
         } 
     
-        private static bool HandleRenderWorkshopSkin(bool origin, UnitDataModel unit)
+        public static bool HandleRenderWorkshopSkin(bool origin, UnitDataModel unit)
         {
             if (!origin) return origin;
             return !SkinRenderPatch.IsLoAPrefabCharacter(unit);

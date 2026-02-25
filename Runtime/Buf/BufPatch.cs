@@ -143,14 +143,14 @@ namespace LibraryOfAngela.Buf
                 var code = codes[i];
                 if (code.opcode == OpCodes.Switch)
                 {
-                    Logger.Log("½ºÅÇ 1");
+                    //Logger.Log("½ºÅÇ 1");
                     var bufValues = Instance.bufMatch.ToList();
                     var targets = code.operand as Label[];
                     CodeInstruction br = null;
                     Type[] emptyArr = new Type[] { };
                     var childCodes = new List<CodeInstruction>();
                     var childCodeBuffer = new List<CodeInstruction>();
-                    Logger.Log("½ºÅÇ 2");
+                    //Logger.Log("½ºÅÇ 2");
                     var labels = new List<Label>();
 
                     if (br is null)
@@ -165,7 +165,7 @@ namespace LibraryOfAngela.Buf
                         }
                     }
 
-                    Logger.Log("½ºÅÇ 3");
+                    //Logger.Log("½ºÅÇ 3");
                     for (int z = 0; z < Instance.diff; z++)
                     {
                         var label = generator.DefineLabel();
@@ -175,7 +175,7 @@ namespace LibraryOfAngela.Buf
                         childCodes.Add(new CodeInstruction(OpCodes.Stloc_2));
                     }
 
-                    Logger.Log("½ºÅÇ 4");
+                    //Logger.Log("½ºÅÇ 4");
                     foreach (var c in bufValues)
                     {
                         try
@@ -194,10 +194,10 @@ namespace LibraryOfAngela.Buf
                         childCodes.AddRange(childCodeBuffer);
                         childCodeBuffer.Clear();
                     }
-                    Logger.Log("½ºÅÇ 5");
+                    //Logger.Log("½ºÅÇ 5");
                     yield return new CodeInstruction(OpCodes.Switch, targets.Concat(labels).ToArray());
                     i++;
-                    Logger.Log("½ºÅÇ 6");
+                    //Logger.Log("½ºÅÇ 6");
                     while (true)
                     {
                         code = codes[i];

@@ -42,7 +42,7 @@ namespace LibraryOfAngela.EquipBook
     class BattleAssetBundle
     {
         public bool isLoaded;
-        public bool isRecyclable;
+        public bool isOnlyBattle;
         public AssetBundleInfo info;
         public string skin;
     }
@@ -88,7 +88,7 @@ namespace LibraryOfAngela.EquipBook
 
                         if (recyclableBundles is null) recyclableBundles = new Dictionary<string, List<BattleAssetBundle>>();
                         if (!recyclableBundles.ContainsKey(sd.skin)) recyclableBundles[sd.skin] = new List<BattleAssetBundle>();
-                        recyclableBundles[sd.skin].Add(new BattleAssetBundle { info = bundleInfo, isLoaded = false, isRecyclable = sd.isOnlyBattle, skin = sd.skin });
+                        recyclableBundles[sd.skin].Add(new BattleAssetBundle { info = bundleInfo, isLoaded = false, isOnlyBattle = sd.isOnlyBattle, skin = sd.skin });
                     }
                 }
 
@@ -105,7 +105,7 @@ namespace LibraryOfAngela.EquipBook
 
                     if (skin is LoAWorkshopSkinData d && !string.IsNullOrEmpty(d.prefab))
                     {
-                        Logger.Log($"Prefab Detect :: {key} // {d.prefab}");
+                        if (LoAFramework.DEBUG) Logger.Log($"Prefab Detect :: {key} // {d.prefab}");
                         prefabs[key] = d.prefab;
                         originSkins.Remove(skin);
                         i--;
@@ -188,23 +188,23 @@ namespace LibraryOfAngela.EquipBook
                 {
                     if (index >= bundleInfo.Count) break;
                     var current = bundleInfo[index];
-                    if (current.isLoaded || (current.isRecyclable && !isBattle))
+                    if (current.isLoaded || (current.isOnlyBattle && !isBattle))
                     {
                         index++;
                         continue;
                     }
-                    Logger.Log($"Skin Try Load :: {current.skin} // {current.info.path} // {isBattle} // {current.isRecyclable}");
-                    LoAAssetBundles.Instance.LoadAssetBundle(new AssetBundleType.Sd(current.skin) { isOnlyBattle = false });
+                    var response = LoAAssetBundles.Instance.LoadAssetBundle(new AssetBundleType.Sd(current.skin) { isOnlyBattle = current.isOnlyBattle });
+                    var builder = new StringBuilder("SD Bundle Load ::");
+                    builder.AppendFormat("{0} // {1} // ", current.skin, current.info.path);
+                    string state;
+                    if (response.syncAssetBundleCount == 0 && response.asyncAssetBundleCount == 0) state = "Fail";
+                    else if (response.syncAssetBundleCount > 0) state = "Sync";
+                    else if (response.asyncAssetBundleCount > 0) state = "Async";
+                    else state = "Skip";
+                    builder.Append(state);
+                    Logger.Log(builder.ToString());
                     current.isLoaded = true;
                     index++;
-                    /*                    if (!current.isRecyclable)
-                                        {
-                                            //bundleInfo.Remove(current);
-                                        }
-                                        else
-                                        {
-                                            index++;
-                                        }*/
                 }
                 if (bundleInfo.Count == 0)
                 {
@@ -398,7 +398,10 @@ namespace LibraryOfAngela.EquipBook
             {
                 foreach (var pair in Instance.recyclableBundles.Values.SelectMany(x => x))
                 {
-                    pair.isLoaded = false;
+                    if (pair.isOnlyBattle)
+                    {
+                        pair.isLoaded = false;
+                    }
                 }
             }
             LoASdTargetDictionary.Instance.Clear();

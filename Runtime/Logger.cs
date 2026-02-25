@@ -20,7 +20,10 @@ namespace LibraryOfAngela
         {
             if (Enabled || LoAFramework.DEBUG)
             {
-                Debug.Log("LoA ::" + s);
+                Console.Write("LoA :: ");
+                Console.Write(s);
+                Console.Write('\n');
+                //Debug.Log("LoA ::" + s);
             }
             else
             {
@@ -39,7 +42,7 @@ namespace LibraryOfAngela
             {
                 var percent = (modLoadingProgress * 100f);
                 var diff = (current - startTime) / 1000.0;
-                Debug.Log($"LoA :: No Update, Maybe CallInitializer Complete Wait, Current Progress : {percent}%, Duration : {diff}s");
+                Console.WriteLine($"LoA :: No Update, Maybe CallInitializer Complete Wait, Current Progress : {percent}%, Duration : {diff}s");
             }
             else if (current - time >= 5000L)
             {
@@ -49,13 +52,13 @@ namespace LibraryOfAngela
                 currentLogger = new StringBuilder();
                 cnt = 0;
                 time = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-                Debug.Log(log);
+                Console.WriteLine(log);
             }
             else
             {
                 var percent = (modLoadingProgress * 100f);
                 var diff = (current - startTime) / 1000.0;
-                Debug.Log($"LoA :: Updated Current, So Wait, Current Progress : {percent}%, Duration : {diff}s");
+                Console.WriteLine($"LoA :: Updated Current, So Wait, Current Progress : {percent}%, Duration : {diff}s");
             }
         }
 
@@ -87,7 +90,8 @@ namespace LibraryOfAngela
             Enabled = true;
             if (!LoAFramework.DEBUG)
             {
-                Debug.Log(currentLogger.ToString());
+                Console.WriteLine(currentLogger.ToString());
+                //Debug.Log(currentLogger.ToString());
             }
         
         }

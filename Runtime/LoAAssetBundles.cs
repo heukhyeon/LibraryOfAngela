@@ -340,7 +340,7 @@ namespace LibraryOfAngela
             //Logger.Log($"활성 변동 :: {packageId},{name} --> {delta} (= {node.sdRef})");
             if (delta < 0 && node.sdRef <= 0)
             {
-                if (RemoveAssetBundle(node, AssetBundleLoadingType.SD, true))
+                if (RemoveAssetBundle(node, AssetBundleLoadingType.SD, LoAFramework.DEBUG))
                 {
                     if (node.info.type is AssetBundleType.Sd s1)
                     {
@@ -384,6 +384,7 @@ namespace LibraryOfAngela
                 {
                     Logger.Log($"AssetBundle Load Requested, But Always Loaded, Skip : {target}");
                 }
+                ret.syncLoadedAssetBundleCount = -1;
                 return ret;
             }
             loadedTargets.Add(target);
@@ -478,8 +479,11 @@ namespace LibraryOfAngela
                 {
                     if (isSync)
                     {
-                        strBuilder.Insert(0, $"AssetBundle Loaded (Sync : {isSync}) : {node.info.path}");
-                        Logger.Log(strBuilder.ToString());
+                        if (LoAFramework.DEBUG)
+                        {
+                            strBuilder.Insert(0, $"AssetBundle Loaded : {node.info.path}");
+                            Logger.Log(strBuilder.ToString());
+                        }
                     }
                     else
                     {
