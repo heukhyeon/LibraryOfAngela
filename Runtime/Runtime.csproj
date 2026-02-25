@@ -206,6 +206,7 @@
     <Compile Include="SD\LoASdTargetDictionary.cs" />
     <Compile Include="SD\LoASpriteLoader.cs" />
     <Compile Include="SD\MovePatch.cs" />
+    <Compile Include="SD\SkinDestroyDetector.cs" />
     <Compile Include="Story\BattleSettingUIPatch.cs" />
     <Compile Include="Story\BookCategoryPatch.cs" />
     <Compile Include="Story\LoAStoryObserver.cs" />

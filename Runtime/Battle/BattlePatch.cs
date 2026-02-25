@@ -1676,6 +1676,21 @@ namespace LibraryOfAngela.Battle
                 Logger.Log("It suspects an infinite loop and ignores the forced behavior. Please look at the logs and respond accordingly.");
                 return true;
             }
+            if (current is ParryingOneSideAction.Manual)
+            {
+                // 이 페이즈를 강제로 조정 안해주면 무한히 반복된다.
+                // phase 막 종료 트리거를 발생시키면 꼬일수있으니 필드 변경으로 대체
+                if (StageController.Instance.phase == StageController.StagePhase.WaitUnitsArrive)
+                {
+                    StageController.Instance._phase = StageController.StagePhase.RoundEndPhase;
+                    // 안부르면 얘가 강제로 다시 setPhase 호출함
+                    BattlePhasePatch.expectedPhase = StageController.StagePhase.RoundEndPhase;
+                    // 아무 막 종료 함수도 안불리는 타이밍
+                    StageController.Instance._roundEndDetailPhase = 10;
+                }
+                callCount--;
+                return false;
+            }
             if (current is ParryingOneSideAction.OneSide one)
             {
                 StageController.Instance.StartAction(one.card);

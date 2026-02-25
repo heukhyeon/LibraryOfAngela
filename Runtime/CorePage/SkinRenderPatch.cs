@@ -47,7 +47,7 @@ namespace LibraryOfAngela.EquipBook
         public string skin;
     }
 
-    struct SkinComponentKey
+    public struct SkinComponentKey
     {
         public string packageId;
         public string skinName;
@@ -78,6 +78,7 @@ namespace LibraryOfAngela.EquipBook
                 var config = c.ArtworkConfig;
                 foreach (var bundleInfo in c?.AssetBundleConfig?.GetAssetBundleInfos() ?? new List<AssetBundleInfo>())
                 {
+                    bundleInfo.packageId = c.packageId;
                     var count = bundleInfo.types?.Length ?? 0;
                     for (int i = 0; i < count + 1; i++)
                     {
@@ -193,18 +194,23 @@ namespace LibraryOfAngela.EquipBook
                         continue;
                     }
                     Logger.Log($"Skin Try Load :: {current.skin} // {current.info.path} // {isBattle} // {current.isRecyclable}");
-                    LoAAssetBundles.Instance.LoadAssetBundle(new AssetBundleType.Sd(current.skin) { isOnlyBattle = current.isRecyclable });
+                    LoAAssetBundles.Instance.LoadAssetBundle(new AssetBundleType.Sd(current.skin) { isOnlyBattle = false });
                     current.isLoaded = true;
-                    if (!current.isRecyclable)
-                    {
-                        bundleInfo.Remove(current);
-                    }
-                    else
-                    {
-                        index++;
-                    }
+                    index++;
+                    /*                    if (!current.isRecyclable)
+                                        {
+                                            //bundleInfo.Remove(current);
+                                        }
+                                        else
+                                        {
+                                            index++;
+                                        }*/
                 }
-                if (bundleInfo.Count == 0) Instance.recyclableBundles.Remove(skinName);
+                if (bundleInfo.Count == 0)
+                {
+                    Logger.Log($"Skin Clear :: " + skinName);
+                    Instance.recyclableBundles.Remove(skinName);
+                }
             }
         }
 
@@ -316,7 +322,9 @@ namespace LibraryOfAngela.EquipBook
         public static GameObject LoadLoAPrefab(SkinComponentKey key, bool ready)
         {
             RemoveCheck(key.skinName);
-            var obj = LoAAssetBundles.Instance.LoadAsset<GameObject>(key.packageId, Instance.prefabs[key] + (ready ? "_Ready" : ""), false);
+            var assetName = Instance.prefabs[key] + (ready ? "_Ready" : "");
+            var obj = LoAAssetBundles.Instance.LoadAsset<GameObject>(key.packageId, assetName, false);
+            obj?.AddComponent<SkinDestroyDetector>()?.Register(key.packageId, assetName, false);
             if (obj is null || ready) return obj;
             var component = AdvancedSkinInfoPatch.Instance.skinComponentTypes.SafeGet(key);
             if (component is null) return obj;
@@ -362,6 +370,26 @@ namespace LibraryOfAngela.EquipBook
                     yield return new CodeInstruction(OpCodes.Ldarg_0);
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(SkinRenderPatch), nameof(FixValidSound)));
                 }
+            }
+        }
+
+        public static void RestoreBundleLoaded(AssetBundleInfo info)
+        {
+            if (Instance.recyclableBundles != null)
+            {
+                foreach (var b in Instance.recyclableBundles)
+                {
+                    foreach (var b2 in b.Value)
+                    {
+                        if (info.Equals(b2.info))
+                        {
+                            //Logger.Log("AssetBundle Restore :" + b2.info.path);
+                            b2.isLoaded = false;
+                            return;
+                        }
+                    }
+                }
+                //Logger.Log("AssetBundle Restore Fail ?? :" + info.packageId + "," + info.path);
             }
         }
 

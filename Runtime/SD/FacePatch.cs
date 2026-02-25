@@ -202,9 +202,10 @@ namespace LibraryOfAngela.SD
         private static SpecialCustomizedAppearance CreateApperance(LoACustomFaceData data, Transform parent)
         {
             if (!string.IsNullOrEmpty(data.PrefabKey))
-            {
+            { 
                 var obj = LoAAssetBundles.Instance.LoadAsset<GameObject>(data.packageId, data.PrefabKey, false);
                 var real = UnityEngine.Object.Instantiate(obj, parent).GetComponent<SpecialCustomizedAppearance>();
+                real.gameObject.AddComponent<SkinDestroyDetector>().Register(data.packageId, data.PrefabKey, true);
                 return real;
             }
             var gameObject = new GameObject("LoA_Face");

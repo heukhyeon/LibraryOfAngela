@@ -61,6 +61,8 @@ namespace LibraryOfAngela
 
         public readonly AssetBundleInfo info;
 
+        public int sdRef = 0;
+
         public UnityEngine.AssetBundle Bundle { get; private set; }
 
         HashSet<AssetBundleLoadingType> refCounts = new HashSet<AssetBundleLoadingType>();
@@ -243,10 +245,10 @@ namespace LibraryOfAngela
         {
             if (current == UIPhase.Sephirah)
             {
-                Instance.RemoveAssetBundle(AssetBundleLoadingType.INVITATION);
-                Instance.RemoveAssetBundle(AssetBundleLoadingType.BATTLE_PAGE);
-                Instance.RemoveAssetBundle(AssetBundleLoadingType.EGO);
-                Instance.RemoveAssetBundle(AssetBundleLoadingType.CORE_PAGE);
+                Instance.RemoveAssetBundles(AssetBundleLoadingType.INVITATION);
+                Instance.RemoveAssetBundles(AssetBundleLoadingType.BATTLE_PAGE);
+                Instance.RemoveAssetBundles(AssetBundleLoadingType.EGO);
+                Instance.RemoveAssetBundles(AssetBundleLoadingType.CORE_PAGE);
                 Instance.loadedTargets.RemoveWhere(x =>
                 {
                     if (x is AssetBundleType.Sd sd)
@@ -322,6 +324,42 @@ namespace LibraryOfAngela
                 Logger.Log($"LoA AssetBundle : Asset is Null : {name} in {packageId}");
             }
             return result;
+        }
+
+        internal void UpdateSdResourceRef(string packageId, string name, int delta)
+        {
+            var realKey = name?.ToLower();
+            var node = keyNodes.SafeGet(packageId)?.Find(x => x.keys.ContainsKey(realKey) == true);
+            if (node == null)
+            {
+                //Logger.Log($"활성 변동 못찾음 ?? {packageId} // {name} // {delta}");
+                return;
+            }
+
+            node.sdRef += delta;
+            //Logger.Log($"활성 변동 :: {packageId},{name} --> {delta} (= {node.sdRef})");
+            if (delta < 0 && node.sdRef <= 0)
+            {
+                if (RemoveAssetBundle(node, AssetBundleLoadingType.SD, true))
+                {
+                    if (node.info.type is AssetBundleType.Sd s1)
+                    {
+                        loadedTargets.Remove(s1);
+                    }
+                    else if (node.info.types != null)
+                    {
+                        for (int i = 0; i < node.info.types.Length; i++)
+                        {
+                            if (node.info.types[i] is AssetBundleType.Sd s2)
+                            {
+                                loadedTargets.Remove(s2);
+                                break;
+                            }
+                        }
+                    }
+                    SkinRenderPatch.RestoreBundleLoaded(node.info);
+                }
+            }
         }
 
         public void LoadAssetBundleAll(string packageId, string path)
@@ -493,17 +531,30 @@ namespace LibraryOfAngela
             return loadType;
         }
 
-        private void RemoveAssetBundle(AssetBundleLoadingType type)
+        private bool RemoveAssetBundle(AssetBundleNode node, AssetBundleLoadingType type, bool showLogImmediate)
+        {
+            if (node.IsLoaded && node.RemoveNode(type))
+            {
+                keyNodes[node.packageId].Remove(node);
+                loadRequireNodes[node.info] = node;
+                node.keys.Clear();
+                LoAArtworks.Instance.OnAssetBundleUnloaded(node.info);
+                if (showLogImmediate)
+                {
+                    Logger.Log("AssetBundle Single Unloaded ::" + node.info.path);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        private void RemoveAssetBundles(AssetBundleLoadingType type)
         {
             StringBuilder logger = null;
             foreach (var node in nodes)
             {
-                if (node.IsLoaded && node.RemoveNode(type))
+                if (RemoveAssetBundle(node, type, false))
                 {
-                    keyNodes[node.packageId].Remove(node);
-                    loadRequireNodes[node.info] = node;
-                    node.keys.Clear();
-                    LoAArtworks.Instance.OnAssetBundleUnloaded(node.info);
                     if (logger is null)
                     {
                         logger = new StringBuilder("AssetBundle Unloaded\n");

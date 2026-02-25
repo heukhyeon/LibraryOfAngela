@@ -79,7 +79,7 @@ namespace LibraryOfAngela.Battle
             isForceHandlePhase = false;
         }
 
-        private static StageController.StagePhase expectedPhase;
+        internal static StageController.StagePhase expectedPhase;
         [HarmonyPatch(typeof(StageController), nameof(StageController.OnFixedUpdate))]
         [HarmonyPrefix]
         private static void Before_OnFixedUpdate(StageController __instance)

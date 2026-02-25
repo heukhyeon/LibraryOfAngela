@@ -482,6 +482,18 @@ namespace LibraryOfAngela.Model
         }
 
         /// <summary>
+        /// 합이나 일방공격 자체를 캔슬시킴
+        /// 이후 동작을 반드시 명시적으로 처리 가능한 경우에만 이 케이스를 사용하세요.
+        /// </summary>
+        public class Manual : ParryingOneSideAction
+        {
+            public Manual() : base(null, null)
+            {
+
+            }
+        }
+
+        /// <summary>
         /// 일방공격
         /// </summary>
         public class OneSide : ParryingOneSideAction

@@ -296,6 +296,11 @@ namespace LibraryOfAngela.BattleUI
 
             if (modelQueue.Count > 0)
             {
+                components.ForEach(d =>
+                {
+                    if (d.isCardMode) d.CardInfo = null;
+                    else d.EmotionInfo = null;
+                });
                 Init(modelQueue.Dequeue());
             }
             else
