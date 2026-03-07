@@ -329,18 +329,27 @@ namespace LibraryOfAngela.CorePage
         private static void Before_SetColorByRarity_Passive(ref Color c, PassiveModel ___passivemodel)
         {
             var passive = ___passivemodel?.reservedData?.currentpassive?.id;
-            if (passive is null || !passiveModels.ContainsKey(passive)) return;
             if (c == UIColorManager.Manager.GetUIColor(UIColor.Disabled)) return;
-            c = passiveModels[passive];
+            var nextColor = HandlePassiveColor(c, passive);
+            if (c != nextColor) c = nextColor;
         }
 
         private static void After_SetData(UILibrarianEquipInfoSlot __instance)
         {
             var passive = __instance._currentpassive?.passive?.id;
-            if (passive is null || !passiveModels.ContainsKey(passive)) return;
-            var color = passiveModels[passive];
-            __instance.Frame.color = color;
-            __instance.txt_cost.color = color;
+            var currentColor = __instance.Frame.color;
+            var nextColor = HandlePassiveColor(currentColor, passive);
+            if (nextColor != currentColor)
+            {
+                __instance.Frame.color = nextColor;
+                __instance.txt_cost.color = nextColor;
+            }
+        }
+
+        internal static Color HandlePassiveColor(Color origin, LorId passiveId)
+        {
+            if (passiveId == null || !passiveModels.ContainsKey(passiveId)) return origin;
+            return passiveModels[passiveId];
         }
 
         public static IEnumerable<CodeInstruction> mappingBookColor(IEnumerable<CodeInstruction> instructions, IEnumerable<CodeInstruction> bookTargetIL)

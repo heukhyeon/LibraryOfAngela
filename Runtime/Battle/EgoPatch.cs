@@ -145,11 +145,17 @@ namespace LibraryOfAngela.Battle
         private static bool IsEmotionEnable(Faction faction)
         {
             var stage = StageController.Instance.GetStageModel()?.ClassInfo?.id;
-            if (stage is null || stage.IsBasic()) return true;
-            var config = instance?.configs?.Find(x => x.packageId == stage.packageId);
-            if (config != null && !config.IsEmotionEnableReception(stage.id, StageController.Instance.CurrentWave, StageController.Instance.RoundTurn, faction))
+            if (stage is null || stage.IsBasic() || instance?.configs == null) return true;
+            foreach (var config in instance.configs)
             {
-                return false;
+                if (config.packageId == stage.packageId)
+                {
+                    if (!config.IsEmotionEnableReception(stage.id, StageController.Instance.CurrentWave, StageController.Instance.RoundTurn, faction))
+                    {
+                        return false;
+                    }
+                    break;
+                }
             }
             return true;
         }

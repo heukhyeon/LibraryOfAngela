@@ -171,7 +171,7 @@ namespace LibraryOfAngela.Battle
                 if (code.GetIndex() == 20)
                 {
                     yield return new CodeInstruction(OpCodes.Ldloc_S, 19);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleResultPatch), "OnCheckParryingable"));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleResultPatch), nameof(OnCheckParryingable)));
                 }
                 // BattleUnitModel unit = list[j]; 에서 list[j] 캐치
                 if (!distanceFired && code.Is(OpCodes.Callvirt, existstarget))

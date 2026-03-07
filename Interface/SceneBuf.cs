@@ -34,7 +34,7 @@ namespace LibraryOfAngela
 
         private string currentDescription;
 
-        public Action onDescriptionChanged;
+        internal Action onDescriptionChanged;
 
         public List<BattleUnitModel> Allys
         {

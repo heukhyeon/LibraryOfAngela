@@ -31,6 +31,7 @@ namespace LibraryOfAngela.Story
                 var category = FrameworkExtension.GetSafeAction(() => x.GetEquipBookCategories());
                 if (category?.Count > 0)
                 {
+                    int index = 0;
                     foreach (var c in category)
                     {
                         if (string.IsNullOrEmpty(c.uniqueId))
@@ -48,6 +49,8 @@ namespace LibraryOfAngela.Story
                         }
                         else
                         {
+                            c.packageId = x.packageId;
+                            c.index = index++;
                             categories[c.uniqueId] = c;
                         }
                     }
@@ -65,6 +68,11 @@ namespace LibraryOfAngela.Story
                             t.PatchInternal(d.Name, PatchInternalFlag.POSTFIX, patchName: "FindCategory");
                             break;
                         }
+                        if (d.Name.Contains("<SetData>b__37_0"))
+                        {
+                            t.PatchInternal(d.Name, PatchInternalFlag.POSTFIX, patchName: "Sort");
+                            break;
+                        }
                     }
                 }
 
@@ -75,6 +83,11 @@ namespace LibraryOfAngela.Story
                         if (d.Name.Contains("<SetData>b__1"))
                         {
                             t.PatchInternal(d.Name, PatchInternalFlag.POSTFIX, patchName: "FindCategory");
+                            break;
+                        }
+                        if (d.Name.Contains("<SetData>b__37_0"))
+                        {
+                            t.PatchInternal(d.Name, PatchInternalFlag.POSTFIX, patchName: "Sort");
                             break;
                         }
                     }
@@ -212,6 +225,15 @@ namespace LibraryOfAngela.Story
             __result = x is LoAUIStoryKeyData data && data.category == match;
         }
 
+        private static void After_Sort(ref int __result, UIStoryKeyData x, UIStoryKeyData y)
+        {
+            if (x is LoAUIStoryKeyData data && y is LoAUIStoryKeyData data2 && data.category.packageId == data2.category.packageId)
+            {
+                // 기본적으로 바닐라가 마지막에 reverse 하므로 내림차순시켜야 실제로는 오름차순으로 보임
+                __result = -data.category.index.CompareTo(data2.category.index);
+            }
+        }
+
         private static void InflateCustomEpisodeSlots(int chapter, UIBookStoryChapterSlot slot, ref int index)
         {
             var targetCategories = Instance.categories.Where(x => x.Value.level == chapter);
@@ -227,7 +249,6 @@ namespace LibraryOfAngela.Story
     .Select(x => BookXmlList.Instance.GetData(x)).ToList();
 
                     if (targetBooks.Count == 0) continue;
-
 
                     var sprite = UISpriteDataManager.instance.GetStoryIcon(category.artwork);
                     var cnt = slots.Count;

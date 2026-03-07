@@ -357,7 +357,7 @@ namespace LibraryOfAngela.EquipBook
                     var label = codes[i].operand;
                     fired = true;
                     yield return new CodeInstruction(OpCodes.Ldarg_1);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AdvancedEquipBookPatch), "CheckVisibleRange"));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AdvancedEquipBookPatch), nameof(CheckVisibleRange)));
                     yield return new CodeInstruction(OpCodes.Brfalse_S, label);
                 }
                 // GetPassiveInfoList 는 실제 순회 이전에도 호출하므로 근거리 여부 판정 이후부터 체크하게 한다.
@@ -365,7 +365,7 @@ namespace LibraryOfAngela.EquipBook
                 {
                     fired2 = true;
                     yield return new CodeInstruction(OpCodes.Ldarg_1);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AdvancedEquipBookPatch), "GetSettingPassiveInfoList"));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AdvancedEquipBookPatch), nameof(GetSettingPassiveInfoList)));
                 }
             }
         }
@@ -397,6 +397,41 @@ namespace LibraryOfAngela.EquipBook
                 {
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AdvancedEquipBookPatch), "CheckDeckChangeable"));
                 }
+            }
+        }
+
+        /// <summary>
+        /// this.img_Icon.color = UIColorManager.Manager.PassiveIconRarityColor[(int)passive.rare];
+        /// ->
+        /// this.img_Icon.color =  AdvancedCorePageRarityPatch.HandlePassiveColor(UIColorManager.Manager.PassiveIconRarityColor[(int)passive.rare], passive);
+        /// </summary>
+        /// <param name="instructions"></param>
+        /// <returns></returns>
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(BattleUnitInformationUI_PassiveList.BattleUnitInformationPassiveSlot), nameof(BattleUnitInformationUI_PassiveList.BattleUnitInformationPassiveSlot.SetData))]
+        private static IEnumerable<CodeInstruction>  Trans_SetDataBattleSlot(IEnumerable<CodeInstruction> instructions)
+        {
+            var target1 = AccessTools.Method(typeof(UIColorManager), "get_PassiveIconRarityColor");
+            var target2 = AccessTools.Method(typeof(UIColorManager), "get_PassiveIconRarityGlowColor");
+            var target3 = AccessTools.Method(typeof(UnityEngine.UI.Graphic), "set_color");
+            int flag = -1;
+            foreach (var d in instructions)
+            {
+                if (d.Calls(target3) && flag == 1)
+                {
+                    flag = 0;
+                    var m = AccessTools.Method(typeof(AdvancedCorePageRarityPatch), nameof(AdvancedCorePageRarityPatch.HandlePassiveColor));
+                    yield return new CodeInstruction(OpCodes.Ldarg_1);
+                    yield return new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(PassiveAbilityBase), nameof(PassiveAbilityBase.id)));
+                    yield return new CodeInstruction(OpCodes.Call, m);
+                }
+
+                if (d.Calls(target1) || d.Calls(target2))
+                {
+                    flag = 1;
+                }
+
+                yield return d;
             }
         }
 
@@ -591,10 +626,19 @@ namespace LibraryOfAngela.EquipBook
             var result = Instance.infos.SafeGet(target.GetBookClassInfoId())?.settingPassive;
             if (result != null)
             {
-                origin.InsertRange(0, result.Select(x => new BookPassiveInfo
+                int i = 0;
+                foreach (var x in result)
                 {
-                    passive = PassiveXmlList.Instance.GetData(x)
-                }));
+                    var p2 = x == null ? null : PassiveXmlList.Instance.GetData(x);
+                    if (p2 == null)
+                    {
+                        Logger.Log($"Setting Passive Settinged, But Null...? Please Check : Target in {target.BookId} // {x}");
+                    }
+                    else
+                    {
+                        origin.Insert(i, new BookPassiveInfo { passive = p2 });
+                    }
+                }
             }
             return origin;
         }
