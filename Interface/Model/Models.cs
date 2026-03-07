@@ -169,7 +169,7 @@ namespace LibraryOfAngela.Model
         public string artwork;
         public int level;
         internal int index = -1;
-        internal string packageId = null;
+        public string packageId = null;
         /// <summary>
         /// 이 값이 null 인경우 현재 모드 내 모든 핵심책장을 넣습니다.
         /// </summary>
