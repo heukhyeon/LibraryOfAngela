@@ -12,7 +12,7 @@ using UnityEngine;
 /// 보호막 클래스
 /// 보호막간 충돌을 막기 위해 이 버프는 상속이 불가능하며, UI 버프 목록에 표시되지 않습니다.
 /// </summary>
-public sealed class BattleUnitBuf_loaShield : BattleUnitBuf, IHandleTakeDamage
+public sealed class BattleUnitBuf_loaShield : BattleUnitBuf, IHandleBeforeTakeDamage, IHandleBeforeTakeBreakDamage, IHandleAfterTakeDamage, IHandleAfterTakeBreakDamage
 {
     ShieldController controller;
 

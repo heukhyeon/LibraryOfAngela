@@ -856,7 +856,15 @@ namespace LibraryOfAngela.Battle
         {
             try
             {
-                foreach (var t in BattleInterfaceCache.Of<IHandleTakeDamage>(owner))
+                if (attacker != null)
+                {
+                    foreach (var t in BattleInterfaceCache.Of<IHandleBeforeGiveDamage>(attacker))
+                    {
+                        t.BeforeGiveDamage(damage, ref originRef, type, owner, bufType);
+                    }
+                }
+
+                foreach (var t in BattleInterfaceCache.Of<IHandleBeforeTakeDamage>(owner))
                 {
                     t.BeforeTakeDamage(damage, ref originRef, type, attacker, bufType);
                 }
@@ -878,7 +886,15 @@ namespace LibraryOfAngela.Battle
         {
             try
             {
-                foreach (var effect in BattleInterfaceCache.Of<IHandleTakeDamage>(owner._self))
+                if (attacker != null)
+                {
+                    foreach (var t in BattleInterfaceCache.Of<IHandleBeforeGiveDamage>(attacker))
+                    {
+                        t.BeforeGiveDamage(originRef, ref originRef, type, owner._self, bufType);
+                    }
+                }
+
+                foreach (var effect in BattleInterfaceCache.Of<IHandleBeforeTakeBreakDamage>(owner._self))
                 {
                     effect.BeforeTakeBreakDamage(originRef, ref originRef, type, attacker, bufType);
                 }
@@ -900,8 +916,16 @@ namespace LibraryOfAngela.Battle
         {
             try
             {
+                if (attacker != null)
+                {
+                    foreach (var t in BattleInterfaceCache.Of<IHandleAfterGiveDamage>(attacker))
+                    {
+                        t.AfterGiveDamage(damage, current, type, owner, bufType);
+                    }
+                }
+
                 var ret = current;
-                foreach (var t in BattleInterfaceCache.Of<IHandleTakeDamage>(owner))
+                foreach (var t in BattleInterfaceCache.Of<IHandleAfterTakeDamage>(owner))
                 {
                     t.AfterTakeDamage(damage, ret, type, attacker, bufType);
                 }
@@ -916,7 +940,15 @@ namespace LibraryOfAngela.Battle
         {
             try
             {
-                foreach (var t in BattleInterfaceCache.Of<IHandleTakeDamage>(owner._self))
+                if (attacker != null)
+                {
+                    foreach (var t in BattleInterfaceCache.Of<IHandleAfterGiveBreakDamage>(attacker))
+                    {
+                        t.AfterGiveBreakDamage(damage, current, type, owner._self, bufType);
+                    }
+                }
+
+                foreach (var t in BattleInterfaceCache.Of<IHandleAfterTakeBreakDamage>(owner._self))
                 {
                     t.AfterTakeBreakDamage(damage, current, type, attacker, bufType);
                 }
