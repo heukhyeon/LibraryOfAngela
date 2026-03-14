@@ -25,16 +25,13 @@ namespace LibraryOfAngela.Buf
         public void OnRoundEndSinking(BattleUnitBuf_loaSinking buf) {
             var reducedValue = (buf.stack * 2) / 3;
             var reduceValue = buf.stack - reducedValue;
-            SinkingBreakDmg(null, buf);
-
-            EffectSinking(buf);
+            SinkingDmg(null, buf);
+            
+            OnReduceStack(buf, new LoAKeywordBufReduceRequest.RoundEnd(reduceValue));
         }
 
-        public void OnAddBufSinking(BattleUnitBuf_loaSinking buf, int addedStack) {
-
-        }
-
-        private int SinkingBreakDmg(BattleUnitModel actor, BattleUnitBuf_loaSinking buf) {
+        public int SinkingDmg(BattleUnitModel actor, BattleUnitBuf_loaSinking buf)
+        {
             var listeners = BattleInterfaceCache.Of<IHandleTakeSinking>(buf._owner).ToList();
 
             var isBreaked = buf._owner.breakDetail.IsBreakLifeZero();
@@ -43,20 +40,29 @@ namespace LibraryOfAngela.Buf
             buf._owner.TakeBreakDamage(dmg, DamageType.Buf, buf._owner, keyword: LoAKeywordBuf.Sinking);
             RunCatching("OnTakeBreakDamage", () => {
                 buf.OnTakeSinkingBreakDamage(dmg);
-                foreach (var listener in listeners) {
+                foreach (var listener in listeners)
+                {
                     listener.OnTakeSinkingBreakDamage(buf, dmg);
                 }
             });
-            if (!isBreaked && buf._owner.breakDetail.IsBreakLifeZero()) {
+            if (!isBreaked && buf._owner.breakDetail.IsBreakLifeZero())
+            {
                 RunCatching("BreakState", () => {
                     buf.OnBreakStateBySinking(actor);
-                    foreach (var listener in listeners) {
+                    foreach (var listener in listeners)
+                    {
                         listener.OnBreakStateBySinking(actor, buf);
                     }
                 });
             }
+            EffectSinking(buf);
             return dmg;
         }
+
+        public void OnAddBufSinking(BattleUnitBuf_loaSinking buf, int addedStack) {
+
+        }
+
 
         private int GetSinkingDmg(BattleUnitBuf_loaSinking buf)
         {
@@ -183,13 +189,14 @@ namespace LibraryOfAngela.Buf
             {
                 bool flag = true;
                 int totalDmg = 0;
-
-                while (!buf.IsDestroyed())
+                int maxCnt = buf.stack;
+                int i = 0;
+                while (!buf.IsDestroyed() && i < maxCnt)
                 {
                     if (flag)
                     {
                         var bp = buf._owner.breakDetail.breakGauge;
-                        OnRoundEndSinking(buf);
+                        SinkingDmg(attacker, buf);
                         if (bp == buf._owner.breakDetail.breakGauge)
                         {
                             flag = false;
@@ -198,11 +205,12 @@ namespace LibraryOfAngela.Buf
 
                     if (!flag)
                     {
-                        var reducedValue = (buf.stack * 2) / 3;
-                        var reduceValue = buf.stack - reducedValue;
                         totalDmg += GetSinkingDmg(buf);
-                        buf.ReduceStack(new LoASinkingReduceRequest.Deluge(attacker, reduceValue));
                     }
+                    var reducedValue = (buf.stack * 2) / 3;
+                    var reduceValue = buf.stack - reducedValue;
+                    buf.ReduceStack(new LoASinkingReduceRequest.Deluge(attacker, reduceValue));
+                    i++;
                 }
 
                 if (totalDmg > 0)
@@ -225,8 +233,11 @@ namespace LibraryOfAngela.Buf
                 {
                     listener.OnTakeSinkingReduceStack(buf, request, ref value);
                 }
+                var before = buf.stack;
                 buf.stack -= value;
+                var after1 = buf.stack;
                 buf.OnAddBuf(-value);
+               // Logger.Log($"침잠 밸류 감소 : {before} --> {request.Stack} --> {after1} --> {buf.stack}");
                 if (buf.stack <= 0) buf.Destroy();
             });
         }
