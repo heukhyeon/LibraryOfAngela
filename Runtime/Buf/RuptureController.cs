@@ -42,6 +42,9 @@ namespace LibraryOfAngela.Buf
         }
 
         public void OnTakeDamageByAttackRupture(BattleUnitBuf_loaRupture buf, BattleDiceBehavior atkDice, int dmg) {
+            // 라오루 구조상 파괴되도 피격 메소드는 불린다
+            if (buf.IsDestroyed()) return;
+
             Damage(atkDice.owner, buf);
             if (StageController.Instance.IsLogState()) {
                 buf._owner.battleCardResultLog.SetTakeDamagedEvent(() => {

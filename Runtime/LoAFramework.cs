@@ -274,6 +274,13 @@ namespace LibraryOfAngela
             BattlePhasePatch.AddPhaseCallback(phase, callback, onlyOnce);
         }
 
+        void ILoARoot.StartParryingOrAction(BattlePlayingCardDataInUnitModel card, BattlePlayingCardDataInUnitModel targetCard)
+        {
+            // skipBasicResponseSelect : 강제 책장 재할당 무시 여부
+            // basicResponse : 명시적으로 합할 대상 책장. 이것도 null 이고 skipBasicResponseSelect 도 false면 강제로 책장 재할당 실행
+            StartParryingOrAction.Invoke(StageController.Instance, card, skipBasicResponseSelect: true, basicResponse: targetCard);
+        }
+
         List<EmotionCardXmlInfo> ILoARoot.CreateValidEmotionCardListByEmotionRate(List<EmotionCardXmlInfo> cardFool, int emotionLevel, int count)
         {
             int num = 0;

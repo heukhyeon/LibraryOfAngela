@@ -66,6 +66,7 @@ namespace LibraryOfAngela.Buf
                     bufContainer = impl;
                 }
                 bufContainer.Current = b;
+                Console.WriteLine($"무대 버프 재설정 : {b?.GetType()?.Name ?? "Null"} // {__instance.GetType().Name}");
             }
             currentBuf = b;
             currentBuf?.OnRoundStart();
@@ -124,6 +125,14 @@ namespace LibraryOfAngela.Buf
             catch (Exception e)
             {
                 Logger.LogError(e);
+            }
+        }
+
+        public static void OnClearResource()
+        {
+            if (bufContainer?.Current != null)
+            {
+                bufContainer.Current = null;
             }
         }
     }

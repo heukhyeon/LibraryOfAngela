@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Workshop;
+using static BattleUnitInformationUI;
+using static UnityEngine.GraphicsBuffer;
 
 namespace LibraryOfAngela.Extension
 {
@@ -282,6 +284,11 @@ namespace LibraryOfAngela.Extension
             {
                 SingletonBehavior<BattleManagerUI>.Instance.ui_battleEmotionCoinUI.OnAcquireCoin(target, type, i);
             }
+        }
+
+        public static void StartParryingOrAction(this StageController owner, BattlePlayingCardDataInUnitModel card)
+        {
+            ServiceLocator.Instance.GetInstance<ILoARoot>().StartParryingOrAction(card);
         }
 
     }

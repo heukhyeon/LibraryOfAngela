@@ -235,28 +235,38 @@ namespace LibraryOfAngela.Battle
         private static float HandleLimbusParryingDiceDelay(float origin, BattleCardBehaviourResult result)
         {
             if (!isExistLimbusResult) return origin;
-            var index = limbusDiceResults.FindIndex(d => d.result == result);
-            if (index == -1) return origin;
-            var target = limbusDiceResults[index];
-            RencounterManager.Instance.PlaySound(RencounterManager.Instance.Dice_Rolled);
-            var targetResultIndex = limbusDiceResults.FindIndex(d => d.targetResult == result);
-            if (targetResultIndex >= 0 || target.targetResult != null)
+            try
             {
-                var targetResult = targetResultIndex >= 0 ? limbusDiceResults[targetResultIndex].result : target.targetResult;
-                if (targetResult.vanillaDiceValueList.Count > 0)
+                var index = limbusDiceResults.FindIndex(d => d.result == result);
+                if (index == -1) return origin;
+                var target = limbusDiceResults[index];
+                RencounterManager.Instance.PlaySound(RencounterManager.Instance.Dice_Rolled);
+                var targetResultIndex = limbusDiceResults.FindIndex(d => d.targetResult == result);
+                if (targetResultIndex >= 0 || target.targetResult != null)
                 {
-                    var owner = targetResult.behaviour.owner;
-                    if (owner.view == RencounterManager.Instance._enemy && RencounterManager.Instance.CurRencounterState >= RencounterManager.RencounterState.PrintLibrarianVanillaDice)
+                    var targetResult = targetResultIndex >= 0 ? limbusDiceResults[targetResultIndex].result : target.targetResult;
+                    if (targetResult?.vanillaDiceValueList != null && targetResult.vanillaDiceValueList.Count > 0)
                     {
-                        // 남은 주사위가 없는 경우, 이 경우 적의 주사위 판정이 이미 끝난 상태라 다시 적용하면 위력이 무시된 상태가 된다.
-                        return origin;
+                        var owner = targetResult.behaviour?.owner;
+                        if (owner == null) return origin;
+
+                        if (owner?.view == RencounterManager.Instance._enemy && RencounterManager.Instance.CurRencounterState >= RencounterManager.RencounterState.PrintLibrarianVanillaDice)
+                        {
+                            // 남은 주사위가 없는 경우, 이 경우 적의 주사위 판정이 이미 끝난 상태라 다시 적용하면 위력이 무시된 상태가 된다.
+                            return origin;
+                        }
+                        var num = targetResult.vanillaDiceValueList[0];
+                        targetResult.vanillaDiceValueList.RemoveAt(0);
+                        targetResult.behaviour.owner.view.diceActionUI.SetDiceNew(
+                        targetResult.resultDiceMax, num, num == targetResult.resultDiceValue, BattleDiceValueColor.Normal);
                     }
-                    var num = targetResult.vanillaDiceValueList[0];
-                    targetResult.vanillaDiceValueList.RemoveAt(0);
-                    targetResult.behaviour.owner.view.diceActionUI.SetDiceNew(
-                    targetResult.resultDiceMax, num, num == targetResult.resultDiceValue, BattleDiceValueColor.Normal);
                 }
             }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+
             return Time.deltaTime * 5.5f;
         }
 

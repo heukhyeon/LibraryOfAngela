@@ -9,6 +9,7 @@ namespace LibraryOfAngela.Interface_External
     /// <summary>
     /// <see cref="BattlePlayingCardDataInUnitModel.NextDice"/> 의 타이밍에 다음 굴릴 주사위를 제어할 수 있다.
     /// </summary>
+    [Obsolete("Please Migrate IHandleDequeueDice")]
     public interface IHandleNextDice : ILoABattleEffect
     {
         IEnumerable<BattleDiceBehavior> BeforeNextDice(BattlePlayingCardDataInUnitModel card);

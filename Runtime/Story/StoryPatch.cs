@@ -527,15 +527,23 @@ namespace LibraryOfAngela.Story
         private static bool isBgFgFixed = false;
 
         [HarmonyPatch(typeof(UI.UIController), "OpenStory", new Type[] { typeof(StageStoryInfo), typeof(StoryRoot.OnEndStoryFunc), typeof(bool), typeof(bool), typeof(bool) })]
-        [HarmonyPostfix]
-        private static void After_OpenStory_UI(StageStoryInfo storyInfo)
+        [HarmonyPrefix]
+        private static void Before_OpenStory_UI(StageStoryInfo storyInfo)
         {
             if (storyInfo?.packageId is null) return;
             var config = LoAModCache.Instance[storyInfo.packageId]?.StoryConfig;
             if (config != null)
             {
                 var com = StoryRoot.Instance.GetComponentInChildren<CamFilterController>(true);
-                if (com != null && CamFilterController._instance != com)
+                if (com == null)
+                {
+                    Logger.Log("CamFilter in Root Null...?");
+                }
+                else if (CamFilterController._instance == com)
+                {
+                    Logger.Log("CamFilter in Root Equal");
+                }
+                else
                 {
                     Logger.Log("CamFilter Refresh in Root");
                     CamFilterController._instance = com;
@@ -544,14 +552,22 @@ namespace LibraryOfAngela.Story
         }
 
         [HarmonyPatch(typeof(BattleStoryUI), "OpenStory")]
-        [HarmonyPostfix]
-        private static void After_OpenStory(BattleStoryUI __instance)
+        [HarmonyPrefix]
+        private static void Before_OpenStory(BattleStoryUI __instance)
         {
             var packageId = Instance.currentStory?.packageId;
             if (packageId != null && LoAModCache.Instance[packageId]?.StoryConfig != null)
             {
                 var com = BattleManagerUI.Instance.ui_battleStory.GetComponentInChildren<CamFilterController>(true);
-                if (com != null && CamFilterController._instance != com)
+                if (com == null)
+                {
+                    Logger.Log("CamFilter in UI Null...?");
+                }
+                else if (CamFilterController._instance == com)
+                {
+                    Logger.Log("CamFilter in UI Equal");
+                }
+                else
                 {
                     Logger.Log("CamFilter Refresh in UI");
                     CamFilterController._instance = com;
@@ -566,6 +582,13 @@ namespace LibraryOfAngela.Story
             var bg = __instance.storyUI.transform.Find("Canvas_Background").GetComponent<Canvas>();
             var fg = __instance.storyUI.transform.Find("Canvas_Forground").GetComponent<Canvas>();
             fg.worldCamera = bg.worldCamera;
+        }
+
+        [HarmonyPatch(typeof(CamFilterController), "SetFilter")]
+        [HarmonyPostfix]
+        private static void After_SetFilter(string filterID, CamFilterController __instance)
+        {
+            Logger.Log($"이펙트 발생 : {filterID} // {__instance.gameObject.name}");
         }
 
         [HarmonyPatch(typeof(UIAlarmPopup), "SetAlarmTextForBlue")]
@@ -638,15 +661,10 @@ namespace LibraryOfAngela.Story
                 var mod = LoAModCache.Instance[stageStoryInfo.packageId]?.mod as ILoALocalizeMod;
                 if (mod != null)
                 {
-                    var langauge = GlobalGameManager.Instance.CurrentOption.language;
-                    var basePath = ModContentManager.Instance.GetModPath(mod.packageId);
-     
-                    var ext = story.EndsWith(".xml") ? "" : ".xml";
-                    var targetStory = Path.Combine(basePath, "Data", "StoryText", $"{langauge}_{story}{ext}");
-                    var targetEffect = Path.Combine(basePath, "Data", "StoryEffect", $"{langauge}_{story}{ext}");
-                    if (File.Exists(targetStory))
+                    var paths = FindValidStoryPath(mod, story);
+                    if (!string.IsNullOrEmpty(paths.Key) && !string.IsNullOrEmpty(paths.Value))
                     {
-                        __result = StorySerializer.LoadStoryFile(targetStory, targetEffect, basePath);
+                        __result = StorySerializer.LoadStoryFile(paths.Key, paths.Value, ModContentManager.Instance.GetModPath(mod.packageId));
                     }
                 }
                 if (__result)
@@ -661,6 +679,63 @@ namespace LibraryOfAngela.Story
                     }
                 }
             }
+        }
+
+        private static KeyValuePair<string, string> FindValidStoryPath(ILoALocalizeMod mod, string story)
+        {
+            var ext = story.EndsWith(".xml") ? "" : ".xml";
+            
+            var basePath = ModContentManager.Instance.GetModPath(mod.packageId);
+            string targetStory = null;
+            string targetEffect = Path.Combine(basePath, "Data", "StoryEffect", $"{story}{ext}");
+            if (!File.Exists(targetEffect)) targetEffect = null;
+
+            var langauge = GlobalGameManager.Instance.CurrentOption.language;
+            var languages = TextDataModel.GetSupportedLangs().ToList();
+            languages.Remove(langauge);
+            languages.Insert(0, langauge);
+
+            foreach (var l in languages)
+            {
+                if (targetStory == null)
+                {
+                    foreach (var pathTarget in new string[]
+{
+                Path.Combine(basePath, "Data", "StoryText", l, story + ext),
+                Path.Combine(basePath, "Data", "StoryText", $"{l}_{story}{ext}"),
+})
+                    {
+                        if (File.Exists(pathTarget))
+                        {
+                            targetStory = pathTarget;
+                            break;
+                        }
+                    }
+                }
+
+                if (targetEffect == null)
+                {
+                    foreach (var pathTarget in new string[]
+{
+                Path.Combine(basePath, "Data", "StoryEffect", l, story + ext),
+                Path.Combine(basePath, "Data", "StoryEffect", $"{l}_{story}{ext}"),
+})
+                    {
+                        if (File.Exists(pathTarget))
+                        {
+                            targetEffect = pathTarget;
+                            break;
+                        }
+                    }
+                }
+
+
+                if (targetStory != null && targetEffect != null)
+                {
+                    break;
+                }
+            }
+            return new KeyValuePair<string, string>(targetStory, targetEffect);
         }
 
         [HarmonyPatch(typeof(StorySerializer), "HasEffectFile")]
@@ -953,10 +1028,7 @@ namespace LibraryOfAngela.Story
                 var next = IsHandledStory(instance.storyManager, instance.storyUI, instance.storyCamera);
                 if (next != null)
                 {
-                    if (LoAFramework.DEBUG)
-                    {
-                        Logger.Log($"Story Handled in Battle : {next}");
-                    }
+                    Logger.Log($"Story Handled in Battle : {next}");
                     return new BattleStoryUI.OnEndStoryFunc(next);
                 }
             }
@@ -992,8 +1064,17 @@ namespace LibraryOfAngela.Story
         private static Action IsHandledStory(StoryManager manager, GameObject storyUI, Camera camera)
         {
             var packageId = Instance.currentStory?.packageId;
-            if (packageId is null) return null;
+            if (packageId is null)
+            {
+                //Logger.Log($"현재 스토리 없음 : {Instance.currentStory?.story} // {Instance.currentStory?.packageId}");
+                return null;
+            }
             var end = FrameworkExtension.GetSafeAction(() => LoAModCache.Instance[packageId]?.StoryConfig?.HandleStoryEnd(Instance.currentStory.story, StoryManager.Instance.isJustRead));
+            if (end == null)
+            {
+                //Logger.Log($"현재 스토리 없음 2 : {packageId} // {Instance.currentStory.story}");
+                return null;
+            }
             if (end is LoAStoryEnd.Next e)
             {
                 var story = new StageStoryInfo

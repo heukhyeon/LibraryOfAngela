@@ -1564,6 +1564,153 @@ namespace LibraryOfAngela.Battle
             }
         }
 
+        [HarmonyPatch(typeof(BattleParryingManager), "EndAction")]
+        [HarmonyTranspiler]
+        private static IEnumerable<CodeInstruction> Trans_EndAction(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = new List<CodeInstruction>(instructions);
+            int i = 0;
+            int cnt = 0;
+            int fire2 = 0;
+            var target1 = AccessTools.Method(typeof(BattleCardTotalResult), nameof(BattleCardTotalResult.SetBehaviourDiceResultUI));
+            var target2 = AccessTools.Method(typeof(BattleParryingManager), nameof(BattleParryingManager.CheckParryingEnd));
+
+            while (i < codes.Count)
+            {
+                var c = codes[i];
+                if (c.Calls(target1))
+                {
+                    if (cnt == 1)
+                    {
+                        CreateAndMoveAfterDiceInstruction(codes, true, ref i);
+                    }
+                    cnt++;
+                   
+                }
+                else if (c.Calls(target2) && fire2 == 0)
+                {
+                    fire2++;
+                    CreateAndMoveAfterDiceInstruction(codes, false, ref i);
+                }
+                i++;
+            }
+            return codes;
+        }
+
+        [HarmonyPatch(typeof(BattleParryingManager), "StartParrying")]
+        [HarmonyTranspiler]
+        private static IEnumerable<CodeInstruction> Trans_StartParrying(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = new List<CodeInstruction>(instructions);
+            int i = 0;
+            int cnt = 0;
+            var target2 = AccessTools.Method(typeof(BattleParryingManager.ParryingTeam), nameof(BattleParryingManager.ParryingTeam.NextDice));
+
+            while (i < codes.Count)
+            {
+                var c = codes[i];
+                i++;
+                if (c.Calls(target2))
+                {
+                    cnt++;
+                    if (cnt == 1) CreateAndMoveAfterDiceInstruction(codes, true, ref i);
+                    else if (cnt == 2) CreateAndMoveAfterDiceInstruction(codes, false, ref i);
+                }
+  
+            }
+            return codes;
+        }
+
+        [HarmonyPatch(typeof(BattleOneSidePlayManager), "StartOneSidePlay")]
+        [HarmonyTranspiler]
+        private static IEnumerable<CodeInstruction> Trans_StartOneSidePlayn(IEnumerable<CodeInstruction> instructions)
+        {
+            var target2 = AccessTools.Method(typeof(BattleOneSidePlayManager), nameof(BattleOneSidePlayManager.NextDice));
+
+            foreach (var c in instructions)
+            {
+                yield return c;
+                if (c.Calls(target2))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                    yield return new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BattleOneSidePlayManager), nameof(BattleOneSidePlayManager._playingCard)));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), nameof(HandleAfterNextDiceOneSide)));
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(BattleOneSidePlayManager), "CheckEndAction")]
+        [HarmonyPrefix]
+        private static void Before_CheckEndAction(BattleOneSidePlayManager __instance)
+        {
+            HandleAfterNextDiceOneSide(__instance._playingCard);
+        }
+
+
+
+        private static void CreateAndMoveAfterDiceInstruction(List<CodeInstruction> codes, bool isEnemy, ref int i)
+        {
+            var name = isEnemy ? nameof(BattleParryingManager._teamEnemy) : nameof(BattleParryingManager._teamLibrarian);
+            codes.InsertRange(i, new CodeInstruction[]
+{
+                        new CodeInstruction(OpCodes.Ldarg_0),
+                        new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(BattleParryingManager), name)),
+                        new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattlePatch), nameof(HandleAfterNextDice)))
+});
+            i += 3;
+        }
+
+        private static void HandleAfterNextDice(BattleParryingManager.ParryingTeam team)
+        {
+            try
+            {
+                var origin = team.playingCard?.currentBehavior;
+                foreach (var p in BattleInterfaceCache.Of<IHandleAfterNextDice>(team.unit))
+                {
+                    p.OnNextDice(team.playingCard, origin);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+        }
+
+        private static void HandleAfterNextDiceOneSide(BattlePlayingCardDataInUnitModel card)
+        {
+            try
+            {
+                var origin = card?.currentBehavior;
+                foreach (var p in BattleInterfaceCache.Of<IHandleAfterNextDice>(card.owner))
+                {
+                    p.OnNextDice(card, origin);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+        }
+
+
+        /*        [HarmonyPatch(typeof(BattlePlayingCardDataInUnitModel), "DequeueAbilityTest")]
+                [HarmonyPostfix]
+                private static void After_DequeueAbilityTest(BattlePlayingCardDataInUnitModel __instance, ref BattleDiceBehavior __result)
+                {
+                    var origin = __result;
+                    foreach (var passive in BattleInterfaceCache.Of<IHandleDequeueDice>(__instance.owner))
+                    {
+                        try
+                        {
+                            passive.OnNextDice(ref __result, __instance, origin);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.LogError(e);
+                        }
+                    }
+                }*/
+
         [HarmonyPatch(typeof(BattleAllyCardDetail), "Init")]
         [HarmonyPostfix]
         private static void After_AllyCard_Init(BattleAllyCardDetail __instance, List<DiceCardXmlInfo> deck)
@@ -1688,7 +1835,7 @@ namespace LibraryOfAngela.Battle
                     Logger.Log("Force Action Handle Error :: One-sided processing was requested, but the attacker and the victim are the same. Therefore, this action is not processed. Correct the action for that class properly : " + b.GetType().FullName);
                     continue;
                 }
-                if (next is ParryingOneSideAction.Parrying pa && (pa.card1?.owner == pa.card1?.target || pa.card2?.owner == pa.card2?.owner || pa.card1?.owner == pa.card2?.owner))
+                if (next is ParryingOneSideAction.Parrying pa && (pa.card1?.owner == pa.card1?.target || pa.card2?.owner == pa.card2?.target || pa.card1?.owner == pa.card2?.owner))
                 {
                     Logger.Log("Force Action Handle Error :: Parrying was requested, but the two subjects for parrying are the same subject. Therefore, this action is not processed. Correct the action for that class properly :" + b.GetType().FullName);
                     continue;
@@ -1699,6 +1846,24 @@ namespace LibraryOfAngela.Battle
             }
             if (isChanged) return ForceHandle(current);
             return true;
+        }
+
+
+        [HarmonyPatch(typeof(BattleUnitBuf_warpCharge), nameof(BattleUnitBuf_warpCharge.UseStack))]
+        [HarmonyPostfix]
+        private static void After_UseStack(BattleUnitBuf_warpCharge __instance, int v, bool isCard, ref bool __result)
+        {
+            try
+            {
+                foreach (var b in BattleInterfaceCache.Of<IUseChargeStackExtension>(__instance._owner))
+                {
+                    b.OnUseChargeStack(__instance, v, isCard, ref __result);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
         }
 
         private static bool ForceHandle(ParryingOneSideAction current)

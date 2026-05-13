@@ -191,8 +191,8 @@ namespace LibraryOfAngela.BattleUI
 
                 if (isCardMode)
                 {
-                    int max = model.cards.Count -1;
-                    if (max + 1 > expectedMax)
+                    int max = model.cards.Count;
+                    if (max > expectedMax)
                     {
                         expectedMax = max;
                         var c = LazyInstantiate();
@@ -200,15 +200,16 @@ namespace LibraryOfAngela.BattleUI
                     }
                     for (int i = 0; i < currentMax; i++)
                     {
-                        components[i].CardInfo = i <= max ? model.cards[i] : null;
+                        var isValid = i < max;
+                        components[i].CardInfo = isValid ? model.cards[i] : null;
                         components[i].IsSelected = false;
-                        if (i <= max) width += 400f;
+                        if (isValid) width += 400f;
                     }
                 }
                 else
                 {
-                    int max = model.emotions.Count - 1;
-                    if (max + 1 > expectedMax)
+                    int max = model.emotions.Count;
+                    if (max > expectedMax)
                     {
                         expectedMax = max;
                         var c = LazyInstantiate();
@@ -216,9 +217,11 @@ namespace LibraryOfAngela.BattleUI
                     }
                     for (int i = 0; i < currentMax; i++)
                     {
-                        components[i].EmotionInfo = i <= max ? model.emotions[i] : null;
+                        
+                        var isValid = i < max;
+                        components[i].EmotionInfo = isValid ? model.emotions[i] : null;
                         components[i].IsSelected = false;
-                        if (i <= max) width += 400f;
+                        if (isValid) width += 400f;
                     }
                 }
 

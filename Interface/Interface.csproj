@@ -9,9 +9,10 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>LibraryOfAngela</RootNamespace>
     <AssemblyName>LoAInterface</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -115,6 +116,7 @@
     <Compile Include="Interface-External\IHandleBeforeGiveBreakDamage.cs" />
     <Compile Include="Interface-External\IHandleAfterGiveDamage.cs" />
     <Compile Include="Interface-External\IHandleBeforeGiveDamage.cs" />
+    <Compile Include="Interface-External\IHandleDequeueDice.cs" />
     <Compile Include="Interface-External\IHandleEmotionCoinAdder.cs" />
     <Compile Include="Interface-External\INotEnoughDiscardListener.cs" />
     <Compile Include="Interface-External\IHandleAutoCardUse.cs" />
@@ -172,6 +174,7 @@
     <Compile Include="Interface-External\IPreventBufStack.cs" />
     <Compile Include="Interface-External\IPreventRecover.cs" />
     <Compile Include="Interface-External\IRepeatPersonalCard.cs" />
+    <Compile Include="Interface-External\IUseChargeStackExtension.cs" />
     <Compile Include="Interface-External\IUseInstanceExternal.cs" />
     <Compile Include="Interface-External\IUseInstanceListener.cs" />
     <Compile Include="Interface-Internal\InterfaceInternal.cs" />

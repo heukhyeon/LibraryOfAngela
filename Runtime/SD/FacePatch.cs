@@ -13,6 +13,9 @@ using System.Threading.Tasks;
 using TMPro;
 using UI;
 using UnityEngine;
+using static LibraryOfAngela.AssetBundleType;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using static UnityEngine.UI.GridLayoutGroup;
 
 namespace LibraryOfAngela.SD
 {
@@ -82,39 +85,15 @@ namespace LibraryOfAngela.SD
                     fired = true;
                     yield return new CodeInstruction(OpCodes.Ldarg_0);
                     yield return new CodeInstruction(OpCodes.Ldarg_1);
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(FacePatch), "IsLoACustomFace"));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(FacePatch), nameof(IsLoACustomSettingFace)));
                     yield return new CodeInstruction(OpCodes.Brtrue_S, endLabel[0]); // target line label
                 }
             }
         }
 
-        private static bool IsLoACustomFace(UICardEquipInfoSlot slot, CardOwnResult info)
+        private static bool IsLoACustomSettingFace(UICardEquipInfoSlot slot, CardOwnResult info)
         {
-            try
-            {
-                var key = info.unit.CustomBookItem._characterSkin;
-                if (faceTargets.ContainsKey(key))
-                {
-                    slot.faceEditor.InitBySephirah(new LorId(16));
-                    var artwork = LoAModCache.Instance[faceTargets[key].packageId].Artworks;
-                    var sp = artwork.GetNullable(faceTargets[key].overrideFaceSprite + "_setting");
-                    if (sp == null)
-                    {
-                        sp = artwork.GetNullable(faceTargets[key].overrideFace.Invoke(key, key, info.unit).GetSettingFaceArtwork());
-                    }
-                    if (sp == null) return false;
-                    slot.faceEditor.head.sprite = sp;
-                    slot.faceEditor.head.enabled = true;
-                    slot.faceEditor.head.color = new UnityEngine.Color(1f, 1f, 1f, 1f);
-                    return true;
-                }
-                return false;
-            }
-            catch (Exception e)
-            {
-                Logger.LogError(e);
-            }
-            return false;
+            return FaceSet(info.unit, slot.faceEditor);
         }
 
         public static UnitCustomizingData HandleLoAFaceBase(UnitCustomizingData origin, UnitDataModel owner, string currentSkinName)
@@ -174,29 +153,52 @@ namespace LibraryOfAngela.SD
         [HarmonyPostfix]
         private static void After_SetData(UnitDataModel unit, FaceEditor ___faceEdit)
         {
+            FaceSet(unit, ___faceEdit);
+        }
+
+        private static bool FaceSet(UnitDataModel unit, FaceEditor faceEditor)
+        {
             try
             {
-                var key = unit.CustomBookItem?._characterSkin;
-                if (key != null && faceTargets.ContainsKey(key))
+                var key = unit.CustomBookItem._characterSkin;
+                ILoAArtworkCache artwork = null;
+                Sprite sp = null;
+                //Logger.Log($"아이디 이전 : {key}");
+                if (faceTargets.ContainsKey(key))
                 {
-                    var artwork = LoAModCache.Instance[faceTargets[key].packageId].Artworks;
-                    var sp = artwork.GetNullable(faceTargets[key].overrideFaceSprite + "_setting");
+                    artwork = LoAModCache.Instance[faceTargets[key].packageId].Artworks;
+                    sp = artwork.GetNullable(faceTargets[key].overrideFaceSprite + "_setting");
                     if (sp == null)
                     {
                         sp = artwork.GetNullable(faceTargets[key].overrideFace.Invoke(key, key, unit).GetSettingFaceArtwork());
                     }
-                    if (sp == null) return;
-                    ___faceEdit.InitBySephirah(new LorId(16));
-                    ___faceEdit.head.sprite = sp;
-                    ___faceEdit.head.enabled = true;
-                    ___faceEdit.head.color = new UnityEngine.Color(1f, 1f, 1f, 1f);
+                    if (sp != null)
+                    {
+                        faceEditor.InitBySephirah(new LorId(16));
+                        faceEditor.head.sprite = sp;
+                        faceEditor.head.enabled = true;
+                        faceEditor.head.color = new UnityEngine.Color(1f, 1f, 1f, 1f);
+                        return true;
+                    }
                 }
+                var corePage = unit.bookItem.BookId;
+                var faceByCorePage = AdvancedEquipBookPatch.Instance.infos.SafeGet(corePage)?.overrideFace?.Invoke(key, key, unit);
+                
+                if (faceByCorePage == null) return false;
+                artwork = LoAModCache.Instance[corePage.packageId].Artworks;
+                sp = artwork.GetNullable(faceByCorePage.GetSettingFaceArtwork());
+                //Logger.Log($"아이디 : {corePage} // 존재 : {faceByCorePage != null} // {sp != null} // {faceByCorePage.GetSettingFaceArtwork()}");
+                if (sp == null) return false;
+                faceEditor.head.sprite = sp;
+                faceEditor.head.enabled = true;
+                faceEditor.head.color = new UnityEngine.Color(1f, 1f, 1f, 1f);
+                return true;
             }
             catch (Exception e)
             {
                 Logger.LogError(e);
             }
-
+            return false;
         }
 
         private static SpecialCustomizedAppearance CreateApperance(LoACustomFaceData data, Transform parent)

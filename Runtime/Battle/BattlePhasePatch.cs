@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using LibraryOfAngela.BattleUI;
+using LibraryOfAngela.Buf;
 using LibraryOfAngela.Interface_External;
 using System;
 using System.Collections.Generic;
@@ -248,6 +249,7 @@ namespace LibraryOfAngela.Battle
 
                 phaseCallbackExists = false;
             }
+            SceneBufPatch.OnClearResource();
         }
 
         private struct PhaseListener
