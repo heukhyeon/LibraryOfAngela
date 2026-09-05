@@ -197,13 +197,13 @@ namespace LibraryOfAngela.EquipBook
                     var builder = new StringBuilder("SD Bundle Load ::");
                     builder.AppendFormat("{0} // {1} // ", current.skin, current.info.path);
                     string state;
-                    if (response.syncAssetBundleCount == 0 && response.asyncAssetBundleCount == 0) state = "Fail";
+                    if (response.syncAssetBundleCount == 0 && response.asyncAssetBundleCount == 0 && response.syncLoadedAssetBundleCount == 0) state = "Fail";
                     else if (response.syncAssetBundleCount > 0) state = "Sync";
                     else if (response.asyncAssetBundleCount > 0) state = "Async";
                     else state = "Skip";
                     builder.Append(state);
                     Logger.Log(builder.ToString());
-                    current.isLoaded = true;
+                    current.isLoaded = state != "Fail";
                     index++;
                 }
                 if (bundleInfo.Count == 0)
@@ -377,6 +377,7 @@ namespace LibraryOfAngela.EquipBook
         {
             if (Instance.recyclableBundles != null)
             {
+                var restored = false;
                 foreach (var b in Instance.recyclableBundles)
                 {
                     foreach (var b2 in b.Value)
@@ -385,10 +386,11 @@ namespace LibraryOfAngela.EquipBook
                         {
                             //Logger.Log("AssetBundle Restore :" + b2.info.path);
                             b2.isLoaded = false;
-                            return;
+                            restored = true;
                         }
                     }
                 }
+                if (restored) return;
                 //Logger.Log("AssetBundle Restore Fail ?? :" + info.packageId + "," + info.path);
             }
         }

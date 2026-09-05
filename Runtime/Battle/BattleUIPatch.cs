@@ -198,7 +198,8 @@ namespace LibraryOfAngela.Battle
         /// </summary>
         /// <param name="instructions"></param>
         /// <returns></returns>
-        [HarmonyPatch(typeof(BattleUnitCardsInHandUI), nameof(BattleUnitCardsInHandUI.UpdateCardList))]
+        /// 허구소녀가 prefix return false 해서 postfix로 대체
+/*        [HarmonyPatch(typeof(BattleUnitCardsInHandUI), nameof(BattleUnitCardsInHandUI.UpdateCardList))]
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> Trans_UpdateCardList(IEnumerable<CodeInstruction> instructions)
         {
@@ -215,40 +216,70 @@ namespace LibraryOfAngela.Battle
                     yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BattleUIPatch), nameof(HandleLoACardBinder)));
                 }
             }
+        }*/
+
+        [HarmonyPatch(typeof(BattleUnitCardsInHandUI), nameof(BattleUnitCardsInHandUI.UpdateCardList))]
+        [HarmonyPostfix]
+        private static void After_UpdateCardList(BattleUnitCardsInHandUI __instance)
+        {
+            int i = 0;
+            try
+            {
+                while (true)
+                {
+                    if (i >= __instance._cardList.Count)
+                    {
+                        break;
+                    }
+                    var ui = __instance._cardList[i];
+                    bool handled = false;
+                    try
+                    {
+                        handled = HandleLoACardBinder(__instance, ui);
+                    }
+                    catch (Exception e)
+                    {
+                        BattleUnitModel owner = __instance._selectedUnit;
+                        if (owner is null)
+                        {
+                            owner = __instance._hOveredUnit;
+                        }
+                        Console.WriteLine($"UpdateCardList Error in {owner?.UnitData?.unitData?.name}'s Hand in {i}");
+                        Logger.LogError(e);
+                    }
+                    if (!handled || ui == __instance._cardList[i]) i++;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
         }
 
-        private static void HandleLoACardBinder(BattleUnitCardsInHandUI instance, int num)
+        private static bool HandleLoACardBinder(BattleUnitCardsInHandUI instance, BattleDiceCardUI ui)
         {
-            if (num < 0) {
-                return;
-            }
-
             BattleUnitModel owner = instance._selectedUnit;
             if (owner is null)
             {
                 owner = instance._hOveredUnit;
             }
 
-            var ui = instance._cardList[num];
             var card = ui.CardModel;
-            try
+            if (card == null) return false;
+
+            var script = card._script ?? card.CreateDiceCardSelfAbilityScript();
+            if (script is ILoACardUIBinder c)
             {
-                var script = card._script ?? card.CreateDiceCardSelfAbilityScript();
-                if (script is ILoACardUIBinder c)
+                if (owner is null)
                 {
-                    if (owner is null)
-                    {
-                        Logger.Log("HandleCustomUsableCard Called, But Owner Not Detect, Maybe Other Logic Conflict...? Ignore.");
-                        return;
-                    }
-                    c.OnHandle(ui, owner, card);
+                    Logger.Log("HandleCustomUsableCard Called, But Owner Not Detect, Maybe Other Logic Conflict...? Ignore.");
+                    return false;
                 }
+                c.OnHandle(ui, owner, card);
+                return true;
+                // Logger.Log($"TEST CALLLLL : ${script.GetType().FullName} // {ui.isEgoCoolTimeLock}");
             }
-            catch (Exception e)
-            {
-                Logger.Log($"HandleLoACardBinder Error in {num} // {instance._cardList.Count} // {card.GetID()} // {card?.GetName()} // Owner Exists : {owner != null} // {owner?.UnitData.unitData.name}");
-                Logger.LogError(e);
-            }
+            return false;
         }
 
 

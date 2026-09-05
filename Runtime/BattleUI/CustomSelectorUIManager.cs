@@ -457,6 +457,7 @@ namespace LibraryOfAngela.BattleUI
                 emotion.Init(_emotionInfo);
                 emotion.gameObject.SetActive(true);
             }
+
         }
 
         private BattleDiceCardUI CreateDiceCardUI(BattleDiceCardUI target)
@@ -465,7 +466,23 @@ namespace LibraryOfAngela.BattleUI
             var com = v.GetComponent<BattleDiceCardUI>();
             com.scaleOrigin = new Vector3(0.25f, 0.25f, 0.25f);
             com.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-            com.SetCard(BattleDiceCardModel.CreatePlayingCard(ItemXmlDataList.instance.GetCardItem(1)));
+            var c2 = BattleDiceCardModel.CreatePlayingCard(ItemXmlDataList.instance.GetCardItem(1));
+            try
+            {
+                com.SetCard(c2);
+            }
+            catch (Exception ex)
+            {
+                if (StageController.Instance.GetStageModel() == null)
+                {
+                    // ReverseMod prefix conflict
+                }
+                else
+                {
+                    Debug.LogError(ex);
+                }
+            }
+            
             com.transform.localPosition = Vector3.zero;
             var trigger = com.GetComponentInChildren<UICustomSelectable>(true);
             trigger.SubmitEvent = new UnityEventBasedata();

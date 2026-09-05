@@ -46,6 +46,7 @@ namespace LibraryOfAngela.Battle
         private List<BattlePlayingCardDataInUnitModel> enemyCards = new List<BattlePlayingCardDataInUnitModel>();
         private Dictionary<BattlePlayingCardDataInUnitModel, List<ParryableTarget>> parryTargets = new Dictionary<BattlePlayingCardDataInUnitModel, List<ParryableTarget>>();
         private Dictionary<BattleUnitModel, float> dmgDic = new Dictionary<BattleUnitModel, float>();
+        private bool errorAffected = false;
 
         public void Execute()
         {
@@ -54,9 +55,10 @@ namespace LibraryOfAngela.Battle
             RunFaction(Faction.Enemy);
             RunFaction(Faction.Player);
 
-            if (level >= LoggingLevel.Simple)
+            if (level >= LoggingLevel.Simple || errorAffected)
             {
                 Logger.Log(totalLogger.ToString());
+                errorAffected = false;
             }
         }
 
@@ -134,13 +136,21 @@ namespace LibraryOfAngela.Battle
                         if (!parryTargets.ContainsKey(card)) continue;
                         if (!card.owner.IsTargetable(unit)) continue;
 
-                        if (card.target == unit && card.targetSlotOrder == i)
+                        try
                         {
-                            parryTargets[card].Add(new ParryableTarget { owner = owner, index = i });
+                            if (card.target == unit && card.targetSlotOrder == i)
+                            {
+                                parryTargets[card].Add(new ParryableTarget { owner = owner, index = i });
+                            }
+                            else if (unit.CanChangeAttackTarget(card.owner, i, card.slotOrder))
+                            {
+                                parryTargets[card].Add(new ParryableTarget { owner = owner, index = i });
+                            }
                         }
-                        else if (unit.CanChangeAttackTarget(card.owner, i, card.slotOrder))
+                        catch (ArgumentOutOfRangeException)
                         {
-                            parryTargets[card].Add(new ParryableTarget { owner = owner, index = i });
+                            // big dll conflict
+                            // 선택 전에 추가되는거므로 의도된 문제니 무시
                         }
                     }
                 }
@@ -204,38 +214,66 @@ namespace LibraryOfAngela.Battle
             for (int i = 0; i < keys.Count; i++)
             {
                 var targetCard = keys[i];
-                foreach (var parry in parryTargets[targetCard])
+                var errorLogger = new StringBuilder();
+                int c = 0;
+                try
                 {
-                    foreach (var card in parry.owner.owner.allyCardDetail._cardInHand)
+                    foreach (var parry in parryTargets[targetCard])
                     {
-                        var priority = GetParryingPriority(card, parry.owner, parry.index, targetCard);
-                        if (priority > current.priority)
+                        errorLogger.AppendLine($"패링 순회 : {parry?.owner?.owner?.UnitData?.unitData?.name}");
+                        foreach (var card in parry.owner.owner.allyCardDetail._cardInHand)
                         {
-                            current = new PriorityInfo { card = card, priority = priority, target = targetCard.owner, index = parry.index };
+                            var priority = GetParryingPriority(card, parry.owner, parry.index, targetCard);
+                            if (priority > current.priority)
+                            {
+                                current = new PriorityInfo { card = card, priority = priority, target = targetCard.owner, index = parry.index };
+                            }
                         }
                     }
-                }
-                if (current.card is null)
-                {
-                    totalLogger.AppendLine($"대상 합 불가 : {targetCard.owner.index}.{targetCard.owner.UnitData.unitData.name}->{targetCard.slotOrder}:{targetCard.card.GetName()}");
-                }
-                else
-                {
-                    current.card.owner.SetCurrentOrder(current.index);
-                    current.card.owner.cardSlotDetail.AddCard(current.card, targetCard.owner, targetCard.slotOrder);
-                    totalLogger.AppendLine($"대상 합 실행 : {targetCard.owner.index}.{targetCard.owner.UnitData.unitData.name}->{targetCard.slotOrder}:{targetCard.card.GetName()} vs {current.card.owner.index}.{current.card.owner.UnitData.unitData.name}->{current.index}:{current.card.GetName()}");
-                    parryTargets.Remove(targetCard);
-                    var nextHp = GetRemainHp(targetCard.owner, dmgDic[targetCard.owner], current.card, true, out int overusedDice);
-                    if (nextHp <= 0) nextHp = 0;
-                    dmgDic[targetCard.owner] = nextHp;
-
-                    for (int j = i + 1; j < keys.Count; j++)
+                    c = 1;
+                    if (current == null)
                     {
-                        parryTargets[keys[j]].RemoveAll(target => target.index == current.index && target.owner.owner == current.card.owner);
+                        errorLogger.AppendLine("커런트가 널 ??");
                     }
-
+                    if (current.card is null)
+                    {
+                        totalLogger.AppendLine($"대상 합 불가 : {targetCard.owner.index}.{targetCard.owner.UnitData.unitData.name}->{targetCard.slotOrder}:{targetCard.card.GetName()}");
+                    }
+                    else
+                    {
+                        c = 2;
+                        if (current.card.owner == null)
+                        {
+                            errorLogger.AppendLine($"카드는 있는데 주인이 없음 ?? {current.card.GetName()}");
+                        }
+                        current.card.owner.SetCurrentOrder(current.index);
+                        c = 8;
+                        current.card.owner.cardSlotDetail.AddCard(current.card, targetCard.owner, targetCard.slotOrder);
+                        c = 9;
+                        totalLogger.AppendLine($"대상 합 실행 : {targetCard.owner.index}.{targetCard.owner.UnitData.unitData.name}->{targetCard.slotOrder}:{targetCard.card.GetName()} vs {current.card.owner.index}.{current.card.owner.UnitData.unitData.name}->{current.index}:{current.card.GetName()}");
+                        c = 10;
+                        parryTargets.Remove(targetCard);
+                        c = 3;
+                        var nextHp = GetRemainHp(targetCard.owner, dmgDic[targetCard.owner], current.card, true, out int overusedDice);
+                        if (nextHp <= 0) nextHp = 0;
+                        dmgDic[targetCard.owner] = nextHp;
+                        c = 4;
+                        for (int j = i + 1; j < keys.Count; j++)
+                        {
+                            parryTargets[keys[j]].RemoveAll(target => target.index == current.index && target.owner.owner == current.card.owner);
+                        }
+                        c = 5;
+                    }
+                    current = new PriorityInfo();
+                    c = 6;
                 }
-                current = new PriorityInfo();
+                catch (NullReferenceException)
+                {
+                    totalLogger.AppendLine($"합 에러 발생 : {targetCard?.card?.GetName()} // {c}");
+                    totalLogger.AppendLine(errorLogger.ToString());
+                    errorAffected = true;
+                }
+
             }
         }
 
@@ -248,68 +286,86 @@ namespace LibraryOfAngela.Battle
             {
                 for (int i = 0; i < ally.owner.speedDiceCount; i++)
                 {
-                    if (ally.owner.cardSlotDetail.cardAry[i] != null || ally.owner.speedDiceResult[i].breaked) continue;
-                    PriorityInfo current = new PriorityInfo();
-                    current.priority = int.MinValue;
-
-                    // 실제로는 책장이 지정되지 않은 슬롯이라던가 그런걸 감안해야겠지만 일단 0으로 고정
-                    var targetSlotOrder = 0;
-                    // 타겟이 불가능한데도 공격할수 있음
-                    var targetables = dmgDic.Keys.Where(d => d.IsTargetable(ally.owner)).ToList();
-
-                    var maxPlayPoint = ally.owner.MaxPlayPoint;
-                    foreach (var flag in new bool[] { false, true })
+                    int c = 0;
+                    try
                     {
-                        foreach (var card in ally.owner.allyCardDetail._cardInHand)
+                        
+                        if (ally.owner.cardSlotDetail.cardAry[i] != null || ally.owner.speedDiceResult[i].breaked) continue;
+                        PriorityInfo current = new PriorityInfo();
+                        current.priority = int.MinValue;
+                        c = 1;
+                        // 실제로는 책장이 지정되지 않은 슬롯이라던가 그런걸 감안해야겠지만 일단 0으로 고정
+                        var targetSlotOrder = 0;
+                        // 타겟이 불가능한데도 공격할수 있음
+                        var targetables = dmgDic.Keys.Where(d => d.IsTargetable(ally.owner)).ToList();
+                        c = 2;
+                        var maxPlayPoint = ally.owner.MaxPlayPoint;
+                        foreach (var flag in new bool[] { false, true })
                         {
-                            foreach (var enemy in targetables)
+                            foreach (var card in ally.owner.allyCardDetail._cardInHand)
                             {
-                                var p = GetOneSidePriority(card, ally, i, enemy, targetSlotOrder, maxPlayPoint, flag);
-                                if (current.priority < p)
+                                foreach (var enemy in targetables)
                                 {
-                                    current = new PriorityInfo { target = enemy, index = i, priority = p, card = card };
+                                    var p = GetOneSidePriority(card, ally, i, enemy, targetSlotOrder, maxPlayPoint, flag);
+                                    if (current.priority < p)
+                                    {
+                                        current = new PriorityInfo { target = enemy, index = i, priority = p, card = card };
+                                    }
                                 }
                             }
+                            if (current.card != null) break;
                         }
-                        if (current.card != null) break;
+                        c = 3;
+                        if (current.card != null)
+                        {
+                            var targetCard = current.card;
+                            var lastIdx = current.target.speedDiceCount - 1;
+                            targetSlotOrder = RandomUtil.Range(0, lastIdx);
+                            if (targetSlotOrder > 0 && targetSlotOrder == lastIdx && !current.target.IsTargetable_theLast())
+                            {
+                                targetSlotOrder--;
+                            }
+                            c = 4;
+                            BattleUnitModel originTarget = null;
+                            int originTargetSlotOrder = 0;
+                            var originTargetCard = current.target.cardSlotDetail.cardAry[targetSlotOrder];
+                            if (originTargetCard != null)
+                            {
+                                originTarget = originTargetCard.target;
+                                originTargetSlotOrder = originTargetCard.targetSlotOrder;
+                            }
+                            c = 5;
+                            ally.owner.SetCurrentOrder(i);
+                            ally.owner.cardSlotDetail.AddCard(current.card, current.target, targetSlotOrder);
+                            if (originTargetCard != null)
+                            {
+                                originTargetCard.target = originTarget;
+                                originTargetCard.targetSlotOrder = originTargetSlotOrder;
+                            }
+                            c = 6;
+                            if (current == null) c = 9;
+                            var currentHp = dmgDic[current.target];
+                            var nextHp = GetRemainHp(current.target, currentHp, current.card, true, out int overusedDice);
+                            if (nextHp <= 0) nextHp = 0;
+                            c = 7;
+                            if (targetCard == null) c = 10;
+                            if (targetCard != null && targetCard.owner == null) c = 11;
+                            if (c == 11) totalLogger.AppendLine($"타겟 카드는 있는데 주인이 없음 ?? {targetCard?.GetName()}");
+                            totalLogger.AppendLine($"대상 일방 공격 : {targetCard.owner.index}.{targetCard.owner.UnitData.unitData.name}->{i}번 슬롯. {current.card.GetName()} --> {current.target.index}.{current.target.UnitData.unitData.name}.{targetSlotOrder}번 슬롯, Hp 변동 예상 : {currentHp} --> {nextHp}");
+                            dmgDic[current.target] = nextHp;
+                        }
+                        else
+                        {
+                            c = 8;
+                            totalLogger.AppendLine($"대상 일방 공격 스킵 : {ally.owner.index}.{ally.owner.UnitData.unitData.name}->{i}번 슬롯");
+                        }
                     }
-   
-                    if (current.card != null)
+                    catch (NullReferenceException)
                     {
-                        var targetCard = current.card;
-                        var lastIdx = current.target.speedDiceCount - 1;
-                        targetSlotOrder = RandomUtil.Range(0, lastIdx);
-                        if (targetSlotOrder > 0 && targetSlotOrder == lastIdx && !current.target.IsTargetable_theLast())
-                        {
-                            targetSlotOrder--;
-                        }
-
-                        BattleUnitModel originTarget = null;
-                        int originTargetSlotOrder = 0;
-                        var originTargetCard = current.target.cardSlotDetail.cardAry[targetSlotOrder];
-                        if (originTargetCard != null)
-                        {
-                            originTarget = originTargetCard.target;
-                            originTargetSlotOrder = originTargetCard.targetSlotOrder;
-                        }
-                        ally.owner.SetCurrentOrder(i);
-                        ally.owner.cardSlotDetail.AddCard(current.card, current.target, targetSlotOrder);
-                        if (originTargetCard != null)
-                        {
-                            originTargetCard.target = originTarget;
-                            originTargetCard.targetSlotOrder = originTargetSlotOrder;
-                        }
-
-                        var currentHp = dmgDic[current.target];
-                        var nextHp = GetRemainHp(current.target, currentHp, current.card, true, out int overusedDice);
-                        if (nextHp <= 0) nextHp = 0;
-                        totalLogger.AppendLine($"대상 일방 공격 : {targetCard.owner.index}.{targetCard.owner.UnitData.unitData.name}->{i}번 슬롯. {current.card.GetName()} --> {current.target.index}.{current.target.UnitData.unitData.name}.{targetSlotOrder}번 슬롯, Hp 변동 예상 : {currentHp} --> {nextHp}");
-                        dmgDic[current.target] = nextHp;
+                        totalLogger.AppendLine($"일방 에러 발생 : {ally.owner?.UnitData?.unitData?.name} // {i} // {c}");
+                        errorAffected = true;
                     }
-                    else
-                    {
-                        totalLogger.AppendLine($"대상 일방 공격 스킵 : {ally.owner.index}.{ally.owner.UnitData.unitData.name}->{i}번 슬롯");
-                    }
+
                 }
             }
         }

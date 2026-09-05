@@ -54,7 +54,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Library Of Ruina\LibraryOfRuina_Data\Mods\LCAngelaR\Assemblies\0Harmony.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\workshop\content\1256670\3727623705\Assemblies\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Accessibility" />
     <Reference Include="Assembly-CSharp-nstrip">
@@ -189,6 +189,7 @@
     <Compile Include="Battle\EgoPatch.cs" />
     <Compile Include="Buf\SceneBufPatch.cs" />
     <Compile Include="Buf\SpeedDiceControllerHandlerImpl.cs" />
+    <Compile Include="PatchExtractor.cs" />
     <Compile Include="SD\FacePatch.cs" />
     <Compile Include="CorePage\FacePatchComponent.cs" />
     <Compile Include="CorePage\SkinPatch.cs" />

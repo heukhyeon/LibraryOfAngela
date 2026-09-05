@@ -394,7 +394,7 @@ namespace LibraryOfAngela.CorePage
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> Trans_ChangeEgoSkin(IEnumerable<CodeInstruction> instructions)
         {
-            var target = AccessTools.Method(typeof(AssetBundleManagerRemake), nameof(AssetBundleManagerRemake.LoadCharacterPrefab));
+            var target = AccessTools.Method(typeof(AssetBundleManagerRemake), nameof(AssetBundleManagerRemake.LoadSdPrefab));
 
             foreach (var code in instructions)
             {

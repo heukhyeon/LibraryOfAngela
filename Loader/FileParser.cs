@@ -213,13 +213,20 @@ namespace LoALoader
                 break;
             }
             Task.WhenAll(cardWorkTasks).Wait();
-            Debug.Log("LoA Loader :: CardWorkTask Complete");
+            logger = new StringBuilder("LoA Loader :: CardWorkTask Complete\n");
+            var dict = CustomizingCardArtworkLoader.Instance._artworkData;
             foreach (var d in cardworks)
             {
+                if (dict.ContainsKey(d.packageId))
+                {
+                    logger.AppendLine($"CombatPage Conflict, Maybe this mode has include LocalizationManager...? {d.packageId} // Fix");
+                    dict.Remove(d.packageId);
+                }
                 Singleton<CustomizingCardArtworkLoader>.Instance.AddArtworkData(d.packageId, d.datas);
             }
             cardWorkwaitSource.SetResult(true);
-            Debug.Log("LoA Loader :: CardWorkTask Add Complete");
+            logger.AppendLine("LoA Loader :: CardWorkTask Add Complete");
+            Console.WriteLine(logger.ToString());
         }
 
         private static void ParseData(string packageId, string path, byte[] bytes)

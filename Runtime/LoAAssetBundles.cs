@@ -193,6 +193,7 @@ namespace LibraryOfAngela
     {
         public AssetBundleInfo info;
         public AssetBundleLoadingType type;
+        public AssetBundleType target;
         public bool isOriginAsync = true;
         public Action<bool, bool> action;
     }
@@ -346,14 +347,13 @@ namespace LibraryOfAngela
                     {
                         loadedTargets.Remove(s1);
                     }
-                    else if (node.info.types != null)
+                    if (node.info.types != null)
                     {
                         for (int i = 0; i < node.info.types.Length; i++)
                         {
                             if (node.info.types[i] is AssetBundleType.Sd s2)
                             {
                                 loadedTargets.Remove(s2);
-                                break;
                             }
                         }
                     }
@@ -387,7 +387,6 @@ namespace LibraryOfAngela
                 ret.syncLoadedAssetBundleCount = -1;
                 return ret;
             }
-            loadedTargets.Add(target);
             var loadType = CreateLoadingType(target);
             StringBuilder logger = null;
             if (LoAFramework.DEBUG)
@@ -395,12 +394,18 @@ namespace LibraryOfAngela
                 logger = new StringBuilder($"LoA AssetBundle Load Requested : {target}\n");
             }
             var targets = new List<Tuple<bool, bool, AssetBundleInfo>>();
-            foreach (var t in loadRequireNodes)
+            foreach (var node in nodes)
             {
-                var isAsync = t.Key.IsAsync(target);
+                var isAsync = node.info.IsAsync(target);
                 if (isAsync != null)
                 {
-                    if (logger != null) logger.AppendLine($"- Load Target : {t.Key.path}");
+                    if (logger != null) logger.AppendLine($"- Load Target : {node.info.path}");
+                    if (node.IsLoaded)
+                    {
+                        loadedTargets.Add(target);
+                        ret.syncLoadedAssetBundleCount++;
+                        continue;
+                    }
                     if (isAsync.Value)
                     {
                         ret.asyncAssetBundleCount++;
@@ -409,22 +414,27 @@ namespace LibraryOfAngela
                     {
                         ret.syncAssetBundleCount++;
                     }
-                    targets.Add(new Tuple<bool, bool, AssetBundleInfo>(isAsync.Value, forceAsync || isAsync.Value, t.Key));
+                    targets.Add(new Tuple<bool, bool, AssetBundleInfo>(isAsync.Value, forceAsync || isAsync.Value, node.info));
                 }
                 else if (logger != null)
                 {
-                    logger.AppendLine($"- Skip Target : {t.Key.path}");
+                    // logger.AppendLine($"- Skip Target : {node.info.path}");
                 }
+            }
+            if (targets.Count > 0)
+            {
+                loadedTargets.Add(target);
             }
             foreach (var t in targets)
             {
                 if (t.Item2)
                 {
-                    LoadAssetBundleAsync(new AsyncAssetBundleRequest { type = loadType, info = t.Item3, action = onComplete, isOriginAsync = t.Item1 });
+                    LoadAssetBundleAsync(new AsyncAssetBundleRequest { type = loadType, target = target, info = t.Item3, action = onComplete, isOriginAsync = t.Item1 });
                 }
                 else
                 {
                     var res = LoadAssetBundleSync(t.Item3, loadType);
+                    if (!res) loadedTargets.Remove(target);
                     onComplete?.Invoke(false, res);
                     ret.syncLoadedAssetBundleCount++;
                 }
@@ -449,11 +459,19 @@ namespace LibraryOfAngela
         private async void LoadAssetBundleAsync(AsyncAssetBundleRequest request)
         {
             var target = loadRequireNodes.SafeGet(request.info);
-            if (target is null) return;
+            if (target is null)
+            {
+                if (request.target != null) loadedTargets.Remove(request.target);
+                request.action?.Invoke(request.isOriginAsync, false);
+                return;
+            }
 
             var result = await target.LoadAsync(request.type);
 
-            OnAssetBundleLoadTryComplete(target, result, false);
+            if (result || target.Bundle != null)
+            {
+                OnAssetBundleLoadTryComplete(target, result, false);
+            }
             request.action?.Invoke(request.isOriginAsync, result);
         }
 
@@ -471,7 +489,7 @@ namespace LibraryOfAngela
                     {
                         var key = Path.GetFileNameWithoutExtension(value);
                         node.keys[key] = value;
-                        if (LoAFramework.DEBUG) strBuilder.AppendLine($"- {key}");
+                        if (LoAFramework.DEBUG) strBuilder.AppendLine($"- {key} in {node.packageId}");
                     }
                 }
                 loadRequireNodes.Remove(node.info);
@@ -488,7 +506,8 @@ namespace LibraryOfAngela
                     else
                     {
                         strBuilder.Insert(0, $"- {node.info.path}\n");
-                        bundleLoadQueue.Enqueue(strBuilder);
+                        Logger.Log(strBuilder.ToString());
+                        //bundleLoadQueue.Enqueue(strBuilder);
                     }
                
                 }

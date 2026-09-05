@@ -60,7 +60,15 @@ namespace LibraryOfAngela.Battle
             if (isPassiveChanged)
             {
                 isPassiveChanged = false;
-                passives = passive._passiveList.OfType<ILoABattleEffect>().ToArray();
+                var p = new List<ILoABattleEffect>();
+                foreach (var d in passive._passiveList)
+                {
+                    if (!d.destroyed && d is ILoABattleEffect d2)
+                    {
+                        p.Add(d2);
+                    }
+                }
+                passives = d2.ToArray();
             }
         }
 

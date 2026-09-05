@@ -15,6 +15,7 @@ namespace LibraryOfAngela.Util
         [HarmonyPostfix]
         private static void After_LoadFromSaveData(LibraryModel __instance)
         {
+            //PatchExtractor.Run();
             if (!LoAFramework.DEBUG) return;
             if (__instance.PlayHistory.currentchapterLevel >= 7) return;
 

@@ -1805,7 +1805,7 @@ namespace LibraryOfAngela.Battle
                     current = new ParryingOneSideAction.OneSide(card);
                 }
                 var next = b.HandleParryingOneside(current);
-                if (next is null || next == current) continue;
+                if (next is null || next == current || !CheckValidAction(next)) continue;
                 isChanged = true;
                 current = next;
                 Logger.Log($"Force Action Handle Detect From OneSide, Controller : {b.GetType().FullName}");
@@ -1829,17 +1829,7 @@ namespace LibraryOfAngela.Battle
                     current = new ParryingOneSideAction.Parrying(cardA, cardB);
                 }
                 var next = b.HandleParryingOneside(current);
-                if (next is null || next == current) continue;
-                if (next is ParryingOneSideAction.OneSide one && one.victim == one.card?.owner)
-                {
-                    Logger.Log("Force Action Handle Error :: One-sided processing was requested, but the attacker and the victim are the same. Therefore, this action is not processed. Correct the action for that class properly : " + b.GetType().FullName);
-                    continue;
-                }
-                if (next is ParryingOneSideAction.Parrying pa && (pa.card1?.owner == pa.card1?.target || pa.card2?.owner == pa.card2?.target || pa.card1?.owner == pa.card2?.owner))
-                {
-                    Logger.Log("Force Action Handle Error :: Parrying was requested, but the two subjects for parrying are the same subject. Therefore, this action is not processed. Correct the action for that class properly :" + b.GetType().FullName);
-                    continue;
-                }
+                if (next is null || next == current || !CheckValidAction(next)) continue;
                 isChanged = true;
                 current = next;
                 Logger.Log($"Force Action Handle Detect From Parrying, Controller : {b.GetType().FullName}");
@@ -1864,6 +1854,43 @@ namespace LibraryOfAngela.Battle
             {
                 Logger.LogError(e);
             }
+        }
+
+        private static bool CheckValidAction(ParryingOneSideAction current)
+        {
+            try
+            {
+                if (current is ParryingOneSideAction.OneSide o1)
+                {
+                    if (o1.card.owner == o1.victim)
+                    {
+                        Logger.Log($"LoA :: OneSide Detected But Attacker and Victim is Equal. so this behaviour ignored, please Check your logic : {o1.card.owner.UnitData.unitData.name}-{o1.card.card.GetName()}\n{Environment.StackTrace}");
+                        return false;
+                    }
+                    return true;
+                }
+                else if (current is ParryingOneSideAction.Parrying o2)
+                {
+                    if (o2.card1 == null || o2.card2 == null)
+                    {
+                        Logger.Log($"LoA :: Parrying Detected But Card is Null. so this behaviour ignored, please Check your logic : {o2.card1?.card?.GetName()} / {o2.card2?.card?.GetName()}\n{Environment.StackTrace}");
+                        return false;
+                    }
+                    if (o2.card1.owner == o2.card2.owner)
+                    {
+                        Logger.Log($"LoA :: Parrying Detected But Attacker is Equal. so this behaviour ignored, please Check your logic : {o2.card1?.card?.GetName()} / {o2.card2?.card?.GetName()}\nAttack : {o2.card1.owner.UnitData.unitData.name}\n{Environment.StackTrace}");
+                        return false;
+                    }
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+                return false;
+            } 
+
+            return true;
         }
 
         private static bool ForceHandle(ParryingOneSideAction current)
@@ -1896,6 +1923,23 @@ namespace LibraryOfAngela.Battle
             }
             else if (current is ParryingOneSideAction.Parrying pa)
             {
+                if (!pa.card1.isKeepedCard && pa.card1.target != pa.card2.owner)
+                {
+                    var card1 = pa.card1;
+                    var card2 = pa.card2;
+
+                    Logger.Log($"Force Parrying Called But Target Invalid, Fix :: {card1.owner.UnitData.unitData.name}.{card1.card.GetName()} --> {card1.target.UnitData.unitData.name} to {card2.owner.UnitData.unitData.name}");
+                    pa.card1.target = pa.card2.owner;
+                }
+                if (!pa.card2.isKeepedCard && pa.card2.target != pa.card1.owner)
+                {
+                    var card1 = pa.card2;
+                    var card2 = pa.card1;
+
+                    Logger.Log($"Force Parrying Called But Target Invalid, Fix :: {card1.owner.UnitData.unitData.name}.{card1.card.GetName()} --> {card1.target.UnitData.unitData.name} to {card2.owner.UnitData.unitData.name}");
+                    pa.card2.target = pa.card1.owner;
+                }
+
                 StageController.Instance.StartParrying(pa.card1, pa.card2);
                 callCount--;
                 return false;

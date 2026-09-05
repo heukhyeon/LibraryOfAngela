@@ -743,16 +743,27 @@ namespace LibraryOfAngela.Story
         private static void After_HasEffectFile(ref bool __result, StageStoryInfo stageStoryInfo)
         {
             if (__result) return;
-            var mod = LoAModCache.Instance[stageStoryInfo.packageId]?.mod as ILoALocalizeMod;
-            if (mod is null) return;
-            var langauge = GlobalGameManager.Instance.CurrentOption.language;
-            var basePath = ModContentManager.Instance.GetModPath(mod.packageId);
-            string story = stageStoryInfo.story;
+            try
+            {
+                var packageId = stageStoryInfo?.packageId;
+                if (packageId == null) return;
+                var mod = LoAModCache.Instance[packageId]?.mod as ILoALocalizeMod;
+                if (mod is null) return;
+                var langauge = GlobalGameManager.Instance.CurrentOption.language;
+                var basePath = ModContentManager.Instance.GetModPath(mod.packageId);
+                string story = stageStoryInfo.story;
 
-            var ext = story.EndsWith(".xml") ? "" : ".xml";
-            var targetStory = Path.Combine(basePath, "Data", "StoryText", $"{langauge}_{story}{ext}");
-            var targetEffect = Path.Combine(basePath, "Data", "StoryEffect", $"{langauge}_{story}{ext}");
-            __result = File.Exists(targetStory);
+                var ext = story.EndsWith(".xml") ? "" : ".xml";
+                var valid = FindValidStoryPath(mod, stageStoryInfo.story);
+                var targetStory = valid.Key;
+                var targetEffect = valid.Value;
+                __result = File.Exists(targetStory);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+
         }
 
         [HarmonyPatch(typeof(StoryManager), "ChangeVisual")]

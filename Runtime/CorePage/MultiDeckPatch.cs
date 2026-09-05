@@ -112,18 +112,25 @@ namespace LibraryOfAngela.CorePage
         private static bool Before_GetCardsByGradeFilterUI(UIInvenCardListScroll __instance, ref List<DiceCardItemModel> __result)
         {
             var bookId = __instance?._unitdata?.bookItem?.BookId;
+            try
+            {
+                var targetInfo = infos.SafeGet(bookId);
+                if (targetInfo == null) return true;
+                var deck = __instance._unitdata.bookItem._deck;
+                var index = __instance._unitdata.bookItem._deckList.IndexOf(deck);
+                var matchInfo = targetInfo.infos[index];
+                var deckCards = FrameworkExtension.GetSafeAction(() => matchInfo.visibleCards?.Invoke(deck.GetCardList_nocopy()));
+                if (deckCards == null || deckCards.Count == 0) return true;
+                ResetDeckCards(matchInfo, deckCards);
+                __result = cards[matchInfo];
+                return false;
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+                return true;
+            }
             if (bookId == null) return true;
-
-            var targetInfo = infos.SafeGet(bookId);
-            if (targetInfo == null) return true;
-            var deck = __instance._unitdata.bookItem._deck;
-            var index = __instance._unitdata.bookItem._deckList.IndexOf(deck);
-            var matchInfo = targetInfo.infos[index];
-            var deckCards = FrameworkExtension.GetSafeAction(() => matchInfo.visibleCards?.Invoke(deck.GetCardList_nocopy()));
-            if (deckCards == null || deckCards.Count == 0) return true;
-            ResetDeckCards(matchInfo, deckCards);
-            __result = cards[matchInfo];
-            return false;
         }
 
         [HarmonyPatch(typeof(DeckModel), "MoveCardToInventory")]

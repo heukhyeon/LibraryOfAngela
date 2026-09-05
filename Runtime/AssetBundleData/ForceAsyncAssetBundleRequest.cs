@@ -34,7 +34,7 @@ namespace LibraryOfAngela.AssetBundleData
             if (!id.IsWorkshop()) return;
             targetInvitationId = id;
             var key = new AssetBundleType.Invitation(id);
-            var response = LoAAssetBundles.Instance.LoadAssetBundle(key, forceAsync: true, onComplete: (isAsync, success) => OnLoaded(isAsync, success));
+            var response = LoAAssetBundles.Instance.LoadAssetBundle(key, onComplete: (isAsync, success) => OnLoaded(isAsync, success));
 
             if (response.syncAssetBundleCount > 0)
             {

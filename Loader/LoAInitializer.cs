@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
+using Workshop;
 
 namespace LoALoader
 {
@@ -168,7 +169,7 @@ namespace LoALoader
             }
         }
 
-        private static bool HandleIsLoADll(bool origin, ModContent mod, FileInfo file)
+        private static bool HandleIsLoADll(bool origin, ModContent mod, System.IO.FileInfo file)
         {
             try
             {

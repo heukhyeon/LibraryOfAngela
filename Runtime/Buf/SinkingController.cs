@@ -119,7 +119,9 @@ namespace LibraryOfAngela.Buf
             {
                 case "cn":
                 case "trcn":
-                    return "一幕内自身被击中时将受到{0}点混乱伤害并使“沉沦”层数减少1/3。（向上取整）";
+                    return "每一幕结束时受到{0}点混乱伤害并使层数减少1/3。(向下取整)";
+                case "jp":
+                    return "幕の終了時に混乱ダメージ{0}を受け、沈潜の値が2/3に減少する（小数点以下は切り捨て）。";
                 case "en":
                     return "At the end of the Scene, take {0} Stagger damage and subtract 1/3rd of the Sinking stack. (Rounds down)";
                 default:
@@ -136,6 +138,8 @@ namespace LibraryOfAngela.Buf
                 case "cn":
                 case "trcn":
                     return "沉沦";
+                case "jp":
+                    return "沈潜";
                 default:
                     return "Sinking";
             }
@@ -147,9 +151,11 @@ namespace LibraryOfAngela.Buf
             {
                 case "cn":
                 case "trcn":
-                    return "一幕内自身被击中时将受到X点混乱伤害并使“沉沦”层数减少1/3。（向上取整）";
+                    return "每一幕结束时受到X点混乱伤害并使层数减少1/3。(向下取整)";
                 case "en":
                     return "At the end of the Scene, take {0} Stagger damage and subtract 1/3rd of the Sinking stack. (Rounds down)";
+                case "jp":
+                    return "幕の終了時に混乱ダメージXを受け、沈潜の値が2/3に減少する（小数点以下は切り捨て）。";
                 default:
                     return "막 종료시 흐트러짐 피해 X를 받고 침잠 수치가 2/3로 감소한다.(소수점 이하 버림)";
             }
@@ -169,6 +175,10 @@ namespace LibraryOfAngela.Buf
                 case "en":
                     name = "Sinking Deluge";
                     desc = "Activate all target's Sinking instantly.\nIf target's Stagger Resist drops to 0, convert overflowing Stagger damage to physical damage.";
+                    break;
+                case "jp":
+                    name = "沈潜殺到";
+                    desc = "対象の「沈潜」を、その数値分だけ繰り返し発動し、沈潜を解除する。\n対象が混乱ダメージを受けられない場合は、代わりにダメージとして受ける.";
                     break;
                 default:
                     name = "침잠 쇄도";

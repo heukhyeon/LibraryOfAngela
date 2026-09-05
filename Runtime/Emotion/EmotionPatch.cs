@@ -92,8 +92,22 @@ namespace LibraryOfAngela.Emotion
                     }
                 }
                 isCalling = false;
+                if (__result != null)
+                {
+                    __result.RemoveAll(RemoveNullEmotionCard);
+                }
             }
 
+        }
+
+        private static bool RemoveNullEmotionCard(EmotionCardXmlInfo d)
+        {
+            if (d == null)
+            {
+                Logger.Log($"EmotionCard Null ....??");
+                return true;
+            }
+            return false;
         }
 
         [HarmonyPatch(typeof(StageController), "StartBattle")]
