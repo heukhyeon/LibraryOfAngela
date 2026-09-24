@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace LoALoader.Model
+namespace LoADataLoader.Model
 {
     public class ActionDetailInfo
     {

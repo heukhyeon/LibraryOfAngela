@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Workshop;
 
-namespace LoALoader.Model
+namespace LoADataLoader.Model
 {
     class LoAWorkshopAppearanceInfo : WorkshopAppearanceInfo
     {

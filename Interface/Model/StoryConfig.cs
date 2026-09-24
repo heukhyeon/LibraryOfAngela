@@ -13,6 +13,16 @@ namespace LibraryOfAngela.Model
         /// </summary>
         /// <returns></returns>
         public abstract List<CustomStoryIconInfo> GetStoryIcons();
+        
+        /// <summary>
+        /// 접대 목록에 표시되지 않지만 접대 내부 정보가 커스텀되어야하는 접대들의 정보를 반환합니다.
+        /// <see cref="GetStoryIcons"/> 의 정보에서 중복된다면 이 메소드에서 정의한 중복되는 내용이 무시됩니다.
+        /// </summary>
+        /// <returns></returns>
+        public virtual List<CustomStoryInfo> GetOnlyStoryInfos()
+        {
+            return null;
+        }
 
         /// <summary>
         /// 스토리 타임라인을 추가합니다. 같은 키값이라면 먼저 온쪽이 사용됩니다.

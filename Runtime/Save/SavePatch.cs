@@ -181,7 +181,7 @@ namespace LibraryOfAngela.Save
             foreach (var mod in LoAModCache.StoryConfigs)
             {
                 var packageId = mod.packageId;
-                foreach (var modInfo in mod.GetStoryIcons().SelectMany(x => x.stageIds))
+                foreach (var modInfo in mod.GetAllStories())
                 {
                     var stageId = new LorId(packageId, modInfo.id);
                     // Debug.Log($"Target Stage :: {stageId} // {LibraryModel.Instance.ClearInfo.GetClearCount(stageId)} // {modInfo.rewards != null}");
@@ -212,19 +212,13 @@ namespace LibraryOfAngela.Save
             if (string.IsNullOrEmpty(packageId)) return;
             var mod = LoAModCache.StoryConfigs.FirstOrDefault(x => x.packageId == packageId);
             if (mod == null) return;
-            bool flag = false;
-            foreach (var stage in mod.GetStoryIcons())
+            foreach (var info in mod.GetAllStories())
             {
-                foreach (var info in stage.stageIds)
+                if (info.id == model.ClassInfo._id)
                 {
-                    if (info.id == model.ClassInfo._id)
-                    {
-                        if (info.skipResult) RewardUIPatch.ReserveSkipResult(iswin);
-                        flag = true;
-                        break;
-                    }
+                    if (info.skipResult) RewardUIPatch.ReserveSkipResult(iswin);
+                    break;
                 }
-                if (flag) break;
             }
         }
 
@@ -238,20 +232,14 @@ namespace LibraryOfAngela.Save
                 if (string.IsNullOrEmpty(packageId)) return;
                 var mod = LoAModCache.StoryConfigs.FirstOrDefault(x => x.packageId == packageId);
                 if (mod == null) return;
-                bool flag = false;
-                foreach (var stage in mod.GetStoryIcons())
+                foreach (var info in mod.GetAllStories())
                 {
-                    foreach (var info in stage.stageIds)
+                    if (info.id == __instance.ClassInfo._id)
                     {
-                        if (info.id == __instance.ClassInfo._id)
-                        {
-                            RewardUIPatch.ReserveRewardUI(__instance.ClassInfo, info.rewards);
-                            InjectReward(info.rewards);
-                            flag = true;
-                            break;
-                        }
+                        RewardUIPatch.ReserveRewardUI(__instance.ClassInfo, info.rewards);
+                        InjectReward(info.rewards);
+                        break;
                     }
-                    if (flag) break;
                 }
             }
             catch (Exception e)

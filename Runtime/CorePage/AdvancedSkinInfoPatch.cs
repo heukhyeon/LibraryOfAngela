@@ -8,7 +8,7 @@ using LibraryOfAngela.Interface_External;
 using LibraryOfAngela.Model;
 using LibraryOfAngela.SD;
 using LibraryOfAngela.Story;
-using LoALoader.Model;
+using LoADataLoader.Model;
 using LOR_XML;
 using System;
 using System.Collections.Generic;

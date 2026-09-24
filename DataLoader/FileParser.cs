@@ -1,6 +1,5 @@
 using HarmonyLib;
-using LibraryOfAngela;
-using LoALoader.Model;
+using LoADataLoader.Model;
 using LOR_DiceSystem;
 using LOR_XML;
 using System;
@@ -16,7 +15,7 @@ using System.Xml.Serialization;
 using UnityEngine;
 using Workshop;
 
-namespace LoALoader
+namespace LoADataLoader
 {
     internal struct FileParseRequest
     {
@@ -34,11 +33,10 @@ namespace LoALoader
         public List<ArtworkCustomizeData> datas;
     }
 
-    public class FileParser
+    internal class FileParser
     {
 
 
-        private static ConcurrentQueue<FileParseRequest> initQueue = new ConcurrentQueue<FileParseRequest>();
         private static ConcurrentQueue<FileParseRequest> queue = new ConcurrentQueue<FileParseRequest>();
         private static AutoResetEvent queueNotifier = new AutoResetEvent(false);
         private static LoAXmlLoader loader = new LoAXmlLoader();
@@ -46,11 +44,7 @@ namespace LoALoader
         private static TaskCompletionSource<bool> dataWaitSource;
         private static TaskCompletionSource<bool> cardWorkwaitSource = new TaskCompletionSource<bool>();
         private static TaskCompletionSource<bool> callInitalizerSource = new TaskCompletionSource<bool>();
-        private static List<Task> cardWorkTasks = new List<Task>();
         private static bool initCheckSkip = false;
-        internal static ConcurrentQueue<FileParseRequest> assembliePaths = new ConcurrentQueue<FileParseRequest>();
-        private static Thread mainThread;
-
         static FileParser()
         {
             ThreadPool.QueueUserWorkItem(EnqueueJob);
@@ -60,14 +54,7 @@ namespace LoALoader
         {
             var source = new TaskCompletionSource<bool>();
             var request = new FileParseRequest { packageId = packageId, modName = modName, path = path, bytes = bytes, type = type, awaitSource = source };
-            if (type == FileType.INIT)
-            {
-                initQueue.Enqueue(request);
-            }
-            else
-            {
-                queue.Enqueue(request);
-            }
+            queue.Enqueue(request);
             queueNotifier.Set();
             return source.Task;
         }
@@ -75,11 +62,12 @@ namespace LoALoader
         public static void InitCheckSkip()
         {
             initCheckSkip = true;
+            queueNotifier.Set();
         }
 
         public static async Task WaitDataComplete()
         {
-            Debug.Log("LoA :: Call Job End");
+            Console.WriteLine("LoA :: Call Job End");
             dataWaitSource = new TaskCompletionSource<bool>();
             queueNotifier.Set();
             await dataWaitSource.Task;
@@ -97,7 +85,7 @@ namespace LoALoader
 
         public static void CallInitializerComplete()
         {
-            callInitalizerSource.SetResult(true);
+            callInitalizerSource.TrySetResult(true);
         }
 
 
@@ -110,11 +98,11 @@ namespace LoALoader
             try
             {
                 var method = AccessTools.Method(typeof(UnityEngine.Object), "CurrentThreadIsMainThread");
-                Debug.Log($"LoA Loader :: Enqueue Job Start, Current Thread is Main Thread :: " + method.Invoke(null, null));
+                Console.WriteLine($"LoA :: DataLoader Enqueue Job Start, Current Thread is Main Thread :: " + method.Invoke(null, null));
             }
             catch (Exception e)
             {
-                Debug.Log("LoALoader :: Thread Check Error");
+                Console.WriteLine("LoA :: DataLoader Thread Check Error");
                 Debug.LogError(e);
 
             }
@@ -125,13 +113,6 @@ namespace LoALoader
                 while (true)
                 {
                     bool flag = false;
-                    if (!initCheckSkip && initQueue.TryDequeue(out FileParseRequest request))
-                    {
-                        //Debug.Log($"Init Request : {request.packageId}");
-                        ParseInit(request.packageId, request.modName, request.path);
-                        request.awaitSource.SetResult(true);
-                        continue;
-                    }
                     if (queue.TryDequeue(out FileParseRequest request2))
                     {
                         //Debug.Log($"Init Request 2 : {request2.path}");
@@ -161,10 +142,10 @@ namespace LoALoader
                 if (!initCheckSkip)
                 {
                     repeatCnt++;
-                    logger.AppendLine("LoA Loader :: Init Check Not Skip :" + repeatCnt);
+                    logger.AppendLine("LoA DataLoader :: Init Check Not Skip :" + repeatCnt);
                     if (repeatCnt % 5 == 1)
                     {
-                        Debug.Log(logger.ToString());
+                        Console.WriteLine(logger.ToString());
                         logger = new StringBuilder("\n");
                     }
                     continue;
@@ -172,17 +153,17 @@ namespace LoALoader
                 else if (!firstStepOver)
                 {
                     firstStepOver = true;
-                    logger.AppendLine("LoA Loader :: Init Check Skip Detected :" + repeatCnt);
+                    logger.AppendLine("LoA DataLoader :: Init Check Skip Detected :" + repeatCnt);
                     repeatCnt = 0;
                 }
 
                 if (!callInitalizerSource.Task.Wait(2000))
                 {
                     repeatCnt++;
-                    logger.AppendLine("LoA Loader :: Call Initializer Not Completed, Repeat Wait : " + repeatCnt);
+                    logger.AppendLine("LoA DataLoader :: Call Initializer Not Completed, Repeat Wait : " + repeatCnt);
                     if (repeatCnt % 20 == 1)
                     {
-                        Debug.Log(logger.ToString());
+                        Console.WriteLine(logger.ToString());
                         logger = new StringBuilder("\n");
                     }
                     continue;
@@ -191,8 +172,8 @@ namespace LoALoader
                 // 런타임에서 명시적으로 data wait 을 호출해주지않았다면 더 추가될수있으므로 다시 루프
                 if (dataWaitSource is null)
                 {
-                    logger.AppendLine("LoA Loader :: Data Wait Source Not Init");
-                    Debug.Log(logger.ToString());
+                    logger.AppendLine("LoA DataLoader :: Data Wait Source Not Init");
+                    Console.WriteLine(logger.ToString());
                     logger = new StringBuilder("\n");
                     Thread.Sleep(1000);
                     continue;
@@ -201,31 +182,39 @@ namespace LoALoader
                 try
                 {
                     loader.Combine();
-                    Debug.Log("LoA :: Data Job End, Finish");
+                    Console.WriteLine("LoA :: Data Job End, Finish");
                 }
                 catch (Exception e)
                 {
-                    Debug.Log("LoA :: Data Job Finish Fail");
+                    Console.WriteLine("LoA :: Data Job Finish Fail");
                     Debug.LogError(e);
                 }
 
                 dataWaitSource.SetResult(true);
                 break;
             }
-            Task.WhenAll(cardWorkTasks).Wait();
-            logger = new StringBuilder("LoA Loader :: CardWorkTask Complete\n");
+            logger = new StringBuilder("LoA DataLoader :: CardWorkTask Complete\n");
             var dict = CustomizingCardArtworkLoader.Instance._artworkData;
             foreach (var d in cardworks)
             {
-                if (dict.ContainsKey(d.packageId))
+                if (dict.TryGetValue(d.packageId, out var existing))
                 {
-                    logger.AppendLine($"CombatPage Conflict, Maybe this mode has include LocalizationManager...? {d.packageId} // Fix");
-                    dict.Remove(d.packageId);
+                    // LocalizationManager can inject shared base artwork before this loader.
+                    // Keep recursively discovered mod artwork first, then retain existing
+                    // entries only as fallbacks so duplicate names preserve mod precedence.
+                    var modArtworkNames = new HashSet<string>(
+                        d.datas.Where(x => x != null).Select(x => x.name),
+                        StringComparer.OrdinalIgnoreCase);
+                    d.datas.AddRange(existing.Where(x => x != null && !modArtworkNames.Contains(x.name)));
+                    dict[d.packageId] = d.datas;
                 }
-                Singleton<CustomizingCardArtworkLoader>.Instance.AddArtworkData(d.packageId, d.datas);
+                else
+                {
+                    Singleton<CustomizingCardArtworkLoader>.Instance.AddArtworkData(d.packageId, d.datas);
+                }
             }
             cardWorkwaitSource.SetResult(true);
-            logger.AppendLine("LoA Loader :: CardWorkTask Add Complete");
+            logger.AppendLine("LoA DataLoader :: CardWorkTask Add Complete");
             Console.WriteLine(logger.ToString());
         }
 
@@ -380,14 +369,6 @@ namespace LoALoader
             }
         }
 
-        private static void ParseInit(string packageId, string modName, string path)
-        {
-            FileLoader.LoadAll(packageId, modName, Path.Combine(path, "Data"), FileType.DATA, true);
-            FileLoader.LoadAll(packageId, modName, Path.Combine(path, "Resource", "CharacterSkin"), FileType.SKIN, true);
-            cardWorkTasks.Add(FileLoader.LoadAll(packageId, modName, Path.Combine(path, "Resource", "CombatPageArtwork"), FileType.CARDWORK, false));
-        }
-       
-
         public static List<R> getContents<T, R>(byte[] data, Func<T, List<R>> targetFindCallback)
         {
             if (data == null || data.Length == 0) return new List<R>();
@@ -404,7 +385,7 @@ namespace LoALoader
             }
             catch (Exception e)
             {
-                Debug.Log("Xml Parse Fail, Please Check the provided data.");
+                Console.WriteLine("LoA :: Xml Parse Fail, Please Check the provided data.");
                 Debug.LogError(e);
                 return new List<R>();
             }

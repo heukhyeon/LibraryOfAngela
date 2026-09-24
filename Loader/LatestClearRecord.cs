@@ -48,7 +48,7 @@ namespace LoALoader
             if (latestClear == null) return;
             __result.AddData(KEY_LAST_CLEAR_PACKAGE, new SaveData(latestClear.packageId));
             __result.AddData(KEY_LAST_CLEAR_STAGE, new SaveData(latestClear.id));
-            Debug.Log($"LoA :: Latest Clear Id Save : {latestClear}");
+            Console.WriteLine($"LoA :: Latest Clear Id Save : {latestClear}");
         }
 
         [HarmonyPatch(typeof(SaveManager), nameof(SaveManager.SaveLatestData))]

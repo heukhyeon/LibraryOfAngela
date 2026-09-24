@@ -324,7 +324,7 @@ namespace LibraryOfAngela.Story
             {
                 var icon = CreateSlot(root, d);
                 root.iconList.Add(icon);
-                StoryPatch.AddStoryIcon(icon, d);
+                StoryPatch.AddStoryIcon(icon, d, StoryPatch.GetModRelatedStoryIcon(icon, d, root.iconList));
                 if (cnt == 0)
                 {
                     icon.SetSlotData(new List<StageClassInfo>());

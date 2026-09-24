@@ -5,7 +5,7 @@ using LibraryOfAngela.Implement;
 using LibraryOfAngela.Interface_Internal;
 using LibraryOfAngela.Model;
 using LibraryOfAngela.SD;
-using LoALoader.Model;
+using LoADataLoader.Model;
 using LOR_DiceSystem;
 using System;
 using System.Collections.Generic;
@@ -299,7 +299,7 @@ namespace LibraryOfAngela.EquipBook
             }
             var name = unit.CustomBookItem.GetOriginalCharcterName();
             var name2 = SkinInfoProvider.ConvertValidSkinName(name, unit);
-            SkinComponentKey key;
+            SkinComponentKey key = default(SkinComponentKey);
             if (name2 != name)
             {
                 var packageId = AdvancedSkinInfoPatch.Instance.infos.SafeGet(name2)?.packageId;
@@ -307,7 +307,8 @@ namespace LibraryOfAngela.EquipBook
                 {
                     key = new SkinComponentKey { packageId = packageId, skinName = name2 };
                 }
-                else
+                // 창작마당 스킨 착용시 창작마당 스킨으로 라우팅될수 있어야함
+                else if (name2 != unit.workshopSkin)
                 {
                     key = new SkinComponentKey { packageId = unit.CustomBookItem.ClassInfo.workshopID, skinName = name };
                 }

@@ -76,6 +76,7 @@ public class LoADiceCardUIKeyDetect : MonoBehaviour, IPointerEnterHandler, IPoin
         this.owner = owner;
         this.onKeyPress = onKeyPress;
         enabled = true;
+        isEnter = ui.IsEntered;
     }
 
     void Update()

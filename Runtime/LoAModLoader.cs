@@ -13,7 +13,7 @@ using LibraryOfAngela.Save;
 using LibraryOfAngela.SD;
 using LibraryOfAngela.Story;
 using LibraryOfAngela.Util;
-using LoALoader;
+using LoADataLoader;
 using LOR_XML;
 using Mod;
 using System;
@@ -107,7 +107,7 @@ namespace LibraryOfAngela
         public void Start()
         {
             modLoadingProgress = 0f;
-            Debug.Log("LoA :: Initialize Start");
+            Console.WriteLine("LoA :: Initialize Start");
             modLoadingProgress += 0.1f;
             manualStartTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             bool isSuccess = false;
@@ -133,7 +133,10 @@ namespace LibraryOfAngela
             initTime = time;
             try
             {
-                Debug.Log("LoARuntime Init Task Start");
+                Console.WriteLine("LoA :: Runtime Init Task Start");
+
+                await DataLoader.WaitInitialLoadComplete();
+                Logger.Log("LoADataLoader Initial Load Complete");
 
                 var _ = Task.Run(async () =>
                 {
@@ -144,7 +147,7 @@ namespace LibraryOfAngela
                     }
                 });
 
-                var callInitializerCompleteTask = FileParser.WaitCallInitializerComplete().ContinueWith((t) =>
+                var callInitializerCompleteTask = DataLoader.WaitCallInitializerComplete().ContinueWith((t) =>
                 {
                     callInitializerCompleteTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
                     Logger.Log($"When Call Initializer in Progress : {modLoadingProgress}");
@@ -295,7 +298,7 @@ namespace LibraryOfAngela
 
                 Logger.Log("Initialize Complete, Wait CardWorkComplete");
 
-                await FileParser.WaitCardWorkComplete();
+                await DataLoader.WaitCardWorkComplete();
                 Logger.Log("CardWorkLoad Complete");
                 //LoAAssetBundles.Instance.LoopAsyncAssetBundleLoad();
                 LogProgress("Completed", forceValue: 1f);
@@ -430,7 +433,7 @@ namespace LibraryOfAngela
             resultBuilder.AppendLine($"- Task Exist : {loaLoadingTask != null}");
             resultBuilder.AppendLine($"- Task Complete : {loaLoadingTask?.IsCompleted} // {loaLoadingTask?.IsCanceled} // {loaLoadingTask?.IsFaulted}");
             resultBuilder.AppendLine($"- From SceneLoaded : {fromSceneLoaded}");
-            Debug.Log(resultBuilder.ToString());
+            Console.WriteLine(resultBuilder.ToString());
             isCompleted = true;
             LoAAssetBundles.Instance.LoopAsyncAssetBundleLoad();
             new AdvancedCorePageRarityPatch().Initialize();
@@ -475,14 +478,14 @@ namespace LibraryOfAngela
                 foreach (var mod in dataMods)
                 {
                     var path = Path.Combine(mod.path, mod.customDataPath ?? "Data");
-                    tasks.Add(FileLoader.LoadData(mod.packageId, path));
+                    tasks.Add(DataLoader.LoadData(mod.packageId, path));
                 }
 
                 await Task.WhenAll(tasks);
             }
 
 
-            await FileParser.WaitDataComplete();
+            await DataLoader.WaitDataComplete();
 
             Logger.Log($"Mod Data Interface Initialize Complete");
         }

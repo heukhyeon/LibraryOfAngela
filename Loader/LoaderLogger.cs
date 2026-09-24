@@ -23,7 +23,8 @@ namespace LoALoader
 
         public static void Flush()
         {
-            Debug.Log(logger.ToString());
+            Console.Write("LoA :: ");
+            Console.WriteLine(logger.ToString());
             logger = null;
         }
     }

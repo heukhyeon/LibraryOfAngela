@@ -52,14 +52,14 @@ namespace LoALoader
                 var logger = new StringBuilder("LoA :: Loading timeout. The loading process probably didn't start properly, so we'll force it to resume. However, the functionality of other LoA modes may not work properly.\n");
                 logger.AppendLine($"- LoadStateLevel : {loadState}");
                 logger.AppendLine($"- LoadProgress : {modLoadingProgress}");
-                Debug.Log(logger.ToString());
+                Console.WriteLine(logger.ToString());
                 try
                 {
                     onTimeout?.Invoke();
                 }
                 catch (Exception e)
                 {
-                    Debug.Log("LoA :: Framework OnTimeout Exception");
+                    Console.WriteLine("LoA :: Framework OnTimeout Exception");
                     Debug.LogError(e);
                 }
                 modLoadingProgress = 1f;

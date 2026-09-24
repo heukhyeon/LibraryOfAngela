@@ -65,12 +65,11 @@ namespace LibraryOfAngela.Story
             {
                 try
                 {
-                    foreach (var d2 in d.GetStoryIcons())
+                    foreach (var d2 in d.GetAllStories())
                     {
-                        foreach (var d3 in d2.stageIds)
-                        {
-                            modStoryIds.Add(new LorId(d.packageId, d3.id));
-                        }
+                        var id = new LorId(d.packageId, d2.id);
+                        modStoryIds.Add(id);
+                        storyInfos[id] = d2;
                     }
                 }
                 catch (Exception e)
@@ -83,10 +82,6 @@ namespace LibraryOfAngela.Story
         public static void AddStoryIcon(UIStoryProgressIconSlot slot, CustomStoryIconInfo info)
         {
             Instance.slotInfo[slot] = info;
-            foreach (var d in info.stageIds)
-            {
-                Instance.storyInfos[new LorId(info.packageId, d.id)] = d;
-            }
         }
 
         /// <summary>
@@ -1222,8 +1217,7 @@ namespace LibraryOfAngela.Story
             var wave = StageController.Instance.CurrentWave;
             var mod = LoAModCache.StoryConfigs.FirstOrDefault(x => x.packageId == currentStageId.packageId);
             if (mod == null) return originState;
-            var matchedStage = mod.GetStoryIcons()
-                .SelectMany(x => x.stageIds)
+            var matchedStage = mod.GetAllStories()
                 .FirstOrDefault(x => x.id == currentStageId.id && x.settingInfos?.Any(d => d.wave == wave) == true);
             if (matchedStage == null) return originState;
 
@@ -1279,8 +1273,8 @@ namespace LibraryOfAngela.Story
                 Instance.ketherIconReplacer = UnityEngine.Object.Instantiate(Instance.originKetherIcon, Instance.originKetherIcon.transform.parent);
             }
 
-            var matchedStage = mod.GetStoryIcons()
-                .FirstOrDefault(x => x.stageIds.Any(d => d.id == currentStage.id.id));
+            var matchedStage = mod.GetAllStories()
+                .FirstOrDefault(d => d.id == currentStage.id.id);
             if (matchedStage == null) return;
             var sprite = UISpriteDataManager.instance.GetStoryIcon(currentStage._storyType);
             Instance.ketherIconReplacer.sprite = sprite.icon;
@@ -1331,5 +1325,34 @@ namespace LibraryOfAngela.Story
             }
         }
 
+    }
+
+    public static class StoryConfigUtil {
+
+        public static List<CustomStoryInfo> GetAllStories(this StoryConfig owner)
+        {
+            List<CustomStoryInfo> infos = new List<CustomStoryInfo>();
+            HashSet<int> idChecks = new HashSet<int>();
+            foreach (var d in owner.GetStoryIcons())
+            {
+                foreach (var d2 in d.stageIds)
+                {
+                    idChecks.Add(d2.id);
+                    infos.Add(d2);
+                }
+            }
+            var add = owner.GetOnlyStoryInfos();
+            if (add != null && add.Count > 0)
+            {
+                foreach (var d2 in add)
+                {
+                    if (!idChecks.Contains(d2.id))
+                    {
+                        infos.Add(d2);
+                    }
+                }
+            }
+            return infos;
+        }
     }
 }

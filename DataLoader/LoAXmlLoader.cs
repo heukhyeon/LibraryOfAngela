@@ -1,4 +1,4 @@
-using LoALoader.Model;
+using LoADataLoader.Model;
 using LOR_DiceSystem;
 using LOR_XML;
 using System;
@@ -11,7 +11,7 @@ using System.Xml.Serialization;
 using UnityEngine;
 using Workshop;
 
-namespace LibraryOfAngela
+namespace LoADataLoader
 {
     class LoAXmlLoader
     {
@@ -167,7 +167,7 @@ namespace LibraryOfAngela
             InsertOrUpdate(packageId, cardDrops, modCardDrops);
         }
 
-        // ¿ø¾î¿¡ ÇÑÇØ¼­´Â Localize¸¦ ¾ÈµÎ°í Á÷Á¢ data¿¡ Àû´Â °æ¿ì°¡ ÀÖÀ¸¹Ç·Î ÆÄ½Ì¿¡¼­µµ À¯Áö
+        // ì›ì–´ì— í•œí•´ì„œëŠ” Localizeë¥¼ ì•ˆë‘ê³  ì§ì ‘ dataì— ì ëŠ” ê²½ìš°ê°€ ìˆìœ¼ë¯€ë¡œ íŒŒì‹±ì—ì„œë„ ìœ ì§€
         public void InsertBookStories(string packageId, List<BookDesc> stories)
         {
             InsertOrUpdate(packageId, stories, modStories);

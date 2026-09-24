@@ -239,13 +239,18 @@
     <Folder Include="Initialize\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Loader\Loader.csproj">
+      <Project>{dabb1f3c-b62c-43cb-b7a5-f980d01f435b}</Project>
+      <Name>Loader</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
     <ProjectReference Include="..\Interface\Interface.csproj">
       <Project>{d74f9a54-b32a-41d1-9799-15fda8052ff3}</Project>
       <Name>Interface</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Loader\Loader.csproj">
-      <Project>{dabb1f3c-b62c-43cb-b7a5-f980d01f435b}</Project>
-      <Name>Loader</Name>
+    <ProjectReference Include="..\DataLoader\DataLoader.csproj">
+      <Project>{8c73b6e1-4a29-45a9-a7d4-6f93ca2c7311}</Project>
+      <Name>DataLoader</Name>
     </ProjectReference>
     <ProjectReference Include="..\RuntimeUI\RuntimeUI.csproj">
       <Project>{dfa52acd-128f-426a-b5ca-f4d7c8721366}</Project>
@@ -256,12 +261,13 @@
   <PropertyGroup>
     <PostBuildEvent>:: 환경변수가 설정되어 있는지 확인 후 복사 진행
 if not "%25LOA_BUILD_PATH%25" == "" (
-    if not exist "%25LOA_BUILD_PATH%25" mkdir "%25MY_TARGET_PATH%25"
+    if not exist "%25LOA_BUILD_PATH%25" mkdir "%25LOA_BUILD_PATH%25"
 
-    copy /Y "$(TargetDir)LoAInterface.dll" "%25LOA_BUILD_PATH%25"
-    copy /Y "$(TargetDir)LoARuntimeUI.dll" "%25LOA_BUILD_PATH%25"
-    copy /Y "$(TargetDir)LoARuntime.dll" "%25LOA_BUILD_PATH%25"
-    echo DLL files copied to %25MY_TARGET_PATH%25 successfully.
+    copy /Y "$(TargetDir)LoAInterface.dll" "%25LOA_BUILD_PATH%25" || exit /b 1
+    copy /Y "$(TargetDir)LoADataLoader.dll" "%25LOA_BUILD_PATH%25" || exit /b 1
+    copy /Y "$(TargetDir)LoARuntimeUI.dll" "%25LOA_BUILD_PATH%25" || exit /b 1
+    copy /Y "$(TargetDir)LoARuntime.dll" "%25LOA_BUILD_PATH%25" || exit /b 1
+    echo DLL files copied successfully.
     "C:\Program Files (x86)\Steam\steamapps\common\Library Of Ruina\LibraryOfRuina.exe"
     if errorLevel == 53 set errorLevel=0
 )</PostBuildEvent>
@@ -272,7 +278,7 @@ if not "%25LOA_BUILD_PATH%25" == "" (
     echo [Pre-Build] Environment variable detected. Terminating process...
     
     :: PowerShell을 호출하여 프로세스 종료 (에러 발생 시 무시)
-    powershell.exe -ExecutionPolicy Bypass -Command "Get-Process -Name LibraryOfRuina -ErrorAction SilentlyContinue | Stop-Process -Force; exit 0"
+    powershell.exe -ExecutionPolicy Bypass -Command "Get-Process -Name LibraryOfRuina -ErrorAction SilentlyContinue | Stop-Process -Force -PassThru | Wait-Process -Timeout 10 -ErrorAction SilentlyContinue; exit 0"
 ) else (
     echo [Pre-Build] LOA_BUILD_PATH is not set. Skipping process termination.
 )</PreBuildEvent>

@@ -39,7 +39,7 @@ namespace LoALoader
             {
                 if (Instance != null)
                 {
-                    UnityEngine.Debug.Log("LoALoader Already Created But Another Instance Created...??");
+                    Console.WriteLine("LoA :: LoALoader Already Created But Another Instance Created...??");
                     return;
                 }
                 Instance = this;
@@ -47,11 +47,11 @@ namespace LoALoader
                 observer.Init();
                 harmony = new Harmony("LoALoader");
                 harmony.PatchAll(typeof(LoAInitializer));
-                UnityEngine.Debug.Log($"LoALoader Load Success : {Assembly.GetExecutingAssembly().GetName().Version}");
+                Console.WriteLine($"LoA :: LoALoader Load Success : {Assembly.GetExecutingAssembly().GetName().Version}");
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.Log("LoALoader Load Fail");
+                Console.WriteLine("LoA :: LoALoader Load Fail");
                 UnityEngine.Debug.LogError(e);
             }
         }
@@ -62,7 +62,7 @@ namespace LoALoader
         {
             if (Instance is null)
             {
-                UnityEngine.Debug.Log($"Failed to initialize LoA Error Level 3 ... Instance is Null... What?!!");
+                Console.WriteLine($"LoA :: Failed to initialize LoA Error Level 3 ... Instance is Null... What?!!");
                 LoadingProgress.modLoadingProgress = 1f;
                 return;
             }
@@ -77,7 +77,7 @@ namespace LoALoader
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.Log($"Failed to initialize LoA Error Level 2");
+                Console.WriteLine($"LoA :: Failed to initialize LoA Error Level 2");
                 UnityEngine.Debug.LogError(e);
                 LoadingProgress.modLoadingProgress = 1f;
             }
@@ -121,12 +121,12 @@ namespace LoALoader
 
         private static void BeforeCall(ModInitializer mod)
         {
-            UnityEngine.Debug.Log($"Call Mod Before :" + mod.GetType().FullName + "// " + mod.GetType().Assembly.Location);
+            Console.WriteLine($"LoA :: Call Mod Before :" + mod.GetType().FullName + "// " + mod.GetType().Assembly.Location);
         }
 
         private static void AfterCall(ModInitializer mod)
         {
-            UnityEngine.Debug.Log($"Call Mod After :" + mod.GetType().FullName + "// " + mod.GetType().Assembly.Location);
+            Console.WriteLine($"LoA :: Call Mod After :" + mod.GetType().FullName + "// " + mod.GetType().Assembly.Location);
         }
 
         [HarmonyPatch(typeof(ModContent), nameof(ModContent.Loads))]
@@ -178,7 +178,7 @@ namespace LoALoader
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.Log("Check Mod Is LoA Mod Logic Error...What?!");
+                Console.WriteLine("LoA :: Check Mod Is LoA Mod Logic Error...What?!");
                 UnityEngine.Debug.LogError(e);
             }
             return origin;

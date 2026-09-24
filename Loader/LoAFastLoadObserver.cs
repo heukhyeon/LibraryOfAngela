@@ -33,48 +33,52 @@ namespace LoALoader
             public long endTime;
         }
 
+        struct AssemblyRecord
+        {
+            public string packageId;
+            public string modName;
+            public string path;
+        }
+
         private DllRecord currentLoARuntimeRecord;
+        private Type dataLoaderType;
         private Type runtimeType;
         private string runtimeDir;
+        private string bootstrapPackageId;
         private long createdTime;
         private long callInitializerTime;
         private long callInitializerCompleteTime;
         private long saveSelectionDataCompleteTime;
         private long runtimeDllLoadTime;
-        private long initTaskCompleteTime;
         private long dllTaskCompleteTime;
+        private long dataLoaderStartTime;
         private long enqueueDuration;
         private Queue<DllLoadRecord> loadRecords = new Queue<DllLoadRecord>();
+        private ConcurrentQueue<AssemblyRecord> assemblyPaths = new ConcurrentQueue<AssemblyRecord>();
+        private int callInitializerCompleted;
+        private int dataLoaderNotified;
 
-        public List<Task> initTasks = new List<Task>();
         public Task dllTask;
         
 
         public void Init()
         {
             createdTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            // LoAInitializer is constructed from the first LoA mod's LoadAssemblies call.
+            // ModContentManager clears _currentPid before CallAllInitializer, so retain it here.
+            bootstrapPackageId = ModContentManager.Instance._currentPid;
             var t = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             EntryObserver.Create();
-            var builder = new StringBuilder("Detected LoA Mods\n");
+            var builder = new StringBuilder("LoA :: Detected LoA Mods\n");
 
             foreach (var mod in EntryObserver.Instance.activatedMods)
             {
                 var dir = mod.dirInfo.FullName;
                 builder.AppendLine($"- {mod.invInfo.workshopInfo.title} // {dir}");
-                
-                //TODO 스킨은 클래스를 커스텀하므로 다시 만들어야할수도 있음.
-                if (mod.invInfo.workshopInfo.uniqueId == ModContentManager.Instance._currentPid)
-                {
-                    FileLoader.LoadAll(mod.invInfo.workshopInfo.uniqueId, mod.invInfo.workshopInfo.title, Path.Combine(dir, "Resource\\CharacterSkin"), FileType.SKIN, false);
-                }
-                else
-                {
-                    initTasks.Add(FileLoader.LoadAll(mod.invInfo.workshopInfo.uniqueId, mod.invInfo.workshopInfo.title, dir, FileType.INIT, true));
-                }
             }
             dllTask = FileLoader.CreateDllTask(EntryObserver.Instance.activatedMods);
             enqueueDuration += (DateTimeOffset.Now.ToUnixTimeMilliseconds() - t);
-            UnityEngine.Debug.Log(builder.ToString());
+            Console.WriteLine(builder.ToString());
         }
 
         public void LoadCommonAssemblies(ModContent mod)
@@ -101,26 +105,8 @@ namespace LoALoader
                 //Debug.Log("Called Initializer 3");
                 dllTaskCompleteTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
                 var assemblies = LoadRuntimeDlls();
-                //Debug.Log("Called Initializer 4");
-                while (true)
-                {
-                    bool flag = false;
-                    for (int i = 0; i < initTasks.Count; i++)
-                    {
-                        if (!initTasks[i].IsCompleted)
-                        {
-                            Debug.Log($"Called Initializer 4 - 1 : {i} // {initTasks.Count}");
-                            flag = true;
-                        }
-                    }
-                    if (!flag) break;  
-                }
-                //Debug.Log("Called Initializer 5");
-                FileParser.InitCheckSkip();
-                initTaskCompleteTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
                 End(assemblies);
                 //Debug.Log("Called Initializer 6");
-                initTasks.Clear();
             });
         }
 
@@ -128,7 +114,8 @@ namespace LoALoader
         {
             //Debug.Log("Called Initializer Final");
             callInitializerCompleteTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            FileParser.CallInitializerComplete();
+            Interlocked.Exchange(ref callInitializerCompleted, 1);
+            NotifyDataLoaderCallInitializerComplete();
         }
 
         public void SaveSelectionDataComplete()
@@ -165,30 +152,68 @@ namespace LoALoader
             }
         }
 
+        public void AddAssembly(string packageId, string modName, string path)
+        {
+            assemblyPaths.Enqueue(new AssemblyRecord
+            {
+                packageId = packageId,
+                modName = modName,
+                path = path
+            });
+        }
+
         private List<Assembly> LoadRuntimeDlls()
         {
-            runtimeDllLoadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             var record = currentLoARuntimeRecord;
-            var asm = Assembly.LoadFile(record.path);
             var assemblies = new List<Assembly>();
-            assemblies.Add(asm);
-            runtimeType = asm.GetType("LibraryOfAngela.LoAFramework");
             runtimeDir = Path.GetDirectoryName(record.path);
+
+            var dataLoaderPath = Path.Combine(runtimeDir, "LoADataLoader.dll");
+            var dataLoaderAssembly = Assembly.LoadFile(dataLoaderPath);
+            dataLoaderType = dataLoaderAssembly.GetType("LoADataLoader.DataLoader", true);
+            dataLoaderType.GetMethod("Initialize", BindingFlags.Static | BindingFlags.Public)
+                .Invoke(null, new object[] { EntryObserver.Instance.activatedMods, bootstrapPackageId });
+            dataLoaderStartTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            NotifyDataLoaderCallInitializerComplete();
+
             var interfacePath = Path.Combine(runtimeDir, "LoAInterface.dll");
             var interfaceAsm = Assembly.LoadFile(interfacePath);
             var uiAsm = Assembly.LoadFile(Path.Combine(runtimeDir, "LoARuntimeUI.dll"));
+            var runtimeAsm = Assembly.LoadFile(record.path);
+            assemblies.Add(runtimeAsm);
+            runtimeType = runtimeAsm.GetType("LibraryOfAngela.LoAFramework");
+            runtimeDllLoadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
             LoaderLogger.AppendLine("Load Dll");
-            foreach (var r in FileParser.assembliePaths)
+            foreach (var r in assemblyPaths)
             {
                 LoaderLogger.AppendLine($"- in {r.modName} : {r.path}");
                 assemblies.Add(Assembly.LoadFile(r.path));
             }
             LoaderLogger.AppendLine();
             LoaderLogger.AppendLine($"LoARuntime Version : {record.ver1}.{record.ver2}.{record.ver3}.{record.ver4} in {record.modName} ({record.path})");
+            LoaderLogger.AppendLine($"---- DataLoader : {dataLoaderAssembly.GetName().Version} ({dataLoaderAssembly.Location})");
             LoaderLogger.AppendLine($"---- Interface : {interfaceAsm.GetName().Version} Path 1 : ({interfaceAsm.Location}) Path 2 : ({interfacePath})");
             LoaderLogger.AppendLine($"---- RuntimeUI : {uiAsm.GetName().Version}");
             LoaderLogger.AppendLine();
             return assemblies;
+        }
+
+        private void NotifyDataLoaderCallInitializerComplete()
+        {
+            if (Volatile.Read(ref callInitializerCompleted) == 0 || dataLoaderType == null) return;
+            if (Interlocked.CompareExchange(ref dataLoaderNotified, 1, 0) != 0) return;
+
+            try
+            {
+                dataLoaderType.GetMethod("CallInitializerComplete", BindingFlags.Static | BindingFlags.Public)
+                    .Invoke(null, null);
+            }
+            catch
+            {
+                Interlocked.Exchange(ref dataLoaderNotified, 0);
+                throw;
+            }
         }
 
         private void End(List<Assembly> assemblies)
@@ -211,9 +236,8 @@ namespace LoALoader
                 LoaderLogger.AppendLine($"(Dll Load Time Total : {total})");
                 LoggingDuration("CallInitializer Duration", callInitializerTime, callInitializerCompleteTime);
                 LoggingDuration("SaveSelectionData Duration", callInitializerCompleteTime, saveSelectionDataCompleteTime);
-                LoggingDuration("SaveSelectionData ~ Init Task Complete", saveSelectionDataCompleteTime, initTaskCompleteTime);
-                LoggingDuration("Init Task Complete ~ Dll Task Complete", initTaskCompleteTime, dllTaskCompleteTime);
-                LoggingDuration("Dll Task Complete ~ Runtime Dll Load", dllTaskCompleteTime, runtimeDllLoadTime);
+                LoggingDuration("Dll Task Complete ~ DataLoader Start", dllTaskCompleteTime, dataLoaderStartTime);
+                LoggingDuration("DataLoader Start ~ Runtime Dll Load", dataLoaderStartTime, runtimeDllLoadTime);
                 LoggingDuration("Runtime Dll Load ~ End", runtimeDllLoadTime, now);
 
                 var latestLoAAsset = Path.Combine(runtimeDir, "LoAAsset");
@@ -230,7 +254,7 @@ namespace LoALoader
                 var myMod = ModContentManager.Instance.GetAllMods().Find(d => d.dirInfo == myModDir);
                 var myModName = myMod?.invInfo.workshopInfo.title ?? myModDir.FullName;
 
-                UnityEngine.Debug.Log($"LoA Loader :: LoA Runtime Not Found, Please Check From {myModName}");
+                Console.WriteLine($"LoA :: Loader Runtime Not Found, Please Check From {myModName}");
                 //ModContentManager.Instance.AddErrorLog($"LoA :: LoA Runtime Not Found, Please Check From {myModName}");
             }
         }

@@ -68,7 +68,7 @@ namespace LibraryOfAngela.Battle
                         p.Add(d2);
                     }
                 }
-                passives = d2.ToArray();
+                passives = p.ToArray();
             }
         }
 
