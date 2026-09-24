@@ -1,11 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using LibraryOfAngela.Extension;
 using LibraryOfAngela.Extension.Framework;
 using LibraryOfAngela.Model;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using UI;
 using UnityEngine;
 using UnityEngine.Events;
@@ -224,6 +225,7 @@ namespace LibraryOfAngela.Story
                 {
                     firstSlot = d;
                 }
+                StoryPatch.CheckKeyReplaceIconInit(d);
             });
             if (firstSlot != null)
             {
@@ -324,6 +326,7 @@ namespace LibraryOfAngela.Story
             {
                 var icon = CreateSlot(root, d);
                 root.iconList.Add(icon);
+                //Console.WriteLine($"타임라인 아이콘 추가 : {icon.name} // {d.stageIds.Count} // {d}");
                 StoryPatch.AddStoryIcon(icon, d, StoryPatch.GetModRelatedStoryIcon(icon, d, root.iconList));
                 if (cnt == 0)
                 {

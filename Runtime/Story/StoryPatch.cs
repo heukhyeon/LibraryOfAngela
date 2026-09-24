@@ -1,25 +1,26 @@
+using HarmonyLib;
+using LibraryOfAngela.Extension;
+using LibraryOfAngela.Extension.Framework;
+using LibraryOfAngela.Implement;
+using LibraryOfAngela.Model;
+using LOR_XML;
+using Mod;
+using StoryScene;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
+using TMPro;
 using UI;
 using UnityEngine;
-using LibraryOfAngela.Model;
 using UnityEngine.UI;
-using TMPro;
-using LibraryOfAngela.Extension.Framework;
-using HarmonyLib;
-using System.Reflection.Emit;
-using LOR_XML;
-using StoryScene;
-using Mod;
-using System.IO;
 using WorkParser;
-using System.Collections;
-using System.Reflection;
-using LibraryOfAngela.Extension;
-using LibraryOfAngela.Implement;
 
 namespace LibraryOfAngela.Story
 {
@@ -41,8 +42,8 @@ namespace LibraryOfAngela.Story
         public Dictionary<LorId, CustomStoryInfo> storyInfos = new Dictionary<LorId, CustomStoryInfo>(); 
         private List<UIStoryProgressPanel> iconAddedContainers;
         private HashSet<LorId> modStoryIds = new HashSet<LorId>();
-        private Image ketherIconReplacer = null;
-        private Image originKetherIcon = null;
+        private UnityEngine.UI.Image ketherIconReplacer = null;
+        private UnityEngine.UI.Image originKetherIcon = null;
         private StageStoryInfo currentStory;
         private Action<int> currentEventListener;
         private Func<int, bool> currentClickListener;
@@ -79,9 +80,67 @@ namespace LibraryOfAngela.Story
             }
         }
 
-        public static void AddStoryIcon(UIStoryProgressIconSlot slot, CustomStoryIconInfo info)
+        public static bool CheckKeyReplaceIconInit(UIStoryProgressIconSlot icon)
+        {
+            if (Instance.replaceableTargets?.Contains(icon) == true)
+            {
+                if (icon.gameObject.activeSelf)
+                {
+                    foreach (var t in Instance.replaceInfos.Values)
+                    {
+                        var t2 = t.Find(d => d.replace == icon);
+                        if (t2 != null)
+                        {
+                            t2.origin.gameObject.SetActive(true);
+                            break;
+                        }
+                    }
+                }
+                icon.SetSlotData(new List<StageClassInfo>());
+                icon.SetActiveStory(false);
+                return true;
+            }
+            return false;
+        }
+
+        public static UIStoryProgressIconSlot GetModRelatedStoryIcon(UIStoryProgressIconSlot main, CustomStoryIconInfo info, List<UIStoryProgressIconSlot> icons)
+        {
+            foreach (var d in icons)
+            {
+                var t = Instance.slotInfo.SafeGet(d);
+                if (t == null) continue;
+                if (t.packageId == info.packageId && t.position == info.position && t.relatedStoryLinePosition == info.relatedStoryLinePosition && t.storyTimeline == info.storyTimeline)
+                {
+                    return d;
+                }
+            }
+            return null;
+        }
+
+        public static void AddStoryIcon(UIStoryProgressIconSlot slot, CustomStoryIconInfo info, UIStoryProgressIconSlot relatedObject)
         {
             Instance.slotInfo[slot] = info;
+            var iconObj = slot;
+            //Logger.Log($"Add Story : {slot.name}");
+            if (info.replaceKeyCode != KeyCode.None)
+            {
+                //Console.WriteLine($"Register Story Toggle : {slot.name} // {relatedObject.name}");
+                iconObj.SetSlotData(new List<StageClassInfo>());
+                iconObj.gameObject.SetActive(false);
+                if (Instance.replaceInfos is null) Instance.replaceInfos = new Dictionary<KeyCode, List<ReplaceKeyInfo>>();
+                if (Instance.replaceableTargets is null) Instance.replaceableTargets = new HashSet<UIStoryProgressIconSlot>();
+                if (!Instance.replaceInfos.ContainsKey(info.replaceKeyCode))
+                {
+                    Instance.replaceInfos[info.replaceKeyCode] = new List<ReplaceKeyInfo>();
+                }
+                Instance.replaceableTargets.Add(iconObj);
+                Instance.replaceInfos[info.replaceKeyCode].Add(new ReplaceKeyInfo
+                {
+                    origin = relatedObject,
+                    replace = iconObj,
+                    targetCode = info.replaceKeyCode
+                });
+            }
         }
 
         /// <summary>
@@ -119,22 +178,8 @@ namespace LibraryOfAngela.Story
                             }
                         }
                         icon.SetDefault();
-                        if (Instance.replaceableTargets?.Contains(icon) == true)
+                        if (CheckKeyReplaceIconInit(icon))
                         {
-                            if (icon.gameObject.activeSelf)
-                            {
-                                foreach (var t in Instance.replaceInfos.Values)
-                                {
-                                    var t2 = t.Find(d => d.replace == icon);
-                                    if (t2 != null)
-                                    {
-                                        t2.origin.gameObject.SetActive(true);
-                                        break;
-                                    }
-                                }
-                            }
-                            icon.SetSlotData(new List<StageClassInfo>());
-                            icon.SetActiveStory(false);
                             continue;
                         }
                         if (icon.transform.parent.gameObject.activeSelf)
@@ -182,8 +227,8 @@ namespace LibraryOfAngela.Story
                     }
                 }
 
-                ReplaceInit(__instance);
                 TimelinePatch.Instance.Init(__instance);
+                ReplaceInit(__instance);
             }
             catch (Exception e)
             {
@@ -223,27 +268,9 @@ namespace LibraryOfAngela.Story
 #pragma warning restore 612, 618, CS0619
 
             });
-            AddStoryIcon(iconObj, modIcon);
+            AddStoryIcon(iconObj, modIcon, relatedObject);
 
-            if (modIcon.replaceKeyCode != KeyCode.None)
-            {
-                iconObj.SetSlotData(new List<StageClassInfo>());
-                iconObj.gameObject.SetActive(false);
-                if (Instance.replaceInfos is null) Instance.replaceInfos = new Dictionary<KeyCode, List<ReplaceKeyInfo>>();
-                if (Instance.replaceableTargets is null) Instance.replaceableTargets = new HashSet<UIStoryProgressIconSlot>();
-                if (!Instance.replaceInfos.ContainsKey(modIcon.replaceKeyCode))
-                {
-                    Instance.replaceInfos[modIcon.replaceKeyCode] = new List<ReplaceKeyInfo>();
-                }
-                Instance.replaceableTargets.Add(iconObj);
-                Instance.replaceInfos[modIcon.replaceKeyCode].Add(new ReplaceKeyInfo
-                {
-                    origin = relatedObject,
-                    replace = iconObj,
-                    targetCode = modIcon.replaceKeyCode
-                });
-            }
-            else
+            if (modIcon.replaceKeyCode == KeyCode.None)
             {
                 var lines = FrameworkExtension.GetSafeAction(() => modIcon.lines);
                 if (lines != null && lines.Count > 0)
@@ -287,11 +314,12 @@ namespace LibraryOfAngela.Story
                     {
                         var origin = k.origin.gameObject.activeSelf;
                         var replace = k.replace.gameObject.activeSelf;
-                        if (origin == replace)
+                        if (!origin && !replace)
                         {
-                            // .... What?
+                            // 타임라인 분기시 가능하지 않을까...
                             continue;
                         }
+                        Logger.Log($"Story Reverse : {k.origin.name} <-> {k.replace.name}");
                         if (origin)
                         {
                             k.origin.gameObject.SetActive(false);
@@ -506,7 +534,7 @@ namespace LibraryOfAngela.Story
 
         [HarmonyPatch(typeof(UIInvitationRightMainPanel), "SetInvBookApplyState")]
         [HarmonyPostfix]
-        private static void After_SetInvBookApplyState(UIInvitationPanel ___invPanel, Image ___img_endcontents_content)
+        private static void After_SetInvBookApplyState(UIInvitationPanel ___invPanel, UnityEngine.UI.Image ___img_endcontents_content)
         {
             var info = Instance.slotInfo.SafeGet(___invPanel.currentSelectedStorySlot);
             if (info == null) return;
@@ -1251,7 +1279,7 @@ namespace LibraryOfAngela.Story
             if (!iscompleteopen) return;
             if (Instance.originKetherIcon == null)
             {
-                Instance.originKetherIcon = GameObject.Find("[Image]KeterIcon")?.GetComponent<Image>();
+                Instance.originKetherIcon = GameObject.Find("[Image]KeterIcon")?.GetComponent<UnityEngine.UI.Image>();
             }
             if (Instance.originKetherIcon == null) return;
 
