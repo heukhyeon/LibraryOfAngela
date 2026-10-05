@@ -1238,18 +1238,28 @@ namespace LibraryOfAngela.Story
             return result;
         }
 
+        [HarmonyPatch(typeof(UIBattleSettingPanel), "OnClickBattleStart")]
+        [HarmonyPrefix]
+        private static bool Before_OnClickBattleStart(UIBattleSettingPanel __instance)
+        {
+            if (!HasCustomKetherSetting() || __instance.IsRunningTutorial()) return true;
+            __instance.StartLightSpread();
+            return false;
+        }
+
+        private static bool HasCustomKetherSetting()
+        {
+            var stage = Singleton<StageController>.Instance.GetStageModel()?.ClassInfo;
+            if (stage == null || string.IsNullOrEmpty(stage.id.packageId)) return false;
+            var mod = LoAModCache.StoryConfigs.FirstOrDefault(x => x.packageId == stage.id.packageId);
+            return mod?.GetAllStories()?.Any(x => x.id == stage.id.id &&
+                x.settingInfos?.Any(d => d.wave == StageController.Instance.CurrentWave) == true) == true;
+        }
+
         private static UIEndContentsState WrappingKetherRealizationState(UIEndContentsState originState)
         {
             if (originState == UIEndContentsState.KeterCompleteOpen) return originState;
-            var currentStageId = Singleton<StageController>.Instance.GetStageModel().ClassInfo.id;
-            var wave = StageController.Instance.CurrentWave;
-            var mod = LoAModCache.StoryConfigs.FirstOrDefault(x => x.packageId == currentStageId.packageId);
-            if (mod == null) return originState;
-            var matchedStage = mod.GetAllStories()
-                .FirstOrDefault(x => x.id == currentStageId.id && x.settingInfos?.Any(d => d.wave == wave) == true);
-            if (matchedStage == null) return originState;
-
-            return UIEndContentsState.KeterCompleteOpen;
+            return HasCustomKetherSetting() ? UIEndContentsState.KeterCompleteOpen : originState;
         }
 
         private static StoryBranch WrappingStoryBranch(StoryBranch branch)
