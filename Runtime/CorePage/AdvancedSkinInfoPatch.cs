@@ -487,6 +487,26 @@ namespace LibraryOfAngela.CorePage
             }
         }
 
+        /// <summary>
+        /// EgoHod 쪽 LS_BookSkinUtil의 ChangeSkin ( view.charAppearance.gameObject.GetComponent<WorkshopSkinDataSetter>().LateInit(); ) 충돌 임시 수정
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="charName"></param>
+        /// <param name="__exception"></param>
+        /// <returns></returns>
+        [HarmonyPatch(typeof(BattleUnitView), "ChangeSkin")]
+        [HarmonyFinalizer]
+        private static Exception Finalize_ChangeSkin(BattleUnitView __instance, string charName, ref Exception __exception)
+        {
+            if (__exception != null && __exception is NullReferenceException)
+            {
+                Debug.LogError(__exception);
+                return null;
+            }
+            return __exception;
+        }
+
+
         [HarmonyPatch(typeof(BattleUnitView), "ChangeEgoSkin")]
         [HarmonyPostfix]
         private static void After_ChangeEgoSkin(BattleUnitView __instance, string egoName)

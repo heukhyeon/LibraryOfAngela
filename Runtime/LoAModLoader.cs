@@ -259,6 +259,7 @@ namespace LibraryOfAngela
                 // 나중에 구겨넣어야할 놈들 리스트
                 AssemblyManager.Instance._initializer.AddRange(LoAModCache.Mods.OfType<ModInitializer>());
                 Patch(typeof(BufPatch));
+                Patch(typeof(BufUIPatch));
                 BufPatch.Instance.Initialize();
                 var harmonyTask = PatchHarmonies();
                 BookCategoryPatch.Instance.Initialize(AdvancedEquipBookPatch.Instance.configs);

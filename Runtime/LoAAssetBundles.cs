@@ -477,7 +477,7 @@ namespace LibraryOfAngela
 
         private void OnAssetBundleLoadTryComplete(AssetBundleNode node, bool result, bool isSync)
         {
-            var strBuilder = new StringBuilder("");
+            var strBuilder = new StringBuilder("- ");
             try
             {
                 var success = result && node.Bundle != null;
@@ -505,8 +505,9 @@ namespace LibraryOfAngela
                     }
                     else
                     {
-                        strBuilder.Insert(0, $"- {node.info.path}\n");
-                        Logger.Log(strBuilder.ToString());
+                        strBuilder.Append(success ? "Success" : "Fail");
+                        strBuilder.Append(" ");
+                        strBuilder.AppendLine(node.info.path);
                         //bundleLoadQueue.Enqueue(strBuilder);
                     }
                
@@ -524,7 +525,8 @@ namespace LibraryOfAngela
                 Logger.Log($"Error in AssetBundle Load (Bundle Exists: {node.Bundle != null} // {result}) Complete -> {node.info.path}");
                 Logger.LogError(e);
             }
-
+            if (isSync) Logger.Log(strBuilder.ToString().TrimEnd());
+            else bundleLoadQueue.Enqueue(strBuilder);
         }
 
         private AssetBundleLoadingType CreateLoadingType(AssetBundleType target)

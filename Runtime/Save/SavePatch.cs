@@ -199,6 +199,38 @@ namespace LibraryOfAngela.Save
 
             return result;
         }
+
+        [HarmonyPatch(typeof(StageController), "GameOver")]
+        [HarmonyPrefix]
+        private static void Before_GameOver(bool iswin, StageController __instance)
+        {
+            if (iswin) return;
+            try
+            {
+                var id = __instance.GetStageModel()?.ClassInfo?.id?.packageId;
+                if (string.IsNullOrEmpty(id)) return;
+                var mod = LoAModCache.Instance[id];
+                if (mod != null)
+                {
+                    int i = 0;
+                    while (i < __instance._usedBooks.Count)
+                    {
+                        var b = __instance._usedBooks[i];
+                        if (b.packageId == "" && (b.id == 99999 || b.id == 99998))
+                        {
+                            __instance._usedBooks.Remove(b);
+                            continue;
+                        }
+                        i++;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+
+        }
     
 
         [HarmonyPatch(typeof(StageController), "GameOver")]
