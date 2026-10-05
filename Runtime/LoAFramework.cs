@@ -215,17 +215,18 @@ namespace LibraryOfAngela
             assetPath = path;
         }
 
+        private static bool Before_CallUIPhase(UIPhase phase)
+        {
+            return phase != UIPhase.BattleResult || !RewardUIPatch.TrySkipResult();
+        }
+
         private static void After_CallUIPhase(UIPhase phase)
         {
             if (phase != UIPhase.Invitation && phase != UIPhase.BattleSetting && phase != UIPhase.DUMMY)
             {
                 PatcherImpl.patchers.ForEach(x => x.ClearInvitationPatch());
             }
-            if (phase == UIPhase.BattleResult)
-            {
-                RewardUIPatch.CheckSkipResult();
-            }
-            else if (phase == UIPhase.Sephirah) RewardUIPatch.CheckShowRewardUI();
+            if (phase == UIPhase.Sephirah) RewardUIPatch.CheckShowRewardUI();
  
         }
 

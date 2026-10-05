@@ -248,7 +248,7 @@ namespace LibraryOfAngela.Save
             {
                 if (info.id == model.ClassInfo._id)
                 {
-                    if (info.skipResult) RewardUIPatch.ReserveSkipResult(iswin);
+                    if (info.skipResult) RewardUIPatch.ReserveSkipResult(model.ClassInfo.id, iswin);
                     break;
                 }
             }

@@ -1,3 +1,4 @@
+using HarmonyLib;
 using LibraryOfAngela.Model;
 using System;
 using System.Collections.Generic;
@@ -13,28 +14,42 @@ namespace LibraryOfAngela.Save
     {
         private static List<ClearReward> currentRewards = null;
         private static int skipState = -1;
+        private static LorId skipStageId;
 
-        public static void ReserveSkipResult(bool isWin)
+        public static void ReserveSkipResult(LorId stageId, bool isWin)
         {
+            skipStageId = stageId;
             skipState = isWin ? 0 : 1;
         }
 
-        public static void CheckSkipResult()
+        public static bool TrySkipResult()
         {
-            if (skipState != -1)
+            if (skipState == -1) return false;
+
+            var stageId = StageController.Instance.GetStageModel()?.ClassInfo?.id;
+            if (stageId != skipStageId)
             {
-                (UI.UIController.Instance.GetUIPanel(UIPanelType.BattleResult) as UIBattleResultPanel).SetData(new TestBattleResultData
-                {
-                    rewardbookdatas = new List<DropBookDataForAddedReward>(),
-                    rewardpageResult = new List<BookDropResult>(),
-                    iswin = skipState == 0,
-                    loseinvitationbooks = new List<LorId>(),
-                    stagemodelInBattle = StageController.Instance._stageModel,
-                    sephirahOrder = new List<SephirahType>(StageController.Instance._usedFloorList)
-                });
                 skipState = -1;
-                UI.UIController.Instance.OnClickGameEnd();
+                skipStageId = null;
+                return false;
             }
+
+            var controller = UI.UIController.Instance;
+            var panel = controller.GetUIPanel(UIPanelType.BattleResult) as UIBattleResultPanel;
+            if (panel == null)
+            {
+                skipState = -1;
+                skipStageId = null;
+                return false;
+            }
+
+            // OnClickGameEnd only reads the result's win state. Supply it without opening the result panel.
+            AccessTools.Field(typeof(UIBattleResultPanel), "resultWavedata").SetValue(panel,
+                new TestBattleResultData { iswin = skipState == 0 });
+            skipState = -1;
+            skipStageId = null;
+            controller.OnClickGameEnd();
+            return true;
         }
 
         public static void ReserveRewardUI(StageClassInfo info, List<ClearReward> rewards)
