@@ -57,6 +57,10 @@ namespace LibraryOfAngela
                     {
                         Logger.Log($"{mod.packageId} is Not Implmeneted LoAArtwork. Skip");
                     }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e);
+                    }
                 }
             });
         }
