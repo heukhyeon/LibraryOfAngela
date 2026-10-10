@@ -39,7 +39,10 @@ internal static class Program
     }
     private static void Run(string name, Action test)
     {
-        BattleObjectManager.instance.units.Clear(); test(); passed++; Console.WriteLine("PASS " + name);
+        BattleObjectManager.instance.units.Clear();
+        try { test(); }
+        catch (Exception e) { Console.WriteLine("FAIL " + name + ": " + e.Message); Environment.Exit(1); }
+        passed++; Console.WriteLine("PASS " + name);
     }
     private static void Players() => new StageController().SetAutoCardForNonControlablePlayer();
     private static void Main()
@@ -122,11 +125,70 @@ internal static class Program
             var p=Unit(Faction.Player,1); Unit(Faction.Enemy); p.Policy=new Policy { score=(c,t,s,ts,cl)=>c.name=="A"?int.MaxValue:int.MinValue };
             Card(p,"B"); var a=Card(p,"A"); Players(); Assert(p.cardSlotDetail.cardAry[0].card==a,"priority overflow");
         });
-        Run("personal instant cards can target allies and draw a normal card", () => {
-            var p=Unit(Faction.Player,1); Unit(Faction.Enemy); p.Policy=new Policy();
-            var instant=new BattleDiceCardModel("instant") { allyOnly=true, instance=u=>Card(u,"A") }; instant.spec.Ranged=CardRange.Instance;
+        Run("TeamKill permission does not add allies to the attack forecast", () => {
+            foreach (var faction in new[] { Faction.Player, Faction.Enemy })
+            {
+                BattleObjectManager.instance.units.Clear();
+                var p=Unit(faction,2); var ally=Unit(faction); ally.controlled=true;
+                var enemy=Unit(faction==Faction.Player?Faction.Enemy:Faction.Player); enemy.hp=1;
+                p.teamKill=true; p.Policy=new Policy { score=(c,t,s,ts,cl)=>t==ally?10000:1 };
+                Card(p,"A",0); Card(p,"B",0);
+                var forecast=new AutoBattleImpl(faction);
+                Assert(forecast.GetPlan(p,0).target==enemy && forecast.GetPlan(p,1).target==enemy,
+                    "TeamKill permission promoted a healthy ally over a predicted-dead enemy");
+                // CarmenControlBuf returns a constant 1. Once projected damage
+                // kills the enemy, that must not promote the still-healthy ally.
+                p.Policy=new Policy { score=(c,t,s,ts,cl)=>1 };
+                forecast=new AutoBattleImpl(faction);
+                Assert(forecast.GetPlan(p,0).target==enemy && forecast.GetPlan(p,1).target==enemy,
+                    "expected-damage score promoted an ally after forecasting an enemy kill");
+                new StageController().ApplyEnemyCardPhase();
+                Assert(p.cardSlotDetail.cardAry.All(x=>x!=null && x.target==enemy),"native selection attacked an ally");
+            }
+        });
+        Run("forced ally target is kept while later selections still prefer enemies", () => {
+            var p=Unit(Faction.Player); var ally=Unit(Faction.Player); var enemy=Unit(Faction.Enemy);
+            p.teamKill=true; p.Policy=new Policy(); var a=Card(p,"A"); Card(p,"B");
+            p.forceTarget=c=>c==a?ally:null; Players();
+            Assert(p.cardSlotDetail.cardAry[0].target==ally && p.cardSlotDetail.cardAry[1].target==enemy,
+                "explicit ally override or subsequent enemy forecast lost");
+            Assert(p.cardSlotDetail.releaseCount==0,"forced ally choice rolled back");
+        });
+        Run("native card replacement keeps the enemy-only random fallback", () => {
+            var p=Unit(Faction.Enemy,1); var ally=Unit(Faction.Enemy); var enemy=Unit(Faction.Player);
+            p.teamKill=true; p.Policy=new Policy(); Card(p,"A"); var b=Card(p,"B"); p.forceCard=c=>b;
+            new StageController().ApplyEnemyCardPhase();
+            Assert(p.cardSlotDetail.cardAry[0].card==b && p.cardSlotDetail.cardAry[0].target==enemy,
+                "replaced card fell back to a friendly target");
+        });
+        Run("controllable TeamKill unit retains native friendly targeting", () => {
+            var p=Unit(Faction.Player,1); var ally=Unit(Faction.Player); Unit(Faction.Enemy);
+            p.teamKill=true; p.controlled=true; p.Policy=new Policy(); Card(p,"A");
+            p.allyCardDetail.PlayTurnAutoForPlayer(0);
+            Assert(p.cardSlotDetail.cardAry[0].target==ally,"policy changed controllable native targeting");
+        });
+        Run("explicit fixed ally target remains authoritative", () => {
+            var p=Unit(Faction.Player,1); var ally=Unit(Faction.Player); Unit(Faction.Enemy);
+            p.fixedTargets.Add(ally); p.Policy=new Policy(); Card(p,"A"); Players();
+            Assert(p.cardSlotDetail.cardAry[0].target==ally,"fixed target lost");
+        });
+        Run("uncontrolled ally alone does not enter the forecast", () => {
+            var p=Unit(Faction.Player,1); var ally=Unit(Faction.Player); var enemy=Unit(Faction.Enemy);
+            p.Policy=new Policy { score=(c,t,s,ts,cl)=>t==ally?10000:1 }; Card(p,"A"); Players();
+            Assert(p.cardSlotDetail.cardAry[0].target==enemy,"uncontrolled ally selected");
+        });
+        Run("personal instant cards retain enemy targeting and draw a normal card", () => {
+            var p=Unit(Faction.Player,1); Unit(Faction.Player); Unit(Faction.Enemy); p.Policy=new Policy();
+            var instant=new BattleDiceCardModel("instant") { instance=u=>Card(u,"A") }; instant.spec.Ranged=CardRange.Instance;
             p.personalEgoDetail._cardInHand.Add(instant); Players();
             Assert(p.personalEgoDetail._cardInHand.Count==0 && p.cardSlotDetail.addCount==2 && p.cardSlotDetail.cardAry[0].card.name=="A","instant prepass failed");
+        });
+        Run("ally-only instant cards are not automatically consumed", () => {
+            var p=Unit(Faction.Player,1); Unit(Faction.Player); Unit(Faction.Enemy); p.Policy=new Policy();
+            var instant=new BattleDiceCardModel("instant") { allyOnly=true }; instant.spec.Ranged=CardRange.Instance;
+            p.personalEgoDetail._cardInHand.Add(instant); Card(p,"A"); Players();
+            Assert(p.personalEgoDetail._cardInHand.Contains(instant) && p.cardSlotDetail.addCount==1,
+                "instant prepass expanded its legacy enemy target pool to allies");
         });
         Run("global clash allocation considers other allies", () => {
             var slow=Unit(Faction.Player,1); var fast=Unit(Faction.Player,1); var e=Unit(Faction.Enemy,1);

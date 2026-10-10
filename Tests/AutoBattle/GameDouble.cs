@@ -50,7 +50,7 @@ public sealed class BattlePlayingCardDataInUnitModel
 public sealed class BattleUnitModel
 {
     public Faction faction; public bool controlled, dead, actionable = true, broken, knockout, targetable = true, lastTargetable = true;
-    public int cardOrder, light = 9, maxLight = 9; public float hp = 100;
+    public int cardOrder, light = 9, maxLight = 9; public float hp = 100; public bool teamKill;
     public BattleUnitTurnState turnState; public IHandleAutoCardUse Policy;
     public List<SpeedDice> speedDiceResult = new List<SpeedDice>();
     public BattlePlayingCardSlotDetail cardSlotDetail; public BattleAllyCardDetail allyCardDetail;
@@ -73,12 +73,13 @@ public sealed class BattleUnitModel
     public int GetSpeed(int i) => speedDiceResult[i].value; public bool IsTargetable_theLast() => lastTargetable;
     public bool IsCardChoosable(BattleDiceCardModel card) => card.choosable;
     public void SetCurrentOrder(int i) { cardOrder = i; }
-    public bool TeamKill() => false;
+    public bool TeamKill() => teamKill;
     public bool IsTargetable(BattleUnitModel actor) => targetable;
     public bool CanChangeAttackTarget(BattleUnitModel target, int mine, int theirs) => GetSpeed(mine) > target.GetSpeed(theirs);
     public List<BattleUnitModel> GetFixedTargets() => fixedTargets;
     public static bool IsTargetableUnit(BattleDiceCardModel card, BattleUnitModel actor, BattleUnitModel target, int slot = -1) =>
-        target.targetable && (card.allyOnly ? target.faction == actor.faction : actor.faction != target.faction) &&
+        target.targetable && target != actor && (card.allyOnly ? target.faction == Faction.Player :
+            actor.faction != target.faction || !target.controlled || actor.TeamKill() || target.TeamKill()) &&
         (actor.fixedTargets.Count == 0 || actor.fixedTargets.Contains(target));
     [MethodImpl(MethodImplOptions.NoInlining)]
     public bool CheckCardAvailable(BattleDiceCardModel card) => CheckCardAvailableForPlayer(card) && IsControlable() && IsCardChoosable(card);
@@ -128,7 +129,7 @@ public sealed class BattleAllyCardDetail
         if (candidates.Count == 0) return;
         candidates.Sort((a,b) => b.Key - a.Key);
         var card = candidates[0].Value;
-        var target = BattleObjectManager.instance.GetTargetByCardForPlayer(_self, card, idx, false);
+        var target = BattleObjectManager.instance.GetTargetByCardForPlayer(_self, card, idx, _self.TeamKill());
         var max = target.speedDiceResult.Count; // Deliberately mirrors native null dereference.
         int targetSlot = _self.ChangeTargetSlot(card, target, idx, 0, false);
         _self.cardSlotDetail.AddCard(card, target, targetSlot, false);
@@ -142,7 +143,7 @@ public sealed class BattleAllyCardDetail
         if (candidates.Count == 0) return;
         candidates.Sort((a,b) => b.Key - a.Key);
         var card = _self.OnSelectCardAuto(candidates[0].Value, currentDiceSlotIdx);
-        var target = BattleObjectManager.instance.GetTargetByCard(_self, card, currentDiceSlotIdx, false);
+        var target = BattleObjectManager.instance.GetTargetByCard(_self, card, currentDiceSlotIdx, _self.TeamKill());
         if (target == null) return;
         int targetSlot = _self.ChangeTargetSlot(card, target, currentDiceSlotIdx, 0, false);
         _self.cardSlotDetail.AddCard(card, target, targetSlot, true);
@@ -161,16 +162,22 @@ public sealed class BattleObjectManager
     [MethodImpl(MethodImplOptions.NoInlining)]
     public BattleUnitModel GetTargetByCardForPlayer(BattleUnitModel actor, BattleDiceCardModel card, int idx, bool teamkill = false)
     {
-        var candidates = units.Where(x => x.faction != actor.faction && x.targetable && !x.dead).ToList();
+        var candidates = Candidates(actor, teamkill);
         var forced = actor.forceTarget?.Invoke(card);
         return forced ?? actor.targetSetter.SelectTargetUnit(candidates);
     }
     [MethodImpl(MethodImplOptions.NoInlining)]
     public BattleUnitModel GetTargetByCard(BattleUnitModel actor, BattleDiceCardModel card, int idx, bool teamkill = false)
     {
-        var candidates = units.Where(x => x.faction != actor.faction && x.targetable && !x.dead).ToList();
+        var candidates = Candidates(actor, teamkill);
         var forced = actor.forceTarget?.Invoke(card);
         return forced ?? actor.targetSetter.SelectTargetUnit(candidates);
+    }
+    private List<BattleUnitModel> Candidates(BattleUnitModel actor, bool teamkill)
+    {
+        var fixedTargets = actor.GetFixedTargets().Where(x => x.IsTargetable(actor)).ToList();
+        return fixedTargets.Count > 0 ? fixedTargets : units.Where(x => x != actor &&
+            (teamkill || x.faction != actor.faction) && x.targetable && !x.dead).ToList();
     }
 }
 public sealed class StageController

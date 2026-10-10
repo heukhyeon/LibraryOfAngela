@@ -14,6 +14,11 @@ never reuse their occupied slots.
 - Only the base target setter's random choice receives the cached target. Full
   candidate lists, fixed targets, revive filtering, `ChangeAttackTarget`, custom
   target setters and other Harmony hooks remain effective.
+- As in the original selector, ordinary forecasts and instant-card candidates
+  target enemies. `TeamKill()` permits targeting allies but does not make them
+  priority candidates. Explicit fixed targets and forced target hooks can still
+  select allies. The base random fallback also prefers enemies if another card
+  replaces the cached card; controllable units keep their native targeting.
 - The cached target slot is an input to `ChangeTargetSlot`, never an override of
   its result. Enemy `OnSelectCardAuto` card replacements are also preserved.
 - Every completed selection invalidates the remaining forecast. Rebuilding reads

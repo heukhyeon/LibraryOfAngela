@@ -182,6 +182,18 @@ namespace LibraryOfAngela.Battle
             // revive filtering, subclass overrides and Harmony hooks stay intact.
             if (plan != null && current.resolvingCard == plan.card && candidates.Contains(plan.target) &&
                 AutoBattleImpl.CanTarget(plan.owner, plan.card, plan.target, plan.targetSlot)) return plan.target;
+            // A replaced/unavailable cached card can still reach the base random
+            // choice. Keep the policy's enemy-only default even when TeamKill
+            // widens vanilla's candidate list; explicit fixed targets still win.
+            if (current?.resolvingCard != null)
+            {
+                var fixedTargets = current.owner.GetFixedTargets();
+                if (fixedTargets == null || !candidates.Any(x => fixedTargets.Contains(x)))
+                {
+                    var enemies = candidates.Where(x => x.faction != current.owner.faction).ToList();
+                    return enemies.Count == 0 ? null : RandomUtil.SelectOne(enemies);
+                }
+            }
             return RandomUtil.SelectOne(candidates);
         }
 

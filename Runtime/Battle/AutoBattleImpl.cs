@@ -72,7 +72,10 @@ namespace LibraryOfAngela.Battle
             slot < target.cardSlotDetail.cardAry.Count &&
             (slot != target.speedDiceResult.Count - 1 || slot == 0 || target.IsTargetable_theLast()) &&
             BattleUnitModel.IsTargetableUnit(card, owner, target, slot) && target != owner &&
-            (target.faction != owner.faction || owner.TeamKill() || owner.GetFixedTargets().Contains(target));
+            // TeamKill permits friendly targeting; it is not an instruction for
+            // this policy to attack allies. Only an explicit fixed target changes
+            // the legacy enemy-only forecast. Native target hooks still run later.
+            (target.faction != owner.faction || owner.GetFixedTargets().Contains(target));
         private static bool OrdinaryAttack(BattleDiceCardModel card)
         {
             var spec = card.GetSpec();
@@ -207,10 +210,12 @@ namespace LibraryOfAngela.Battle
                     {
                         if (attempted.Contains(card) || card.GetSpec().Ranged != CardRange.Instance || !Available(owner, card)) continue;
                         var targets = alive.Where(x => BattleUnitModel.IsTargetableUnit(card, owner, x)).ToList();
-                        foreach (var target in targets)
+                        var enemies = targets.Where(x => x.faction != faction).ToList();
+                        var allies = targets.Where(x => x.faction == faction).ToList();
+                        foreach (var target in enemies)
                         {
                             var score = (long)Policy(owner).GetCustomizedCardPriority(owner, card, owner.GetSpeed(instanceSlot), instanceSlot, target, 0, null,
-                                false, targets.Where(x => x.faction != faction).ToList(), alive.Where(x => x.faction == faction).ToList()) * 10000 + RandomUtil.Range(1, 5);
+                                false, enemies, allies) * 10000 + RandomUtil.Range(1, 5);
                             if (best == null || score > best.priority) best = new Plan { owner = owner, card = card, target = target, priority = score };
                         }
                     }
