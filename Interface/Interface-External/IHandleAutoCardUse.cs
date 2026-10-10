@@ -14,6 +14,8 @@ namespace LibraryOfAngela.Interface_External
         /// <summary>
         /// AI가 특정 카드를 특정 대상의 특정 속도 주사위 슬롯에 특정 속도 주사위를 사용하여 플레이하려고 할 때,
         /// 그 행동의 우선순위를 계산합니다.
+        /// 남은 선택의 사전 계획 중 여러 번 호출될 수 있으며, 호출 자체가 책장 장착을 뜻하지 않습니다.
+        /// 실제 장착 및 강제 대상/슬롯 변경 이후에는 확정된 선택을 유지한 채 남은 계획을 다시 계산합니다.
         /// </summary>
         /// <param name="attacker">현재 행동을 결정하는 아군 유닛입니다.</param>
         /// <param name="cardToUse">사용을 고려 중인 아군의 카드입니다.</param>

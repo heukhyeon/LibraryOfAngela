@@ -1,443 +1,282 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
 using LibraryOfAngela.Interface_External;
-using LOR_DiceSystem; // CardRange, BehaviourType 등을 위해 추가
+using LOR_DiceSystem;
 
 namespace LibraryOfAngela.Battle
 {
-    class ParryableTarget
-    {
-        public CustomSetterOwner owner;
-        public int index;
-    }
-
-
-    class CustomSetterOwner
+    // Projected state only; planning never equips cards or changes live light/targets.
+    internal sealed class CustomSetterOwner
     {
         public BattleUnitModel owner;
         public IHandleAutoCardUse setter;
+        public List<BattleDiceCardModel> hand;
+        public List<int> slots;
+        public int light;
     }
 
-    class PriorityInfo
+    internal sealed class AutoBattleImpl
     {
-        public BattleUnitModel target;
-        public BattleDiceCardModel card;
-        public int index;
-        public int priority;
-    }
-
-
-    class AutoBattleImpl
-    {
-        enum LoggingLevel
+        internal sealed class Plan
         {
-            None,
-            Simple,
-            Full,
-        }
-        //private LoggingLevel level = LoggingLevel.Full;
-        private LoggingLevel level = LoAFramework.DEBUG ? LoggingLevel.Full : LoggingLevel.None;
-        private StringBuilder totalLogger = new StringBuilder();
-        private List<CustomSetterOwner> allyOwners = new List<CustomSetterOwner>();
-        private List<BattlePlayingCardDataInUnitModel> enemyCards = new List<BattlePlayingCardDataInUnitModel>();
-        private Dictionary<BattlePlayingCardDataInUnitModel, List<ParryableTarget>> parryTargets = new Dictionary<BattlePlayingCardDataInUnitModel, List<ParryableTarget>>();
-        private Dictionary<BattleUnitModel, float> dmgDic = new Dictionary<BattleUnitModel, float>();
-        private bool errorAffected = false;
-
-        public void Execute()
-        {
-            totalLogger = new StringBuilder("전투 매칭 로깅\n");
-
-            RunFaction(Faction.Enemy);
-            RunFaction(Faction.Player);
-
-            if (level >= LoggingLevel.Simple || errorAffected)
-            {
-                Logger.Log(totalLogger.ToString());
-                errorAffected = false;
-            }
+            public BattleUnitModel owner;
+            public BattleDiceCardModel card;
+            public BattleUnitModel target;
+            public int slot;
+            public int targetSlot;
+            public bool clash;
+            public long priority;
         }
 
-        private void RunFaction(Faction faction)
+        private readonly Faction faction;
+        private readonly Dictionary<BattleUnitModel, HashSet<int>> completed = new Dictionary<BattleUnitModel, HashSet<int>>();
+        private readonly List<Plan> plans = new List<Plan>();
+        private readonly Dictionary<BattleUnitModel, float> dmgDic = new Dictionary<BattleUnitModel, float>();
+        private List<BattleUnitModel> units;
+        private bool dirty = true;
+        private bool prepared;
+
+        internal AutoBattleImpl(Faction faction) { this.faction = faction; }
+        internal static IHandleAutoCardUse Policy(BattleUnitModel unit) => BattleInterfaceCache.Of<IHandleAutoCardUse>(unit).FirstOrDefault();
+        internal static bool Handles(BattleUnitModel unit) => unit != null &&
+            (unit.faction != Faction.Player || !unit.IsControlable()) && Policy(unit) != null;
+        private static bool CanAct(BattleUnitModel unit) => !unit.IsDead() && unit.IsActionable() &&
+            unit.turnState != BattleUnitTurnState.BREAK && !unit.IsBreakLifeZero() && !unit.IsKnockout();
+        internal static bool EmptySlot(BattleUnitModel unit, int slot) => slot >= 0 &&
+            slot < unit.speedDiceResult.Count && slot < unit.cardSlotDetail.cardAry.Count &&
+            !unit.speedDiceResult[slot].breaked && unit.cardSlotDetail.cardAry[slot] == null;
+        private bool IsCompleted(BattleUnitModel owner, int slot) => completed.TryGetValue(owner, out var slots) && slots.Contains(slot);
+
+        internal void Complete(BattleUnitModel owner, int slot)
         {
-            foreach (var card in GetTargetCards(faction))
-            {
-                enemyCards.Add(card);
-                // 롤랑 같은 경우처럼 마지막 다이스에만 지정불가가 걸릴때 그것도 합하는 경우가 있음
-                if (!card.owner.view.speedDiceSetterUI.GetSpeedDiceByIndex(card.slotOrder).CheckBlockDice())
-                {
-                    parryTargets[card] = new List<ParryableTarget>();
-                }
-            }
+            if (!completed.TryGetValue(owner, out var slots)) completed[owner] = slots = new HashSet<int>();
+            slots.Add(slot);
+            // Reconcile all remaining choices from the real board, including changes
+            // to other cards, costs and buffs made by OnApplyCard or other mods.
+            dirty = true;
+        }
+        internal void Invalidate() { dirty = true; }
+        internal Plan GetPlan(BattleUnitModel owner, int slot)
+        {
+            if (!CanAct(owner) || !EmptySlot(owner, slot) || IsCompleted(owner, slot)) return null;
+            if (!prepared) { prepared = true; UseInstanceCards(); }
+            if (dirty) Rebuild();
+            return plans.Find(x => x.owner == owner && x.slot == slot);
+        }
 
-            allyOwners.AddRange(GetCustomSetterOwners(faction));
+        private static bool Available(BattleUnitModel owner, BattleDiceCardModel card) =>
+            owner.IsCardChoosable(card) && owner.CheckCardAvailableForPlayer(card);
+        internal static bool CanTarget(BattleUnitModel owner, BattleDiceCardModel card, BattleUnitModel target, int slot) =>
+            target != null && !target.IsDead() && slot >= 0 && slot < target.speedDiceResult.Count &&
+            slot < target.cardSlotDetail.cardAry.Count &&
+            (slot != target.speedDiceResult.Count - 1 || slot == 0 || target.IsTargetable_theLast()) &&
+            BattleUnitModel.IsTargetableUnit(card, owner, target, slot) && target != owner &&
+            (target.faction != owner.faction || owner.TeamKill() || owner.GetFixedTargets().Contains(target));
+        private static bool OrdinaryAttack(BattleDiceCardModel card)
+        {
+            var spec = card.GetSpec();
+            return spec.Ranged != CardRange.Instance && spec.Ranged != CardRange.FarArea &&
+                spec.Ranged != CardRange.FarAreaEach && spec.affection != CardAffection.TeamNear;
+        }
+        private static bool ExpectedClash(BattleUnitModel owner, BattleDiceCardModel card, int slot, BattleUnitModel target, int targetSlot)
+        {
+            var other = target.cardSlotDetail.cardAry[targetSlot];
+            return other != null && OrdinaryAttack(card) && OrdinaryAttack(other.card) &&
+                ((other.target == owner && other.targetSlotOrder == slot) || owner.CanChangeAttackTarget(target, slot, targetSlot));
+        }
+        private List<BattleUnitModel> Enemies(CustomSetterOwner state, BattleDiceCardModel card) => units.Where(x =>
+            x.faction != state.owner.faction && Enumerable.Range(0, x.speedDiceResult.Count).Any(i => CanTarget(state.owner, card, x, i))).ToList();
+        private List<BattleUnitModel> Allies(CustomSetterOwner state) => units.Where(x => x.faction == state.owner.faction).ToList();
 
-            // 아군 제어가능 아군이 있을때만 판단
-            if (allyOwners.Count > 0)
-            {
-                foreach (var allyOwner in allyOwners)
-                {
-                    ExecuteInstance(allyOwner, allyOwner.owner.allyCardDetail._cardInHand);
-                    ExecuteInstance(allyOwner, allyOwner.owner.personalEgoDetail._cardInHand);
-                }
-
-                ExecuteParrying();
-
-                ExecuteOneSide();
-            }
-
-            allyOwners.Clear();
-            enemyCards.Clear();
-            parryTargets.Clear();
+        private void Rebuild()
+        {
+            plans.Clear();
             dmgDic.Clear();
-        }
-
-        /// <summary>
-        /// 현재 활동중인 적들이 사용하는 전체 카드의 정보
-        /// </summary>
-        /// <returns></returns>
-        private IEnumerable<BattlePlayingCardDataInUnitModel> GetTargetCards(Faction faction)
-        {
-            foreach (var enemy in BattleObjectManager.instance.GetList())
-            {
-                if (enemy.IsDead() || enemy.faction == faction) continue;
-                foreach (var card in enemy.cardSlotDetail.cardAry)
-                {
-                    if (card != null) yield return card;
-                }
-                // 남은 hp
-                var minHp = enemy.GetMinHp();
-                if (minHp < 0) minHp = 0;
-                dmgDic[enemy] = enemy.hp - minHp;
-                totalLogger.AppendLine($"팩션 {faction}, 대상 적 : {enemy.UnitData.unitData.name}");
-            }
-        }
-
-        /// <summary>
-        /// <see cref="IHandleAutoCardUse"/> 를 보유한 사서 목록을 조회하고, 각 사서의 속도 주사위가 어떤 책장과 합할수 있는지를 처리
-        /// </summary>
-        /// <returns></returns>
-        private IEnumerable<CustomSetterOwner> GetCustomSetterOwners(Faction faction)
-        {
-            foreach (var unit in BattleObjectManager.instance.GetList())
-            {
-                if (unit.faction != faction || unit.turnState == BattleUnitTurnState.BREAK || unit.IsDead() || !unit.IsActionable() || (unit.IsControlable() && faction == Faction.Player)) continue;
-                var setter = BattleInterfaceCache.Of<IHandleAutoCardUse>(unit).FirstOrDefault();
-                if (setter is null) continue;
-                var owner = new CustomSetterOwner { owner = unit, setter = setter };
-                for (int i = 0; i < unit.speedDiceCount; i++)
-                {
-                    foreach (var card in enemyCards)
+            units = BattleObjectManager.instance.GetList().Where(x => !x.IsDead()).ToList();
+            foreach (var unit in units) dmgDic[unit] = Math.Max(0, unit.hp - Math.Max(0, unit.GetMinHp()));
+            // Committed choices (including vanilla/other mods) are immutable inputs.
+            foreach (var unit in units.Where(x => x.faction == faction))
+                foreach (var played in unit.cardSlotDetail.cardAry.Where(x => x != null))
+                    if (played.target != null && dmgDic.ContainsKey(played.target))
                     {
-                        if (!parryTargets.ContainsKey(card)) continue;
-                        if (!card.owner.IsTargetable(unit)) continue;
+                        var other = played.target.cardSlotDetail.cardAry.ElementAtOrDefault(played.targetSlotOrder);
+                        var clash = other != null && other.target == unit && other.targetSlotOrder == played.slotOrder &&
+                            OrdinaryAttack(played.card) && OrdinaryAttack(other.card);
+                        dmgDic[played.target] = Math.Max(0, GetRemainHp(played.target, dmgDic[played.target], played.card, clash, out _));
+                    }
+            var owners = new List<CustomSetterOwner>();
+            foreach (var unit in units.Where(x => x.faction == faction && Handles(x) && CanAct(x)))
+                owners.Add(new CustomSetterOwner {
+                    owner = unit, setter = Policy(unit), light = unit.PlayPoint - unit.cardSlotDetail.ReservedPlayPoint,
+                    slots = Enumerable.Range(0, unit.speedDiceResult.Count).Where(i => EmptySlot(unit, i) && !IsCompleted(unit, i)).ToList(),
+                    hand = unit.allyCardDetail.GetHand().Where(c => c.GetSpec().Ranged != CardRange.Instance && Available(unit, c)).ToList()
+                });
 
-                        try
+            var claimed = new HashSet<BattlePlayingCardDataInUnitModel>();
+            foreach (var owner in units.Where(x => x.faction == faction))
+                foreach (var played in owner.cardSlotDetail.cardAry.Where(x => x != null && x.target != null))
+                {
+                    var other = played.target.cardSlotDetail.cardAry.ElementAtOrDefault(played.targetSlotOrder);
+                    if (other != null && other.target == owner && other.targetSlotOrder == played.slotOrder &&
+                        OrdinaryAttack(played.card) && OrdinaryAttack(other.card)) claimed.Add(other);
+                }
+            var attacks = units.Where(x => x.faction != faction).SelectMany(x => x.cardSlotDetail.cardAry)
+                .Where(x => x != null).OrderByDescending(x => x.speedDiceResultValue).ToList();
+            foreach (var attack in attacks)
+            {
+                if (claimed.Contains(attack)) continue;
+                Plan best = null;
+                CustomSetterOwner bestOwner = null;
+                foreach (var state in owners)
+                    foreach (var slot in state.slots)
+                        foreach (var card in state.hand)
                         {
-                            if (card.target == unit && card.targetSlotOrder == i)
+                            if (!Eligible(state, card, slot) || !CanTarget(state.owner, card, attack.owner, attack.slotOrder) ||
+                                !ExpectedClash(state.owner, card, slot, attack.owner, attack.slotOrder)) continue;
+                            var score = GetParryingPriority(card, state, slot, attack);
+                            if (best == null || score > best.priority)
                             {
-                                parryTargets[card].Add(new ParryableTarget { owner = owner, index = i });
-                            }
-                            else if (unit.CanChangeAttackTarget(card.owner, i, card.slotOrder))
-                            {
-                                parryTargets[card].Add(new ParryableTarget { owner = owner, index = i });
+                                best = NewPlan(state, card, slot, attack.owner, attack.slotOrder, true, score);
+                                bestOwner = state;
                             }
                         }
-                        catch (ArgumentOutOfRangeException)
-                        {
-                            // big dll conflict
-                            // 선택 전에 추가되는거므로 의도된 문제니 무시
-                        }
-                    }
-                }
-                yield return owner;
+                if (best != null) { Reserve(bestOwner, best); claimed.Add(attack); }
             }
-        }
-    
-        /// <summary>
-        /// 손에 있는 장착시 발동 책장을 모두 사용한다. 한장이라도 사용했다면 다시 호출해서 추가 발동이 있는지 확인한다.
-        /// </summary>
-        /// <param name="owner"></param>
-        /// <returns></returns>
-        private void ExecuteInstance(CustomSetterOwner owner, List<BattleDiceCardModel> cards)
-        {
-            List<PriorityInfo> priorities = new List<PriorityInfo>();
-            var speed = owner.owner.GetSpeed(0);
-
-            foreach (var card in cards)
-            {
-                if (card._script?.OnChooseCard(owner.owner) == false) continue;
-                if (card.GetSpec().Ranged != CardRange.Instance) continue;
-                if (card.GetCost() > owner.owner.PlayPoint) continue;
-
-                var targetableAllys = new List<BattleUnitModel>();
-                var targetableEnemys = new List<BattleUnitModel>();
-
-                foreach (var unit in BattleObjectManager.instance.GetList())
+            foreach (var state in owners)
+                foreach (var slot in state.slots.ToArray())
                 {
-                    if (unit.IsDead()) continue;
-                    if (!BattleUnitModel.IsTargetableUnit(card, owner.owner, unit)) continue;
-                    if (unit.faction != owner.owner.faction) targetableEnemys.Add(unit);
-                    else targetableAllys.Add(unit);
-                }
-
-                foreach (var unit in targetableEnemys)
-                {
-                    var priority = owner.setter.GetCustomizedCardPriority(owner.owner, card, speed, 0, unit, 0, null, false, targetableEnemys, targetableAllys);
-                    priorities.Add(new PriorityInfo { target = unit, card = card, priority = priority });
-                }
-            }
-
-            if (priorities.Count > 0)
-            {
-                var target = priorities.OrderByDescending(d => (d.priority * 10000) + RandomUtil.Range(1, 5)).FirstOrDefault();
-                owner.owner.SetCurrentOrder(0);
-                owner.owner.cardSlotDetail.AddCard(target.card, target.target, 0);
-                ExecuteInstance(owner, cards);
-                return;
-            }
-        }
-    
-        /// <summary>
-        /// 합 처리
-        /// </summary>
-        private void ExecuteParrying()
-        {
-            PriorityInfo current = new PriorityInfo();
-            current.priority = int.MinValue;
-            var keys = parryTargets.Keys.OrderByDescending(d => d.speedDiceResultValue).ToList();
-
-            for (int i = 0; i < keys.Count; i++)
-            {
-                var targetCard = keys[i];
-                var errorLogger = new StringBuilder();
-                int c = 0;
-                try
-                {
-                    foreach (var parry in parryTargets[targetCard])
+                    Plan best = null;
+                    // Prefer an unclaimed target, but do not leave a usable slot
+                    // empty when every remaining attack would naturally redirect a
+                    // clash. AddCard's resulting redirection remains authoritative.
+                    for (var allowRedirect = 0; allowRedirect < 2 && best == null; allowRedirect++)
+                    foreach (var card in state.hand)
                     {
-                        errorLogger.AppendLine($"패링 순회 : {parry?.owner?.owner?.UnitData?.unitData?.name}");
-                        foreach (var card in parry.owner.owner.allyCardDetail._cardInHand)
-                        {
-                            var priority = GetParryingPriority(card, parry.owner, parry.index, targetCard);
-                            if (priority > current.priority)
+                        if (!Eligible(state, card, slot)) continue;
+                        foreach (var target in units)
+                            for (var targetSlot = 0; targetSlot < target.speedDiceResult.Count; targetSlot++)
                             {
-                                current = new PriorityInfo { card = card, priority = priority, target = targetCard.owner, index = parry.index };
+                                if (!CanTarget(state.owner, card, target, targetSlot)) continue;
+                                var clash = ExpectedClash(state.owner, card, slot, target, targetSlot);
+                                var targetCard = target.cardSlotDetail.cardAry[targetSlot];
+                                if (allowRedirect == 0 && clash && claimed.Contains(targetCard)) continue;
+                                var score = clash ? GetParryingPriority(card, state, slot, targetCard) :
+                                    GetOneSidePriority(card, state, slot, target, targetSlot, state.owner.MaxPlayPoint, false);
+                                if (best == null || score > best.priority)
+                                    best = NewPlan(state, card, slot, target, targetSlot, clash, score);
                             }
-                        }
                     }
-                    c = 1;
-                    if (current == null)
+                    if (best != null)
                     {
-                        errorLogger.AppendLine("커런트가 널 ??");
+                        Reserve(state, best);
+                        if (best.clash) claimed.Add(best.target.cardSlotDetail.cardAry[best.targetSlot]);
                     }
-                    if (current.card is null)
-                    {
-                        totalLogger.AppendLine($"대상 합 불가 : {targetCard.owner.index}.{targetCard.owner.UnitData.unitData.name}->{targetCard.slotOrder}:{targetCard.card.GetName()}");
-                    }
-                    else
-                    {
-                        c = 2;
-                        if (current.card.owner == null)
-                        {
-                            errorLogger.AppendLine($"카드는 있는데 주인이 없음 ?? {current.card.GetName()}");
-                        }
-                        current.card.owner.SetCurrentOrder(current.index);
-                        c = 8;
-                        current.card.owner.cardSlotDetail.AddCard(current.card, targetCard.owner, targetCard.slotOrder);
-                        c = 9;
-                        totalLogger.AppendLine($"대상 합 실행 : {targetCard.owner.index}.{targetCard.owner.UnitData.unitData.name}->{targetCard.slotOrder}:{targetCard.card.GetName()} vs {current.card.owner.index}.{current.card.owner.UnitData.unitData.name}->{current.index}:{current.card.GetName()}");
-                        c = 10;
-                        parryTargets.Remove(targetCard);
-                        c = 3;
-                        var nextHp = GetRemainHp(targetCard.owner, dmgDic[targetCard.owner], current.card, true, out int overusedDice);
-                        if (nextHp <= 0) nextHp = 0;
-                        dmgDic[targetCard.owner] = nextHp;
-                        c = 4;
-                        for (int j = i + 1; j < keys.Count; j++)
-                        {
-                            parryTargets[keys[j]].RemoveAll(target => target.index == current.index && target.owner.owner == current.card.owner);
-                        }
-                        c = 5;
-                    }
-                    current = new PriorityInfo();
-                    c = 6;
                 }
-                catch (NullReferenceException)
-                {
-                    totalLogger.AppendLine($"합 에러 발생 : {targetCard?.card?.GetName()} // {c}");
-                    totalLogger.AppendLine(errorLogger.ToString());
-                    errorAffected = true;
-                }
-
-            }
+            dirty = false;
+        }
+        private static bool Eligible(CustomSetterOwner state, BattleDiceCardModel card, int slot) => card.GetCost() <= state.light &&
+            (state.owner.faction != Faction.Enemy || card.GetPriority(state.owner.GetSpeed(slot)) > -10);
+        private static Plan NewPlan(CustomSetterOwner state, BattleDiceCardModel card, int slot, BattleUnitModel target, int targetSlot, bool clash, long score) =>
+            new Plan { owner = state.owner, card = card, slot = slot, target = target, targetSlot = targetSlot, clash = clash, priority = score };
+        private void Reserve(CustomSetterOwner state, Plan plan)
+        {
+            plans.Add(plan);
+            state.hand.Remove(plan.card);
+            state.slots.Remove(plan.slot);
+            state.light -= plan.card.GetCost();
+            dmgDic[plan.target] = Math.Max(0, GetRemainHp(plan.target, dmgDic[plan.target], plan.card, plan.clash, out _));
         }
 
-        /// <summary>
-        /// 합 이후 일방공격 처리
-        /// </summary>
-        private void ExecuteOneSide()
+        // Vanilla auto selection excludes Instance cards, so retain this small prepass.
+        private void UseInstanceCards()
         {
-            foreach (var ally in allyOwners)
+            foreach (var owner in BattleObjectManager.instance.GetList().Where(x => x.faction == faction && Handles(x) && CanAct(x)).ToArray())
             {
-                for (int i = 0; i < ally.owner.speedDiceCount; i++)
+                if (owner.speedDiceResult.Count == 0) continue;
+                var attempted = new HashSet<BattleDiceCardModel>();
+                for (var count = 0; count < 128 && CanAct(owner); count++)
                 {
-                    int c = 0;
+                    var instanceSlot = Enumerable.Range(0, owner.speedDiceResult.Count)
+                        .Where(i => EmptySlot(owner, i) && !IsCompleted(owner, i)).DefaultIfEmpty(-1).First();
+                    if (instanceSlot < 0) break;
+                    Plan best = null;
+                    var alive = BattleObjectManager.instance.GetList().Where(x => !x.IsDead()).ToList();
+                    var hand = owner.allyCardDetail.GetHand().Concat(owner.personalEgoDetail._cardInHand).Distinct().ToArray();
+                    foreach (var card in hand)
+                    {
+                        if (attempted.Contains(card) || card.GetSpec().Ranged != CardRange.Instance || !Available(owner, card)) continue;
+                        var targets = alive.Where(x => BattleUnitModel.IsTargetableUnit(card, owner, x)).ToList();
+                        foreach (var target in targets)
+                        {
+                            var score = (long)Policy(owner).GetCustomizedCardPriority(owner, card, owner.GetSpeed(instanceSlot), instanceSlot, target, 0, null,
+                                false, targets.Where(x => x.faction != faction).ToList(), alive.Where(x => x.faction == faction).ToList()) * 10000 + RandomUtil.Range(1, 5);
+                            if (best == null || score > best.priority) best = new Plan { owner = owner, card = card, target = target, priority = score };
+                        }
+                    }
+                    if (best == null) break;
+                    // Effects may return a card to hand; do not recursively retry it.
+                    attempted.Add(best.card);
+                    var order = owner.cardOrder;
                     try
                     {
-                        
-                        if (ally.owner.cardSlotDetail.cardAry[i] != null || ally.owner.speedDiceResult[i].breaked) continue;
-                        PriorityInfo current = new PriorityInfo();
-                        current.priority = int.MinValue;
-                        c = 1;
-                        // 실제로는 책장이 지정되지 않은 슬롯이라던가 그런걸 감안해야겠지만 일단 0으로 고정
-                        var targetSlotOrder = 0;
-                        // 타겟이 불가능한데도 공격할수 있음
-                        var targetables = dmgDic.Keys.Where(d => d.IsTargetable(ally.owner)).ToList();
-                        c = 2;
-                        var maxPlayPoint = ally.owner.MaxPlayPoint;
-                        foreach (var flag in new bool[] { false, true })
-                        {
-                            foreach (var card in ally.owner.allyCardDetail._cardInHand)
-                            {
-                                foreach (var enemy in targetables)
-                                {
-                                    var p = GetOneSidePriority(card, ally, i, enemy, targetSlotOrder, maxPlayPoint, flag);
-                                    if (current.priority < p)
-                                    {
-                                        current = new PriorityInfo { target = enemy, index = i, priority = p, card = card };
-                                    }
-                                }
-                            }
-                            if (current.card != null) break;
-                        }
-                        c = 3;
-                        if (current.card != null)
-                        {
-                            var targetCard = current.card;
-                            var lastIdx = current.target.speedDiceCount - 1;
-                            targetSlotOrder = RandomUtil.Range(0, lastIdx);
-                            if (targetSlotOrder > 0 && targetSlotOrder == lastIdx && !current.target.IsTargetable_theLast())
-                            {
-                                targetSlotOrder--;
-                            }
-                            c = 4;
-                            BattleUnitModel originTarget = null;
-                            int originTargetSlotOrder = 0;
-                            var originTargetCard = current.target.cardSlotDetail.cardAry[targetSlotOrder];
-                            if (originTargetCard != null)
-                            {
-                                originTarget = originTargetCard.target;
-                                originTargetSlotOrder = originTargetCard.targetSlotOrder;
-                            }
-                            c = 5;
-                            ally.owner.SetCurrentOrder(i);
-                            ally.owner.cardSlotDetail.AddCard(current.card, current.target, targetSlotOrder);
-                            if (originTargetCard != null)
-                            {
-                                originTargetCard.target = originTarget;
-                                originTargetCard.targetSlotOrder = originTargetSlotOrder;
-                            }
-                            c = 6;
-                            if (current == null) c = 9;
-                            var currentHp = dmgDic[current.target];
-                            var nextHp = GetRemainHp(current.target, currentHp, current.card, true, out int overusedDice);
-                            if (nextHp <= 0) nextHp = 0;
-                            c = 7;
-                            if (targetCard == null) c = 10;
-                            if (targetCard != null && targetCard.owner == null) c = 11;
-                            if (c == 11) totalLogger.AppendLine($"타겟 카드는 있는데 주인이 없음 ?? {targetCard?.GetName()}");
-                            totalLogger.AppendLine($"대상 일방 공격 : {targetCard.owner.index}.{targetCard.owner.UnitData.unitData.name}->{i}번 슬롯. {current.card.GetName()} --> {current.target.index}.{current.target.UnitData.unitData.name}.{targetSlotOrder}번 슬롯, Hp 변동 예상 : {currentHp} --> {nextHp}");
-                            dmgDic[current.target] = nextHp;
-                        }
-                        else
-                        {
-                            c = 8;
-                            totalLogger.AppendLine($"대상 일방 공격 스킵 : {ally.owner.index}.{ally.owner.UnitData.unitData.name}->{i}번 슬롯");
-                        }
+                        owner.SetCurrentOrder(instanceSlot);
+                        var forcedTarget = owner.ChangeAttackTarget(best.card, instanceSlot);
+                        owner.cardSlotDetail.AddCard(best.card, forcedTarget ?? best.target, 0);
                     }
-                    catch (NullReferenceException)
-                    {
-                        totalLogger.AppendLine($"일방 에러 발생 : {ally.owner?.UnitData?.unitData?.name} // {i} // {c}");
-                        errorAffected = true;
-                    }
-
+                    finally { owner.SetCurrentOrder(order); }
                 }
             }
         }
 
-
-        private int GetParryingPriority(BattleDiceCardModel card, CustomSetterOwner owner, int myIndex, BattlePlayingCardDataInUnitModel targetCard)
+        private long GetParryingPriority(BattleDiceCardModel card, CustomSetterOwner owner, int myIndex, BattlePlayingCardDataInUnitModel targetCard)
         {
-            var initialCustomPriority = owner.setter.GetCustomizedCardPriority(owner.owner, card, owner.owner.GetSpeed(myIndex), myIndex, targetCard.owner, targetCard.slotOrder, targetCard.card, true, null, null);
-            var priority = initialCustomPriority * 100;
+            var initialCustomPriority = owner.setter.GetCustomizedCardPriority(owner.owner, card, owner.owner.GetSpeed(myIndex), myIndex, targetCard.owner, targetCard.slotOrder, targetCard.card, true, Enemies(owner, card), Allies(owner));
+            var priority = (long)initialCustomPriority * 100;
             var cost = card.GetCost();
-            var remainPlayPoint = owner.owner.PlayPoint - owner.owner.cardSlotDetail.ReservedPlayPoint;
+            var remainPlayPoint = owner.light;
 
-            // 상세 로깅 시작
-            LoggingIfFull($"  [GetParryingPriority] 카드: {card.GetName()} ({owner.owner.UnitData.unitData.name} S{myIndex}) vs {targetCard.card.GetName()} ({targetCard.owner.UnitData.unitData.name} S{targetCard.slotOrder})");
-            LoggingIfFull($"    - 초기 커스텀 우선도: {initialCustomPriority} (적용값: {priority})");
-            LoggingIfFull($"    - 카드 비용: {cost}, 남은 빛: {remainPlayPoint}");
 
             if (cost > remainPlayPoint)
             {
-                LoggingIfFull($"    - 빛 부족! 최종 우선도: -10000 (조기 반환)");
                 return int.MinValue;
             }
 
             var flag = false;
-            var lightLogicReason = "";
-            var remainCount = owner.owner.speedDiceCount - owner.owner.cardSlotDetail.cardAry.Count(d => d != null);
+            var remainCount = owner.slots.Count;
             if (cost == 0 || remainCount == 1)
             {
                 flag = true;
-                lightLogicReason = remainCount == 1 ? "마지막 슬롯" : "0코스트 카드";
             }
             else
             {
-                var index = owner.owner.allyCardDetail._cardInHand.IndexOf(card);
-                bool foundNextCard = false;
-                for (int i = 0; i < owner.owner.allyCardDetail._cardInHand.Count; i++)
+                var index = owner.hand.IndexOf(card);
+                for (int i = 0; i < owner.hand.Count; i++)
                 {
                     if (i == index) continue;
 
-                    if (owner.owner.allyCardDetail._cardInHand[i].GetCost() + cost <= remainPlayPoint)
+                    if (owner.hand[i].GetCost() + cost <= remainPlayPoint)
                     {
                         flag = true;
-                        foundNextCard = true;
-                        lightLogicReason = $"다음 카드 ({owner.owner.allyCardDetail._cardInHand[i].GetName()}) 사용 가능";
                         break;
                     }
                 }
-                if (!foundNextCard) lightLogicReason = "다음 카드 사용 불가능";
             }
-            LoggingIfFull($"    - 빛 관리 flag: {flag} (사유: {lightLogicReason})");
 
-            var lightPriorityAdjustment = 0;
             if (!flag)
             {
                 priority -= 550;
-                lightPriorityAdjustment = -550;
             }
             else
             {
                 var delta = (owner.owner.speedDiceCount - myIndex) * 20;
                 var costBonus = cost * delta;
                 priority += costBonus;
-                lightPriorityAdjustment = costBonus;
-                LoggingIfFull($"    - Delta 값: {delta}");
             }
-            LoggingIfFull($"    - 빛 관리로 인한 우선도 변경: {lightPriorityAdjustment}");
 
             var diceDiffPriorityAdjustment = GetAdjustmantPostiveRoll(card, targetCard.card);
             priority += diceDiffPriorityAdjustment;
 
-            LoggingIfFull($"    - (우선도 변경: {diceDiffPriorityAdjustment})");
-            LoggingIfFull($"    - 최종 우선도 (랜덤 제외): {priority}");
 
             return priority + RandomUtil.Range(1, 5);
         }
@@ -463,7 +302,7 @@ namespace LibraryOfAngela.Battle
                 if (myDices.Count <= i && targetDices.Count > i && targetDices[i].Type == BehaviourType.Atk) priority -= 80;
                 // 내가 일방을 할 상황이면 우선도 증가
                 if (targetDices.Count <= i && myDices.Count > i && myDices[i].Type == BehaviourType.Atk) priority += 80;
-                
+
                 // 둘다 이 인덱스에서 주사위를 굴릴 수 있을때
                 if (myDices.Count > i && targetDices.Count > i)
                 {
@@ -476,18 +315,18 @@ namespace LibraryOfAngela.Battle
                     else if (myValue < targetValue) priority -= 30;
                     // 비길거같은데 나랑 상대 둘다 가드라 감정 못벌거같으면 우선도 감소
                     else if (myDices[i].Detail == BehaviourDetail.Guard || myDices[i].Detail == BehaviourDetail.Guard) priority -= 30;
-                } 
+                }
             }
 
             return priority;
         }
 
-        private int GetOneSidePriority(BattleDiceCardModel card, CustomSetterOwner owner, int myIndex, BattleUnitModel target, int targetIndex, int maxPlayPoint, bool forceUseEvenIfEnemyZero)
+        private long GetOneSidePriority(BattleDiceCardModel card, CustomSetterOwner owner, int myIndex, BattleUnitModel target, int targetIndex, int maxPlayPoint, bool forceUseEvenIfEnemyZero)
         {
             // 기본 스크립트 우선도
-            var priority = owner.setter.GetCustomizedCardPriority(owner.owner, card, owner.owner.GetSpeed(myIndex), myIndex, target, targetIndex, null, false, null, null) * 100;
+            var priority = (long)owner.setter.GetCustomizedCardPriority(owner.owner, card, owner.owner.GetSpeed(myIndex), myIndex, target, targetIndex, target.cardSlotDetail.cardAry[targetIndex]?.card, false, Enemies(owner, card), Allies(owner)) * 100;
             var cost = card.GetCost();
-            var remainPlayPoint = owner.owner.PlayPoint - owner.owner.cardSlotDetail.ReservedPlayPoint;
+            var remainPlayPoint = owner.light;
 
             if (cost > remainPlayPoint) return int.MinValue;
 
@@ -499,7 +338,7 @@ namespace LibraryOfAngela.Battle
                 // 소모된 빛이 2 미만이라면 그냥 책장을 사용하지 않는다.
                 // 이게 0, 1번째여도 무시한다.
                 if (maxPlayPoint - remainPlayPoint < 2 || myIndex <= 1) return -10000;
- 
+
                 var keywords = BattleCardAbilityDescXmlList.Instance.GetAbilityKeywords_byScript(card.XmlData.Script);
                 foreach (var sc in keywords)
                 {
@@ -515,16 +354,16 @@ namespace LibraryOfAngela.Battle
 
             var flag = false;
             // 마지막 속도 주사위 슬롯이라면 비용을 특별히 고려하지 않는다.
-            if (myIndex == owner.owner.speedDiceCount - 1 || cost == 0)
+            if (owner.slots.Count == 1 || cost == 0)
             {
                 flag = true;
             }
             else
             {
-                var index = owner.owner.allyCardDetail._cardInHand.IndexOf(card);
-                for (int i = index + 1; i < owner.owner.allyCardDetail._cardInHand.Count; i++)
+                var index = owner.hand.IndexOf(card);
+                for (int i = 0; i < owner.hand.Count; i++)
                 {
-                    if (owner.owner.allyCardDetail._cardInHand[i].GetCost() + cost < remainPlayPoint)
+                    if (i != index && owner.hand[i].GetCost() + cost <= remainPlayPoint)
                     {
                         flag = true;
                         break;
@@ -574,7 +413,7 @@ namespace LibraryOfAngela.Battle
                 }
             }
 
-        
+
             var expectedRemainHp = GetRemainHp(target, currentRemainHp, card, false, out int overusedDice);
 
             // 주사위가 낭비될것같다면 우선도를 감소시킨다.
@@ -612,7 +451,7 @@ namespace LibraryOfAngela.Battle
             overusedDice = 0;
             foreach (var b in card.XmlData.DiceBehaviourList)
             {
-                
+
                 if (b.Type == BehaviourType.Atk)
                 {
                     if (currentHp <= 0)
@@ -628,10 +467,5 @@ namespace LibraryOfAngela.Battle
             return currentHp;
         }
 
-        private void LoggingIfFull(string log)
-        {
-            if (level < LoggingLevel.Full) return;
-            totalLogger.AppendLine(log);
-        }
     }
 }

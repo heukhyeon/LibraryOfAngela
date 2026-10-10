@@ -1,0 +1,16 @@
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <AssemblyName>VerifyGameIL</AssemblyName><OutputPath>bin\</OutputPath>
+    <LangVersion>7.3</LangVersion>
+    <HarmonyPath Condition="'$(HarmonyPath)' == ''">C:\Program Files (x86)\Steam\steamapps\workshop\content\1256670\3727623705\Assemblies\0Harmony.dll</HarmonyPath>
+    <HarmonyDirectory>$([System.IO.Path]::GetDirectoryName('$(HarmonyPath)'))</HarmonyDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System"/><Reference Include="System.Core"/>
+    <Reference Include="0Harmony"><HintPath>$(HarmonyPath)</HintPath></Reference>
+    <Compile Include="VerifyGameIL.cs"/><None Include="App.config"/>
+    <Content Include="$(HarmonyDirectory)\Mono*.dll"><Link>%(Filename)%(Extension)</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+</Project>
