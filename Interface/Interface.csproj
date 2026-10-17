@@ -118,6 +118,7 @@
     <Compile Include="Interface-External\IHandleBeforeGiveDamage.cs" />
     <Compile Include="Interface-External\IHandleDequeueDice.cs" />
     <Compile Include="Interface-External\IHandleEmotionCoinAdder.cs" />
+    <Compile Include="Interface-External\IHandleUniteCard.cs" />
     <Compile Include="Interface-External\INotEnoughDiscardListener.cs" />
     <Compile Include="Interface-External\IHandleAutoCardUse.cs" />
     <Compile Include="Interface-External\IDiceCardSelfAbilityOnWaveStart.cs" />

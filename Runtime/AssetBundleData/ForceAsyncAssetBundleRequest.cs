@@ -10,9 +10,45 @@ namespace LibraryOfAngela.AssetBundleData
     class ForceAsyncAssetBundleRequest
     {
         private bool isRunning;
+        public bool IsDestroyed()
+        {
+            return !initRequire && requestTypes.Count > 0 &&
+                requestTypes.All(type => !LoAAssetBundles.Instance.HasActiveAssetBundleRequest(type));
+        }
+
+        public void Initialize()
+        {
+            initRequire = true;
+            try
+            {
+                CheckInvitation();
+                CheckUnits();
+            }
+            finally
+            {
+                CompleteInitialization();
+            }
+        }
+
+        public void Cancel()
+        {
+            if (isRunning || initRequire)
+                Logger.Log($"Cancel Previous AssetBundle Request : {targetInvitationId}, Remaining : {requestCount}");
+            reserved = false;
+            isRunning = false;
+            if (ReferenceEquals(LoAAssetBundles.Instance.currentForceSyncRequest, this))
+                LoAAssetBundles.Instance.currentForceSyncRequest = null;
+        }
+
+        public void CompleteInitialization()
+        {
+            initRequire = false;
+            if (requestCount == 0) Complete();
+        }
+
         public bool initRequire;
         private Stopwatch watch;
-        private List<AssetBundleType> requestTypes;
+        private readonly List<AssetBundleType> requestTypes = new List<AssetBundleType>();
         private int requestCount;
         private bool reserved;
         public LorId targetInvitationId;
@@ -34,20 +70,9 @@ namespace LibraryOfAngela.AssetBundleData
             if (!id.IsWorkshop()) return;
             targetInvitationId = id;
             var key = new AssetBundleType.Invitation(id);
-            var response = LoAAssetBundles.Instance.LoadAssetBundle(key, onComplete: (isAsync, success) => OnLoaded(isAsync, success));
-
-            if (response.syncAssetBundleCount > 0)
-            {
-                var cnt = response.syncAssetBundleCount - response.syncLoadedAssetBundleCount;
-                if (cnt > 0)
-                {
-                    isRunning = true;
-                    watch = Stopwatch.StartNew();
-                    requestTypes = new List<AssetBundleType>();
-                    requestTypes.Add(key);
-                    requestCount += cnt;
-                }
-            }
+            if (!requestTypes.Contains(key)) requestTypes.Add(key);
+            LoAAssetBundles.Instance.LoadAssetBundle(key, onComplete: OnLoaded,
+                onLoadStart: isAsync => OnLoadStart(isAsync, key));
         }
 
         public void CheckUnits()
@@ -60,55 +85,51 @@ namespace LibraryOfAngela.AssetBundleData
                 var id2 = unit.unitData.bookItem.BookId;
                 if (id2.IsBasic()) continue;
                 var key = new AssetBundleType.CorePage(id2);
-                var response = LoAAssetBundles.Instance.LoadAssetBundle(key, forceAsync: true, onComplete: (isAsync, success)=> OnLoaded(isAsync, success));
-                if (response.syncAssetBundleCount > 0)
-                {
-                    var cnt = response.syncAssetBundleCount - response.syncLoadedAssetBundleCount;
-                    if (cnt > 0)
-                    {
-                        requestCount += cnt;
-                        if (!isRunning)
-                        {
-                            isRunning = true;
-                            watch = Stopwatch.StartNew();
-                            requestTypes = new List<AssetBundleType>();
-                        }
-                        requestTypes.Add(key);
-                    }
-    
-                }
+                if (!requestTypes.Contains(key)) requestTypes.Add(key);
+                LoAAssetBundles.Instance.LoadAssetBundle(key, forceAsync: true, onComplete: OnLoaded,
+                    onLoadStart: isAsync => OnLoadStart(isAsync, key));
+            }
+        }
+
+        private void OnLoadStart(bool isOriginAsync, AssetBundleType key)
+        {
+            if (isOriginAsync) return;
+            requestCount++;
+            isRunning = true;
+            if (watch == null)
+            {
+                watch = Stopwatch.StartNew();
             }
         }
 
         private void OnLoaded(bool isOriginAsync, bool success)
         {
-            if (!isOriginAsync)
+            // Detaching the current request is enough to cancel its late callbacks.
+            if (!ReferenceEquals(LoAAssetBundles.Instance.currentForceSyncRequest, this)) return;
+            if (isOriginAsync) return;
+            requestCount--;
+            if (initRequire) return;
+            if (requestCount == 0) Complete();
+            else Logger.Log("Remain Sync AssetBundle Count :" + requestCount);
+        }
+
+        private void Complete()
+        {
+            if (!ReferenceEquals(LoAAssetBundles.Instance.currentForceSyncRequest, this)) return;
+            LoAAssetBundles.Instance.currentForceSyncRequest = null;
+            isRunning = false;
+            if (watch != null)
             {
-                requestCount--;
-                if (requestCount == 0)
-                {
-                    LoAAssetBundles.Instance.currentForceSyncRequest = default(ForceAsyncAssetBundleRequest);
-                    isRunning = false;
-                    watch.Stop();
-                    var logger = new StringBuilder($"Invitation Load AssetBundle Duration : {(watch.ElapsedMilliseconds / 1000.0)}s\n");
-                    logger.AppendLine("Loaded AssetBundleType:");
-                    foreach (var d in requestTypes)
-                    {
-                        logger.Append("-");
-                        logger.Append(d.ToString());
-                        logger.Append("\n");
-                    }
-                    Logger.Log(logger.ToString());
-                    if (reserved)
-                    {
-                        GameSceneManager.Instance.battleScene.gameObject.SetActive(true);
-                        BattleSceneRoot.Instance.StartBattle();
-                    }
-                }
-                else
-                {
-                    Logger.Log("Remain Sync AssetBundle Count :" + requestCount);
-                }
+                watch.Stop();
+                var logger = new StringBuilder($"Invitation Load AssetBundle Duration : {(watch.ElapsedMilliseconds / 1000.0)}s\n");
+                logger.AppendLine("Loaded AssetBundleType:");
+                foreach (var d in requestTypes) logger.AppendLine("-" + d);
+                Logger.Log(logger.ToString());
+            }
+            if (reserved)
+            {
+                GameSceneManager.Instance.battleScene.gameObject.SetActive(true);
+                BattleSceneRoot.Instance.StartBattle();
             }
         }
     }

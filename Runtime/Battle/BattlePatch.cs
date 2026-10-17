@@ -1206,6 +1206,10 @@ namespace LibraryOfAngela.Battle
             {
                 listener.OnUseInstance(card, targetUnit);
             }
+            foreach (var listener in BattleInterfaceCache.Of<IExtensionUseInstance>(unit))
+            {
+                listener.OnUseInstance(unit, card, targetUnit, targetSpeedDiceIndex);
+            }
         }
 
         private static bool OnHandleApplyCard(bool origin, BattlePlayingCardSlotDetail instance)
@@ -1492,6 +1496,34 @@ namespace LibraryOfAngela.Battle
                     __result = true;
                     break;
                 }
+            }
+        }
+
+        [HarmonyPatch(typeof(DiceCardSelfAbilityBase), "get_IsUniteCard")]
+        [HarmonyPostfix]
+        private static void After_get_IsUniteCard(DiceCardSelfAbilityBase __instance, ref bool __result)
+        {
+            try
+            {
+                bool called = false;
+                var c = __instance?.card?.card;
+                var origin = __result;
+                if (__instance?.card?.owner != null)
+                {
+                    foreach (var d in BattleInterfaceCache.Of<IHandleUniteCard>(__instance?.owner))
+                    {
+                        if (d == __instance) called = true;
+                        d.OnCheckUniteCard(c, __instance, origin, ref __result);
+                    }
+                }
+                if (!called && __instance is IHandleUniteCard ab)
+                {
+                    ab.OnCheckUniteCard(c, __instance, origin, ref __result);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
             }
         }
 

@@ -15,7 +15,7 @@ namespace LibraryOfAngela.Interface_External
     /// 
     /// 각각의 함수는 원래 함수를 호출한뒤 targetSpeedDiceIndex 가 붙은 버전을 추가로 호출한다.
     /// </summary>
-    public interface IExtensionUseInstance
+    public interface IExtensionUseInstance : ILoABattleEffect
     {
         bool IsValidTarget(BattleUnitModel unit, BattleDiceCardModel card, BattleUnitModel targetUnit, int targetSpeedDiceIndex);
 

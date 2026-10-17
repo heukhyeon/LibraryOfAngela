@@ -1,0 +1,15 @@
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <AssemblyName>AssetBundleLifecycleTests</AssemblyName><OutputPath>bin\</OutputPath>
+    <LangVersion>7.3</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System"/><Reference Include="System.Core"/>
+    <Compile Include="..\..\Runtime\LoAAssetBundles.cs" Link="LoAAssetBundles.cs"/>
+    <Compile Include="..\..\Runtime\AssetBundleData\ForceAsyncAssetBundleRequest.cs" Link="ForceAsyncAssetBundleRequest.cs"/>
+    <Compile Include="..\..\Interface\AssetBundle.cs" Link="AssetBundle.cs"/>
+    <Compile Include="GameDouble.cs"/><Compile Include="Program.cs"/>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+</Project>

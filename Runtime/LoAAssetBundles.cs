@@ -67,7 +67,8 @@ namespace LibraryOfAngela
 
         HashSet<AssetBundleLoadingType> refCounts = new HashSet<AssetBundleLoadingType>();
         private AssetBundleCreateRequest latestRequest;
-
+        public bool HasActiveRequest => Bundle != null || (latestRequest != null &&
+            (!latestRequest.isDone || latestRequest.assetBundle != null));
 
         public AssetBundleNode(string packageId, AssetBundleInfo info)
         {
@@ -143,7 +144,8 @@ namespace LibraryOfAngela
                 if (!refCounts.Contains(type))
                 {
                     Logger.Log($"AssetBundle Load Canceled?? : {ValidPath}");
-                    latestRequest.assetBundle.Unload(true);
+                    if (latestRequest.assetBundle != null) latestRequest.assetBundle.Unload(true);
+                    latestRequest = null;
                     return false;
                 }
                 Bundle = latestRequest.assetBundle;
@@ -246,6 +248,7 @@ namespace LibraryOfAngela
         {
             if (current == UIPhase.Sephirah)
             {
+                Instance.currentForceSyncRequest?.Cancel();
                 Instance.RemoveAssetBundles(AssetBundleLoadingType.INVITATION);
                 Instance.RemoveAssetBundles(AssetBundleLoadingType.BATTLE_PAGE);
                 Instance.RemoveAssetBundles(AssetBundleLoadingType.EGO);
@@ -269,11 +272,10 @@ namespace LibraryOfAngela
         {
             try
             {
-                Instance.currentForceSyncRequest = new ForceAsyncAssetBundleRequest();
-                Instance.currentForceSyncRequest.initRequire = true;
-                Instance.currentForceSyncRequest.CheckInvitation();
-                Instance.currentForceSyncRequest.CheckUnits();
-                Instance.currentForceSyncRequest.initRequire = false;
+                Instance.currentForceSyncRequest?.Cancel();
+                var request = new ForceAsyncAssetBundleRequest();
+                Instance.currentForceSyncRequest = request;
+                request.Initialize();
             }
             catch (Exception e)
             {
@@ -287,12 +289,23 @@ namespace LibraryOfAngela
         private static void Before_LoadBattleScene()
         {
             var id = StageController.Instance.GetStageModel()?.ClassInfo?.id;
+            var request = Instance.currentForceSyncRequest;
+            if (request?.IsDestroyed() == true)
+            {
+                Logger.Log($"Reset Destroyed AssetBundle Request Before LoadBattleScene : {request.targetInvitationId}");
+                request.Cancel();
+            }
             if (Instance.currentForceSyncRequest?.targetInvitationId != id)
             {
                 Before_OnClickGameStart();
             }
         }
 
+
+        internal bool HasActiveAssetBundleRequest(AssetBundleType type)
+        {
+            return nodes.Any(node => node.info.IsAsync(type) != null && node.HasActiveRequest);
+        }
 
         [HarmonyPatch(typeof(BattleSceneRoot), "StartBattle")]
         [HarmonyPrefix]
@@ -375,7 +388,7 @@ namespace LibraryOfAngela
             foreach (var t in targets) asyncQueue.Enqueue(t);
         }
 
-        public AssetBundleLoadResponse LoadAssetBundle(AssetBundleType target, Action<bool, bool> onComplete = null, bool forceAsync = false)
+        public AssetBundleLoadResponse LoadAssetBundle(AssetBundleType target, Action<bool, bool> onComplete = null, bool forceAsync = false, Action<bool> onLoadStart = null)
         {
             var ret = default(AssetBundleLoadResponse);
             if (loadedTargets.Contains(target))
@@ -427,6 +440,8 @@ namespace LibraryOfAngela
             }
             foreach (var t in targets)
             {
+                // Register ownership of the completion before it can run inline.
+                onLoadStart?.Invoke(t.Item1);
                 if (t.Item2)
                 {
                     LoadAssetBundleAsync(new AsyncAssetBundleRequest { type = loadType, target = target, info = t.Item3, action = onComplete, isOriginAsync = t.Item1 });
@@ -478,6 +493,7 @@ namespace LibraryOfAngela
         private void OnAssetBundleLoadTryComplete(AssetBundleNode node, bool result, bool isSync)
         {
             var strBuilder = new StringBuilder("- ");
+            int contentCount = 0;
             try
             {
                 var success = result && node.Bundle != null;
@@ -489,7 +505,11 @@ namespace LibraryOfAngela
                     {
                         var key = Path.GetFileNameWithoutExtension(value);
                         node.keys[key] = value;
-                        if (LoAFramework.DEBUG) strBuilder.AppendLine($"- {key} in {node.packageId}");
+                        if (LoAFramework.DEBUG)
+                        {
+                            strBuilder.AppendLine($"- {key} in {node.packageId}");
+                            contentCount++;
+                        }
                     }
                 }
                 loadRequireNodes.Remove(node.info);
@@ -500,7 +520,6 @@ namespace LibraryOfAngela
                         if (LoAFramework.DEBUG)
                         {
                             strBuilder.Insert(0, $"AssetBundle Loaded : {node.info.path}");
-                            Logger.Log(strBuilder.ToString());
                         }
                     }
                     else
@@ -508,6 +527,7 @@ namespace LibraryOfAngela
                         strBuilder.Append(success ? "Success" : "Fail");
                         strBuilder.Append(" ");
                         strBuilder.AppendLine(node.info.path);
+                        contentCount++;
                         //bundleLoadQueue.Enqueue(strBuilder);
                     }
                
@@ -525,8 +545,11 @@ namespace LibraryOfAngela
                 Logger.Log($"Error in AssetBundle Load (Bundle Exists: {node.Bundle != null} // {result}) Complete -> {node.info.path}");
                 Logger.LogError(e);
             }
-            if (isSync) Logger.Log(strBuilder.ToString().TrimEnd());
-            else bundleLoadQueue.Enqueue(strBuilder);
+            if (contentCount >= 1)
+            {
+                if (isSync) Logger.Log(strBuilder.ToString().TrimEnd());
+                else bundleLoadQueue.Enqueue(strBuilder);
+            }
         }
 
         private AssetBundleLoadingType CreateLoadingType(AssetBundleType target)
